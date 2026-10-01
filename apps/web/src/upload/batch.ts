@@ -194,9 +194,8 @@ export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
     belfiore_reference_set: 'belfiore_1998',
     include_status_columns: i.includeStatus,
     row_counts: { total: i.rows.total, with_problems: i.rows.withProblems, rows_with_input_problems: i.rows.withProblems, calculated: i.rows.calculated },
-    methods: registry.map((m) => ({
-      id: m.id, name: m.name, included: m.deferredReason === undefined,
-      csv_column: m.deferredReason === undefined ? columnName(m.id, i.orientation) : null,
+    methods: INCLUDED.map((m) => ({
+      id: m.id, name: m.name, csv_column: columnName(m.id, i.orientation),
       source_verification: m.source_verification,
     })),
   };

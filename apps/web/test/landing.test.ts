@@ -24,9 +24,8 @@ describe('landing counts', () => {
     const c = methodCounts();
     const html = pageFor('/');
     expect(html).toContain('id="calculate-root"');
-    expect(landing()).toContain('href="#/methods"');
-    expect(html).toContain(`${c.available} methods available`);
-    expect(html).toContain(`${c.notIncluded} listed but not included`);
+    expect(html).not.toContain("methods available");
+    expect(html).not.toContain('not included');
     expect(html).toContain(PRIVACY_STATEMENT);
   });
   it('about page has author, citation and privacy statement', () => {

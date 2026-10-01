@@ -17,7 +17,6 @@ export function landing(): string {
 <h1>ISAT</h1>
 <p class="subtitle">Insulin Sensitivity Analysis Tool</p>
 <p class="lede">Calculate and explore insulin sensitivity indices from metabolic data, for one person or a whole file, entirely in your browser.</p>
-<p id="method-counts" class="lede"><strong>${c.available} methods available</strong>; ${c.notIncluded} listed but not included. <a href="#/methods">See the methods</a>.</p>
 <p class="notice">${PRIVACY_STATEMENT}</p>
 <p class="notice">${SURROGATE_NOTE}</p>`;
 }

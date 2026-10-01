@@ -8,7 +8,7 @@ type Spec = Record<string, any>;
 
 export const CATEGORIES: Array<[string, string]> = [
   ['all', 'All'], ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'],
-  ['tracer_dxa', 'Tracer & DXA'], ['deferred', 'Not included'],
+  ['tracer_dxa', 'Tracer & DXA'],
 ];
 
 /** Category used for filtering; excluded methods are always "deferred" whatever their YAML category. */
@@ -26,7 +26,6 @@ export const LEVELS: Array<[string, string]> = [
   ['directly_verified', 'The formula was checked against the original publication.'],
   ['secondary_source_confirmed', 'The formula was confirmed in secondary sources; the original was not re-read.'],
   ['author_verified_not_rechecked', 'The formula was verified against the publication by the InsuSensCalc author; not re-checked for ISAT.'],
-  ['unresolved', 'The source could not be verified; the method is not included in this version.'],
 ];
 
 const UNIT_WORDS: Record<string, string> = {
@@ -155,7 +154,6 @@ const JUDGEMENT = /\b(abnormal|normal|good|bad|cut-?off)\b/i;
 
 export function methodsHtml(): string {
   const included = registry.filter((m) => m.deferredReason === undefined);
-  const excluded = registry.filter((m) => m.deferredReason !== undefined);
   const key = LEVELS.map(([k, meaning]) => `<li><span class="badge" data-sv="${k}">${esc(badgeText(k))}</span> ${esc(meaning)}</li>`).join('');
   const chips = CATEGORIES.map(([k, label]) => `<button type="button" class="chip" data-chip="${k}" aria-pressed="${k === 'all'}">${esc(label)}</button>`).join('');
   return `<p>All formulas below are the ones ISAT executes; this page is generated from the same method files the calculation engine uses.</p>
@@ -165,6 +163,5 @@ export function methodsHtml(): string {
 <div class="chips" role="group" aria-label="Category">${chips}</div></div>
 <p id="m-count" class="hint" aria-live="polite"></p>
 <section id="m-main"><h2>Methods</h2>${included.map(entryHtml).join('\n')}</section>
-<section id="m-excluded"><h2>Not included in this version</h2>${excluded.map(entryHtml).join('\n')}</section>
 <h2>Unit conversions</h2>${conversionsHtml()}`;
 }

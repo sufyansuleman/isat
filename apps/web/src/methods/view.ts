@@ -17,7 +17,7 @@ export function mountMethods(root: HTMLElement, methodId?: string): () => void {
       d.hidden = !ok;
       if (ok) shown++;
     }
-    for (const sec of ['#m-main', '#m-excluded']) {
+    for (const sec of ['#m-main']) {
       const s = root.querySelector<HTMLElement>(sec)!;
       s.hidden = ![...s.querySelectorAll<HTMLDetailsElement>('details.method')].some((d) => !d.hidden);
     }

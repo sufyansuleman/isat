@@ -107,13 +107,13 @@ describe('results', () => {
     expect(txt).not.toMatch(/\b(abnormal|good|bad)\b/i);
   });
 
-  it('lists excluded methods separately, with reasons', () => {
+  it('never mentions excluded methods', () => {
     const html = availabilityHtml(snap.results);
     for (const id of ['homa2', 'bennett', 'cederholm']) {
       const m = registry.find((x) => x.id === id)!;
-      expect(html).toContain(m.name.replace(/&/g, '&amp;'));
+      expect(html).not.toContain(m.name.replace(/&/g, '&amp;'));
     }
-    expect(html).toContain('Not included in this version');
+    expect(html).not.toContain('Not included');
   });
 
   it('has no inline style attributes in card markup (CSP)', () => {

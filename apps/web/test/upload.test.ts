@@ -177,7 +177,7 @@ describe('batch processing', () => {
       includeStatus: false, rows: { total: 4, withProblems: 0, calculated: 4 },
     }) as Record<string, any>;
     for (const k of ['isat_version', 'timestamp', 'input_file', 'units', 'conversion_factors', 'avignon_weight', 'orientation', 'belfiore_reference_set', 'row_counts', 'methods', 'delimiter']) expect(s).toHaveProperty(k);
-    expect(s['methods'].length).toBe(registry.length);
+    expect(s['methods'].length).toBe(registry.filter((m) => m.deferredReason === undefined).length);
     expect(s['methods'].find((m: any) => m.id === 'homa_ir').csv_column).toBe('homa_ir_inv');
   });
 });

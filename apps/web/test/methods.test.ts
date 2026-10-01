@@ -12,24 +12,19 @@ host.innerHTML = methodsHtml();
 const entries = [...host.querySelectorAll<HTMLElement>('details.method')];
 
 describe('methods page', () => {
-  it('has exactly one entry per registry method, deferred ones only under Not included', () => {
+  it('has exactly one entry per included method and never lists excluded ones', () => {
     const ids = entries.map((e) => e.dataset['id']);
-    expect(ids.sort()).toEqual(registry.map((m) => m.id).sort());
+    expect(ids.sort()).toEqual(registry.filter((m) => m.deferredReason === undefined).map((m) => m.id).sort());
     expect(new Set(ids).size).toBe(ids.length);
-    for (const m of registry) {
-      const inExcluded = !!host.querySelector(`#m-excluded #m-${m.id}`);
-      const inMain = !!host.querySelector(`#m-main #m-${m.id}`);
-      expect(inExcluded).toBe(m.deferredReason !== undefined);
-      expect(inMain).toBe(m.deferredReason === undefined);
-    }
+    expect(host.querySelector('#m-excluded')).toBeNull();
+    expect(host.textContent).not.toMatch(/Not included|HOMA2|Bennett SI|Cederholm/);
   });
 
   it('entry count per category matches the registry', () => {
-    const cats = new Set(registry.map(categoryOf));
-    for (const c of cats) {
-      expect(entries.filter((e) => e.dataset['cat'] === c).length).toBe(registry.filter((m) => categoryOf(m) === c).length);
+    const incl = registry.filter((m) => m.deferredReason === undefined);
+    for (const c of new Set(incl.map(categoryOf))) {
+      expect(entries.filter((e) => e.dataset['cat'] === c).length).toBe(incl.filter((m) => categoryOf(m) === c).length);
     }
-    expect(entries.filter((e) => e.dataset['cat'] === 'deferred').map((e) => e.dataset['id']).sort()).toEqual(['bennett', 'cederholm', 'homa2']);
   });
 
   it('every formula and variant converts to MathML without leftover backslashes', () => {
@@ -86,8 +81,9 @@ describe('methods page', () => {
     const root = document.createElement('div');
     document.body.appendChild(root);
     mountMethods(root);
-    (root.querySelector('[data-chip="deferred"]') as HTMLButtonElement).click();
-    expect([...root.querySelectorAll<HTMLElement>('details.method')].filter((d) => !d.hidden).map((d) => d.dataset['id']).sort()).toEqual(['bennett', 'cederholm', 'homa2']);
+    expect(root.querySelector('[data-chip="deferred"]')).toBeNull();
+    (root.querySelector('[data-chip="tracer_dxa"]') as HTMLButtonElement).click();
+    expect([...root.querySelectorAll<HTMLElement>('details.method')].filter((d) => !d.hidden).map((d) => d.dataset['id']).sort()).toEqual(['atiri', 'lipo', 'liri']);
     (root.querySelector('[data-chip="all"]') as HTMLButtonElement).click();
     const s = root.querySelector('#m-search') as HTMLInputElement;
     s.value = 'amato';

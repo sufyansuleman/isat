@@ -36,7 +36,6 @@ export const unitLabel = (u: string) => u.replace('uU/mL', 'µU/mL').replace('um
 // ---------- availability panel ----------
 export function availabilityHtml(results: Result[]): string {
   const included = registry.filter((m) => m.deferredReason === undefined);
-  const excluded = registry.filter((m) => m.deferredReason !== undefined);
   const byId = new Map(results.map((r) => [r.id, r]));
   const ok = included.filter((m) => byId.get(m.id)?.status === 'ok');
   const notOk = included.filter((m) => byId.get(m.id)?.status !== 'ok').map((m) => {
@@ -44,12 +43,10 @@ export function availabilityHtml(results: Result[]): string {
     const why = r?.reasons.join('; ') ?? 'no result';
     return `<li>${esc(m.name)}: <span class="av-state">${r?.status === 'error' ? 'error, ' : ''}${esc(why)}</span></li>`;
   });
-  const ex = excluded.map((m) => `<a href="#/methods/${esc(m.id)}">${esc(m.name)}</a>`).join(', ');
   return `<p class="av-summary"><strong>${ok.length} of ${included.length} indices can be calculated</strong> with the values entered.</p>
 <details class="av-details" id="av-details"><summary>Show which and why</summary>
 <p><strong>Calculated:</strong> ${ok.length ? ok.map((m) => esc(m.name)).join(', ') : 'none yet'}.</p>
 ${notOk.length ? `<p><strong>Not calculated:</strong></p><ul class="av-list">${notOk.join('')}</ul>` : ''}
-<p class="hint"><strong>Not included in this version</strong> (reasons on the Methods page): ${ex}.</p>
 </details>`;
 }
 
