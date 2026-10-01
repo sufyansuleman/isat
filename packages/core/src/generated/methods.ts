@@ -995,7 +995,7 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula with age and BMI as implemented in InsuSensCalc, attributed to the Stumvoll 2001 letter (no abstract available; not checked). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here."
+    "source_verification_detail": "Formula as printed in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), citing the Stumvoll 2001 letter (no abstract; not yet read). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here."
   },
   "stumvoll_mod": {
     "id": "stumvoll_mod",
@@ -1009,10 +1009,17 @@ export const methodSpecs = {
       "glucose_120 (mmol/L)"
     ],
     "reference": {
-      "citation": "Stumvoll M, Mitrakou A, Pimenta W, Jenssen T, Yki-Järvinen H, Van Haeften T, Renn W, Gerich J. Use of the oral glucose tolerance test to assess insulin release and insulin sensitivity. Diabetes Care. 2000;23(3):295-301.",
-      "doi": "10.2337/diacare.23.3.295",
-      "pmid": 10868854
+      "citation": "Stumvoll M, Van Haeften T, Fritsche A, Gerich J. Oral glucose tolerance test indexes for insulin sensitivity and secretion based on various availabilities of sampling times. Diabetes Care. 2001;24(4):796-797.",
+      "doi": "10.2337/diacare.24.4.796",
+      "pmid": 11315860
     },
+    "secondary_references": [
+      {
+        "citation": "Stumvoll M, Mitrakou A, Pimenta W, Jenssen T, Yki-Järvinen H, Van Haeften T, Renn W, Gerich J. Use of the oral glucose tolerance test to assess insulin release and insulin sensitivity. Diabetes Care. 2000;23(3):295-301.",
+        "doi": "10.2337/diacare.23.3.295",
+        "pmid": 10868854
+      }
+    ],
     "verification": {
       "status": "supported_secondary",
       "detail": "Coefficients from secondary reproductions; primary not read in this project."
@@ -1022,7 +1029,7 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "0/120-min variant (uses G120); cited to the Stumvoll 2001 letter as in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), where the formula is printed identically. The 2001 letter itself (no abstract) not yet read; the 2000 paper gives the original equations using G90."
   },
   "tg_hdl": {
     "id": "tg_hdl",
