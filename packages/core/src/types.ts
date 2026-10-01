@@ -14,6 +14,9 @@ export interface Inputs {
   waist?: number; // cm
   age?: number; // years
   sex?: 'male' | 'female';
+  fat_mass?: number; // kg (DXA)
+  rate_glycerol?: number; // tracer rate, units as supplied by user
+  rate_palmitate?: number; // tracer rate, units as supplied by user
 }
 
 /** Normal-population reference means, canonical units; areas in canonical-unit*h. */
@@ -43,4 +46,5 @@ export interface Result {
   warnings: string[];
   details?: Record<string, unknown>;
   conversion: ConversionSettings;
+  orientation?: 'published' | 'sensitivity';
 }

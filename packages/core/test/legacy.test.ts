@@ -3,7 +3,7 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { calculateAll, registry, parseCsv, parseWideRow } from '../src/index';
+import { calculateAll, calculateBatch, orient, registry, parseCsv, parseWideRow } from '../src/index';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const csv = parseCsv(readFileSync(resolve(root, 'validation/fixtures/inputs.csv'), 'utf8'));
@@ -15,16 +15,17 @@ const legacyById = new Map(legacy.rows.map((r) => [String(r.participant_id), r])
 
 const relDiff = (a: number, b: number) => Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1e-300);
 
+const batch = calculateBatch(rows.map((r) => r.inputs), { avignon_weight: 'sample' }); // avignon_sim needs the full-sample weight
 const diffRows: string[] = [];
 const unavailRows: string[] = [];
 let matched = 0;
 const counts = new Map<string, number>();
 
 describe('ISAT vs InsuSensCalc 0.1.0', () => {
-  for (const row of rows) {
+  for (const [idx, row] of rows.entries()) {
     const id = row.participant_id!;
     const leg = legacyById.get(id)!;
-    const results = calculateAll(row.inputs);
+    const results = batch[idx]!;
     it(`${id}: one result per method, no parse problems`, () => {
       expect(row.problems).toEqual([]);
       expect(results.length).toBe(registry.length);
@@ -78,6 +79,24 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
       expect(r.value as number).toBeLessThan(2);
       expect((r.details?.reference_set as { name: string }).name).toBe('belfiore_1998');
     }
+  });
+
+  it('orient(sensitivity) reproduces the legacy _inv columns', () => {
+    let n = 0;
+    for (const [idx, row] of rows.entries()) {
+      const leg = legacyById.get(row.participant_id!)!;
+      const out = orient(batch[idx]!, 'sensitivity');
+      for (const r of out.filter((x) => x.id.endsWith('_inv'))) {
+        const m = registry.find((x) => x.id === r.id.replace(/_inv$/, ''))!;
+        const col = typeof m.legacy.column === 'string' ? m.legacy.column : m.legacy.column![row.inputs.sex!];
+        expect(r.orientation).toBe('sensitivity');
+        expect(r.status).toBe('ok');
+        expect(relDiff(r.value as number, leg[col!] as number), `${row.participant_id} ${r.id}`).toBeLessThan(1e-9);
+        n++;
+      }
+      expect(orient(batch[idx]!, 'published')).toEqual(batch[idx]);
+    }
+    expect(n).toBe(8 * 13); // 13 negated methods x 8 rows
   });
 
   afterAll(() => {

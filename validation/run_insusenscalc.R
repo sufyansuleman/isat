@@ -13,9 +13,9 @@ version <- read.dcf(file.path(ref_dir, "DESCRIPTION"), fields = "Version")[1, 1]
 source(file.path(ref_dir, "R", "calc_indices.R"))
 
 inputs <- read.csv("validation/fixtures/inputs.csv", stringsAsFactors = FALSE)
-# InsuSensCalc needs tracer columns for tracer_dxa; not used in ISAT V1
+# All four InsuSensCalc categories, including tracer_dxa
 res <- suppressMessages(suppressWarnings(
-  isi_calculator(inputs, category = c("fasting", "ogtt", "adipo"))
+  isi_calculator(inputs, category = c("fasting", "ogtt", "adipo", "tracer_dxa"))
 ))
 
 legacy_cols <- setdiff(names(res), names(inputs))

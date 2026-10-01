@@ -61,7 +61,8 @@ Note on VAI and LAP: ISAT computes the formula for the participant's own sex onl
 
 ## Verification status (emit as metadata; `provisional` adds a warning to every result)
 - **confirmed:** quicki, homa_ir, matsuda_*, bigtt_si, vai, lap, mcauley, tyg, belfiore_* (formula).
-- **supported_secondary:** firi (Duncan 1995 reproduced in secondary sources; primary not read).
+- **supported_secondary:** hiri (form tabulated in Gastaldelli 2022, doi:10.1002/oby.23503; Abdul-Ghani 2007 originally used 0�30 min AUCs, differing by a constant factor only), avignon_sim (SiM = (0.137�Sib + Si2h)/2 per Avignon 1999 as reported in secondary sources; the abstract does not state the coefficient), firi (Duncan 1995 reproduced in secondary sources; primary not read).
+- **legacy_match:** bennett, ifc, liri, lipo, atiri (formula reproduces InsuSensCalc; primary sources not read).
 - **provisional:**
   - gutt, cederholm: log base not stated in any source read; ln matches InsuSensCalc.
   - cederholm: whether the means use time points 0/120 only or all OGTT samples is unconfirmed.
@@ -71,8 +72,7 @@ Note on VAI and LAP: ISAT computes the formula for the participant's own sex onl
   - 0–1–2 h area: insulin 638.00 pmol/L·h, glucose 11.36 mmol/L·h, FFA 296.25 µmol/L·h.
 
 ## Deferred (registered as `unavailable` with reason "not included in this version: <why>")
-- bennett, hiri: source not verified.
-- avignon_sim: sample-dependent weight.
-- ifc: not an established IS index.
-- liri, lipo, atiri: tracer/DXA, arbitrary units.
 - homa2: closed-source model.
+
+## Orientation
+`orient(results, mode)`: 'published' (default) changes nothing. 'sensitivity' negates every result whose direction is resistant and whose YAML legacy relation is `negated`, renames it `<id>_inv`, sets `orientation: 'sensitivity'` and `details.orientation_note` ("negated published index (InsuSensCalc convention): higher = more sensitive"). It reproduces the InsuSensCalc `_inv` columns.

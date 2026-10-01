@@ -1,9 +1,14 @@
 id: atiri
 name: "ATIRI"
-category: deferred
-direction: unknown
-deferred:
-  reason: "tracer/DXA, arbitrary units"
+category: tracer_dxa
+direction: higher_more_resistant
+formula_latex: "rate_{palmitate} \\times I_{0,\\mu U/mL}"
+inputs: ["rate_palmitate (as supplied)", "insulin_0"]
+notes: ["tracer rate units as supplied by user"]
+verification:
+  status: legacy_match
+  detail: "Formula matches InsuSensCalc."
 legacy:
-  insusenscalc_column: null
-  relation: none
+  insusenscalc_column: ATIRI_inv
+  relation: negated
+  difference: "Legacy column is the negated index."

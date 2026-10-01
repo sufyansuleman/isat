@@ -23,14 +23,24 @@ export const methodSpecs = {
   "atiri": {
     "id": "atiri",
     "name": "ATIRI",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "tracer/DXA, arbitrary units"
+    "category": "tracer_dxa",
+    "direction": "higher_more_resistant",
+    "formula_latex": "rate_{palmitate} \\times I_{0,\\mu U/mL}",
+    "inputs": [
+      "rate_palmitate (as supplied)",
+      "insulin_0"
+    ],
+    "notes": [
+      "tracer rate units as supplied by user"
+    ],
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Formula matches InsuSensCalc."
     },
     "legacy": {
-      "insusenscalc_column": null,
-      "relation": "none"
+      "insusenscalc_column": "ATIRI_inv",
+      "relation": "negated",
+      "difference": "Legacy column is the negated index."
     }
   },
   "avignon_si0": {
@@ -76,14 +86,22 @@ export const methodSpecs = {
   "avignon_sim": {
     "id": "avignon_sim",
     "name": "Avignon Sim",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "sample-dependent weight"
+    "category": "ogtt",
+    "direction": "higher_more_sensitive",
+    "formula_latex": "(w \\cdot Si_0 + Si_{120}) / 2",
+    "inputs": [
+      "glucose_0,120",
+      "insulin_0,120",
+      "weight"
+    ],
+    "verification": {
+      "status": "supported_secondary",
+      "detail": "SiM = (0.137·Sib + Si2h)/2 per Avignon 1999 as reported in secondary sources; the abstract does not state the coefficient."
     },
     "legacy": {
       "insusenscalc_column": "Avignon_Sim",
-      "relation": "none"
+      "relation": "equal",
+      "difference": "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (InsuSensCalc / Suleman 2024 data-driven weight, w = mean(Si120)/mean(Si0)). Default is the published w = 0.137."
     }
   },
   "belfiore": {
@@ -211,14 +229,20 @@ export const methodSpecs = {
   "bennett": {
     "id": "bennett",
     "name": "Bennett index",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "source not verified"
+    "category": "fasting",
+    "direction": "higher_more_sensitive",
+    "formula_latex": "1 / (\\ln I_{0,\\mu U/mL} \\cdot \\ln G_{0,mg/dL})",
+    "inputs": [
+      "glucose_0 (mg/dL)",
+      "insulin_0 (uU/mL)"
+    ],
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Formula matches InsuSensCalc; primary source not read."
     },
     "legacy": {
       "insusenscalc_column": "Bennett",
-      "relation": "none"
+      "relation": "equal"
     }
   },
   "bigtt_si": {
@@ -331,14 +355,21 @@ export const methodSpecs = {
   "hiri": {
     "id": "hiri",
     "name": "Hepatic insulin resistance index",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "source not verified"
+    "category": "fasting",
+    "direction": "higher_more_resistant",
+    "formula_latex": "\\frac{\\overline{G}_{0,30,mg/dL}}{100}\\cdot \\overline{I}_{0,30,\\mu U/mL}",
+    "inputs": [
+      "glucose_0,30",
+      "insulin_0,30"
+    ],
+    "verification": {
+      "status": "supported_secondary",
+      "detail": "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503): mean(G0,G30) mg/dL /100 × mean(I0,I30) µU/mL. Abdul-Ghani 2007 originally defined it with 0–30 min AUCs; this tabulated form differs by a constant factor only."
     },
     "legacy": {
       "insusenscalc_column": "HIRI_inv",
-      "relation": "none"
+      "relation": "negated",
+      "difference": "Legacy column is the negated index."
     }
   },
   "homa2": {
@@ -376,15 +407,25 @@ export const methodSpecs = {
   },
   "ifc": {
     "id": "ifc",
-    "name": "IFC",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "not an established IS index"
+    "name": "Insulin fold change",
+    "category": "ogtt",
+    "direction": "higher_more_resistant",
+    "formula_latex": "\\ln(I_{120}/I_0)",
+    "inputs": [
+      "insulin_0",
+      "insulin_120"
+    ],
+    "notes": [
+      "insulin fold change; not a clamp-validated insulin sensitivity index"
+    ],
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Formula matches InsuSensCalc."
     },
     "legacy": {
       "insusenscalc_column": "Ifc_inv",
-      "relation": "none"
+      "relation": "negated",
+      "difference": "Legacy column is the negated index."
     }
   },
   "ig_ratio_120": {
@@ -492,27 +533,47 @@ export const methodSpecs = {
   "lipo": {
     "id": "lipo",
     "name": "Lipo-IR",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "tracer/DXA, arbitrary units"
+    "category": "tracer_dxa",
+    "direction": "higher_more_resistant",
+    "formula_latex": "rate_{glycerol} \\times I_{0,\\mu U/mL}",
+    "inputs": [
+      "rate_glycerol (as supplied)",
+      "insulin_0"
+    ],
+    "notes": [
+      "tracer rate units as supplied by user"
+    ],
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Formula matches InsuSensCalc."
     },
     "legacy": {
-      "insusenscalc_column": null,
-      "relation": "none"
+      "insusenscalc_column": "Lipo_inv",
+      "relation": "negated",
+      "difference": "Legacy column is the negated index."
     }
   },
   "liri": {
     "id": "liri",
     "name": "LIRI",
-    "category": "deferred",
-    "direction": "unknown",
-    "deferred": {
-      "reason": "tracer/DXA, arbitrary units"
+    "category": "tracer_dxa",
+    "direction": "higher_more_resistant",
+    "formula_latex": "-0.091 + 0.4\\log_{10}\\bar I_{0,30,pmol/L} + 0.346\\log_{10}(FM/BW\\cdot 100) - 0.408\\log_{10}HDL_{mg/dL} + 0.435\\log_{10}BMI",
+    "inputs": [
+      "insulin_0,30",
+      "fat_mass (kg)",
+      "weight (kg)",
+      "hdl",
+      "bmi"
+    ],
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Formula matches InsuSensCalc. Insulin mean goes through the units module so the configured insulin factor is respected."
     },
     "legacy": {
-      "insusenscalc_column": null,
-      "relation": "none"
+      "insusenscalc_column": "LIRI_inv",
+      "relation": "negated",
+      "difference": "Legacy column is the negated index."
     }
   },
   "matsuda_3pt": {

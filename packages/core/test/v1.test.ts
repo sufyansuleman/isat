@@ -103,3 +103,49 @@ describe('wide adapter', () => {
     expect(parseWideRow({ G0: 'abc', sex: '3' }).problems.length).toBe(2);
   });
 });
+
+import { calculateBatch, avignonSim } from '../src/index';
+
+describe('avignon_sim weights', () => {
+  const row = (g0: number, g120: number, i0: number, i120: number) => ({
+    glucose: { 0: g0, 120: g120 }, insulin: { 0: i0, 120: i120 }, weight: 70,
+  });
+  it('single participant uses 0.137 from avignon_1999', () => {
+    const r = calculateAll(row(5, 7, 60, 300)).find((x) => x.id === 'avignon_sim')!;
+    expect(r.details!.weight).toBe(0.137);
+    expect(r.details!.weight_source).toBe('avignon_1999');
+    expect(r.warnings).toEqual([]);
+    const o = calculateAll(row(5, 7, 60, 300), { avignon_weight: 0.5 }).find((x) => x.id === 'avignon_sim')!;
+    expect(o.details!.weight).toBe(0.5);
+  });
+  it('batch sample weight = mean(Si120)/mean(Si0); <2 rows falls back with warning', () => {
+    const rows = [row(5, 7, 60, 300), row(6, 9, 90, 400)];
+    const out = calculateBatch(rows, { avignon_weight: 'sample' }).map((rs) => rs.find((x) => x.id === 'avignon_sim')!);
+    const si0 = rows.map((r) => 1e8 / (r.glucose[0] * 18 * (r.insulin[0] / 6) * 70 * 150));
+    const si120 = rows.map((r) => 1e8 / (r.glucose[120] * 18 * (r.insulin[120] / 6) * 70 * 150));
+    const w = (si120[0]! + si120[1]!) / (si0[0]! + si0[1]!);
+    expect(out[0]!.details!.weight_source).toBe('sample');
+    close(out[0]!.details!.weight as number, w);
+    close(out[0]!.value, (w * si0[0]! + si120[0]!) / 2);
+    expect(out[0]!.warnings.join(' ')).toMatch(/cohort/);
+    expect(calculateBatch(rows)[0]!.find((x) => x.id === 'avignon_sim')!.details!.weight).toBe(0.137);
+    const one = calculateBatch([rows[0]!], { avignon_weight: 'sample' })[0]!.find((x) => x.id === 'avignon_sim')!;
+    expect(one.details!.weight).toBe(0.137);
+    expect(one.warnings.join(' ')).toMatch(/Fewer than 2/);
+    expect(avignonSim({}, undefined).status).toBe('unavailable');
+  });
+});
+
+describe('tracer methods', () => {
+  it('lipo records tracer-unit note and uses no conversion', () => {
+    const r = calculateAll({ insulin: { 0: 60 }, rate_glycerol: 0.5 }).find((x) => x.id === 'lipo')!;
+    close(r.value, 5);
+    expect(r.details!.note).toBe('tracer rate units as supplied by user');
+  });
+  it('wide adapter reads tracer and DXA columns', () => {
+    const w = parseWideRow({ fat_mass: '20', rate_glycerol: '0.5', rate_palmitate: '' });
+    expect(w.inputs.fat_mass).toBe(20);
+    expect(w.inputs.rate_glycerol).toBe(0.5);
+    expect(w.inputs.rate_palmitate).toBeUndefined();
+  });
+});

@@ -1,9 +1,14 @@
 id: ifc
-name: "IFC"
-category: deferred
-direction: unknown
-deferred:
-  reason: "not an established IS index"
+name: "Insulin fold change"
+category: ogtt
+direction: higher_more_resistant
+formula_latex: "\\ln(I_{120}/I_0)"
+inputs: ["insulin_0", "insulin_120"]
+notes: ["insulin fold change; not a clamp-validated insulin sensitivity index"]
+verification:
+  status: legacy_match
+  detail: "Formula matches InsuSensCalc."
 legacy:
   insusenscalc_column: Ifc_inv
-  relation: none
+  relation: negated
+  difference: "Legacy column is the negated index."

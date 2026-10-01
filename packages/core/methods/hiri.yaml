@@ -1,9 +1,13 @@
 id: hiri
 name: "Hepatic insulin resistance index"
-category: deferred
-direction: unknown
-deferred:
-  reason: "source not verified"
+category: fasting
+direction: higher_more_resistant
+formula_latex: "\\frac{\\overline{G}_{0,30,mg/dL}}{100}\\cdot \\overline{I}_{0,30,\\mu U/mL}"
+inputs: ["glucose_0,30", "insulin_0,30"]
+verification:
+  status: supported_secondary
+  detail: "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503): mean(G0,G30) mg/dL /100 × mean(I0,I30) µU/mL. Abdul-Ghani 2007 originally defined it with 0–30 min AUCs; this tabulated form differs by a constant factor only."
 legacy:
   insusenscalc_column: HIRI_inv
-  relation: none
+  relation: negated
+  difference: "Legacy column is the negated index."

@@ -74,3 +74,24 @@ export const avignonSi0 = (i: Inputs, s?: S): Result =>
 export const avignonSi120 = (i: Inputs, s?: S): Result =>
   run('avignon_si120', S_, i, s, ['G120', 'I120', 'weight'], (v, c) =>
     1e8 / (c.gmg(v.G120!) * c.iu(v.I120!) * v.weight! * 150));
+
+export const AVIGNON_1999_WEIGHT = 0.137;
+export type AvignonWeightSource = 'sample' | 'avignon_1999' | 'user';
+
+/** Avignon Sim = (w*Si0 + Si120)/2. Weight and its source are always recorded in details. */
+export function avignonSim(
+  i: Inputs, s: S | undefined, w: number = AVIGNON_1999_WEIGHT,
+  source: AvignonWeightSource = 'avignon_1999', warnings: string[] = [],
+): Result {
+  const a = avignonSi0(i, s), b = avignonSi120(i, s);
+  if (a.status !== 'ok' || b.status !== 'ok') {
+    const bad = a.status === 'error' || b.status === 'error' ? (a.status === 'error' ? a : b) : a.status !== 'ok' ? a : b;
+    const reasons = [...new Set([...a.reasons, ...b.reasons])];
+    return { ...bad, id: 'avignon_sim', reasons, warnings: [...warnings] };
+  }
+  const si0 = a.value as number, si120 = b.value as number;
+  return {
+    ...a, id: 'avignon_sim', value: (w * si0 + si120) / 2, warnings: [...warnings],
+    details: { weight: w, weight_source: source, si0, si120 },
+  };
+}

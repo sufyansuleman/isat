@@ -35,8 +35,8 @@ export function parseWideRow(row: Record<string, string | number | null | undefi
     }
     const num = typeof raw === 'number' ? raw : Number(String(raw).trim());
     const series = /^(g|i|ffa)(\d*)$/.exec(lk);
-    const scalar = { tg: 'tg', hdl: 'hdl', hdl_c: 'hdl', weight: 'weight', bmi: 'bmi', waist: 'waist', age: 'age' }[lk] as
-      | 'tg' | 'hdl' | 'weight' | 'bmi' | 'waist' | 'age' | undefined;
+    const scalar = { tg: 'tg', hdl: 'hdl', hdl_c: 'hdl', weight: 'weight', bmi: 'bmi', waist: 'waist', age: 'age', fat_mass: 'fat_mass', rate_glycerol: 'rate_glycerol', rate_palmitate: 'rate_palmitate' }[lk] as
+      | 'tg' | 'hdl' | 'weight' | 'bmi' | 'waist' | 'age' | 'fat_mass' | 'rate_glycerol' | 'rate_palmitate' | undefined;
     if (!series && !scalar) continue; // ignore unknown columns
     if (!Number.isFinite(num)) {
       problems.push(`${key}: not a number ("${String(raw)}")`);

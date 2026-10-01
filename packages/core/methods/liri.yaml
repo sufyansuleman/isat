@@ -1,9 +1,13 @@
 id: liri
 name: "LIRI"
-category: deferred
-direction: unknown
-deferred:
-  reason: "tracer/DXA, arbitrary units"
+category: tracer_dxa
+direction: higher_more_resistant
+formula_latex: "-0.091 + 0.4\\log_{10}\\bar I_{0,30,pmol/L} + 0.346\\log_{10}(FM/BW\\cdot 100) - 0.408\\log_{10}HDL_{mg/dL} + 0.435\\log_{10}BMI"
+inputs: ["insulin_0,30", "fat_mass (kg)", "weight (kg)", "hdl", "bmi"]
+verification:
+  status: legacy_match
+  detail: "Formula matches InsuSensCalc. Insulin mean goes through the units module so the configured insulin factor is respected."
 legacy:
-  insusenscalc_column: null
-  relation: none
+  insusenscalc_column: LIRI_inv
+  relation: negated
+  difference: "Legacy column is the negated index."

@@ -17,6 +17,7 @@ export type Formula = (v: Record<string, number>, c: Conv, sex?: Sex) => Outcome
 const LABEL: Record<string, string> = {
   weight: 'body weight', bmi: 'BMI', waist: 'waist circumference', age: 'age',
   tg: 'triglycerides', hdl: 'HDL cholesterol', sex: 'sex (male/female)',
+  fat_mass: 'fat mass (DXA)', rate_glycerol: 'glycerol rate of appearance', rate_palmitate: 'palmitate rate of appearance',
 };
 const SERIES: Record<string, 'glucose' | 'insulin' | 'ffa'> = { G: 'glucose', I: 'insulin', FFA: 'ffa' };
 const SNAME: Record<string, string> = { glucose: 'glucose', insulin: 'insulin', ffa: 'FFA' };

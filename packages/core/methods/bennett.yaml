@@ -1,9 +1,12 @@
 id: bennett
 name: "Bennett index"
-category: deferred
-direction: unknown
-deferred:
-  reason: "source not verified"
+category: fasting
+direction: higher_more_sensitive
+formula_latex: "1 / (\\ln I_{0,\\mu U/mL} \\cdot \\ln G_{0,mg/dL})"
+inputs: ["glucose_0 (mg/dL)", "insulin_0 (uU/mL)"]
+verification:
+  status: legacy_match
+  detail: "Formula matches InsuSensCalc; primary source not read."
 legacy:
   insusenscalc_column: Bennett
-  relation: none
+  relation: equal

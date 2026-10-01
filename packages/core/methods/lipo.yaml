@@ -1,9 +1,14 @@
 id: lipo
 name: "Lipo-IR"
-category: deferred
-direction: unknown
-deferred:
-  reason: "tracer/DXA, arbitrary units"
+category: tracer_dxa
+direction: higher_more_resistant
+formula_latex: "rate_{glycerol} \\times I_{0,\\mu U/mL}"
+inputs: ["rate_glycerol (as supplied)", "insulin_0"]
+notes: ["tracer rate units as supplied by user"]
+verification:
+  status: legacy_match
+  detail: "Formula matches InsuSensCalc."
 legacy:
-  insusenscalc_column: null
-  relation: none
+  insusenscalc_column: Lipo_inv
+  relation: negated
+  difference: "Legacy column is the negated index."
