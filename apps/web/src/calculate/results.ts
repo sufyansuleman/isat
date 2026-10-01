@@ -30,21 +30,26 @@ export function availabilityHtml(results: Result[]): string {
   const included = registry.filter((m) => m.deferredReason === undefined);
   const excluded = registry.filter((m) => m.deferredReason !== undefined);
   const byId = new Map(results.map((r) => [r.id, r]));
-  const li = included.map((m) => {
+  const ok = included.filter((m) => byId.get(m.id)?.status === 'ok');
+  const notOk = included.filter((m) => byId.get(m.id)?.status !== 'ok').map((m) => {
     const r = byId.get(m.id);
-    if (r?.status === 'ok') return `<li class="av-ok"><span class="mark" aria-hidden="true">✓</span> ${esc(m.name)} <span class="av-state">calculable</span></li>`;
     const why = r?.reasons.join('; ') ?? 'no result';
-    const kind = r?.status === 'error' ? 'error' : 'not calculable';
-    const mark = r?.status === 'error' ? '!' : '○';
-    return `<li class="av-no"><span class="mark" aria-hidden="true">${mark}</span> ${esc(m.name)} <span class="av-state">${kind}: ${esc(why)}</span></li>`;
+    return `<li>${esc(m.name)}: <span class="av-state">${r?.status === 'error' ? 'error, ' : ''}${esc(why)}</span></li>`;
   });
-  const ex = excluded.map((m) =>
-    `<li class="av-no"><span class="mark" aria-hidden="true">○</span> ${esc(m.name)} <span class="av-state">${esc(m.deferredReason ?? '')}</span></li>`);
-  const nOk = results.filter((r) => r.status === 'ok').length;
-  return `<h3>${nOk} of ${included.length} methods calculable with the current inputs</h3>
-<ul class="avail">${li.join('')}</ul>
-<h3>Not included in this version</h3>
-<ul class="avail">${ex.join('')}</ul>`;
+  const ex = excluded.map((m) => `<a href="#/methods/${esc(m.id)}">${esc(m.name)}</a>`).join(', ');
+  return `<p class="av-summary"><strong>${ok.length} of ${included.length} indices can be calculated</strong> with the values entered.</p>
+<details class="av-details" id="av-details"><summary>Show which and why</summary>
+<p><strong>Calculated:</strong> ${ok.length ? ok.map((m) => esc(m.name)).join(', ') : 'none yet'}.</p>
+${notOk.length ? `<p><strong>Not calculated:</strong></p><ul class="av-list">${notOk.join('')}</ul>` : ''}
+<p class="hint"><strong>Not included in this version</strong> (reasons on the Methods page): ${ex}.</p>
+</details>`;
+}
+
+/** One line under the results pointing to the reasons for indices that were not calculated. */
+export function notCalculatedHtml(results: Result[]): string {
+  const included = new Set(registry.filter((m) => m.deferredReason === undefined).map((m) => m.id));
+  const n = results.filter((r) => included.has(r.id) && r.status !== 'ok').length;
+  return n ? `<p class="hint">${n} ${n === 1 ? 'index' : 'indices'} not calculated with these values. <button type="button" class="linklike" id="show-why">See why</button></p>` : '';
 }
 
 // ---------- inputs used (values as entered, in the user's units) ----------

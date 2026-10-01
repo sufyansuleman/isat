@@ -4,7 +4,7 @@ import { esc } from './format';
 import { exampleState } from './example';
 import { buildInputs, emptyState, settingsOf, type FormState, type UnitChoice } from './state';
 import {
-  aucHtml, availabilityHtml, cardsHtml, csvText, resultsFooterHtml, unitLabel, type Snapshot,
+  aucHtml, availabilityHtml, notCalculatedHtml, cardsHtml, csvText, resultsFooterHtml, unitLabel, type Snapshot,
 } from './results';
 import { hydrateFormulas } from './mathml';
 import { unitsSectionHtml } from './units';
@@ -51,8 +51,8 @@ ${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
 <button type="button" id="example">Load example</button> <button type="button" id="clear">Clear</button></p>
 <p id="calc-msg" class="err" role="alert"></p>
 
-<section aria-labelledby="h-avail"><h2 id="h-avail">Availability</h2>
-<div id="avail" aria-live="polite"></div></section>
+<section aria-label="Indices available with the values entered" class="avail-box">
+<div id="avail"></div></section>
 
 <section id="results" aria-labelledby="h-res" hidden><h2 id="h-res">Results</h2>
 <p id="stale" class="warn-banner" hidden>Inputs have changed since this calculation. Press Calculate to update.</p>
@@ -61,6 +61,7 @@ ${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
 <label><input type="radio" name="orient" value="sensitivity"> InsuSensCalc convention (resistance indices negated, _inv)</label>
 </fieldset>
 <div id="cards" class="cards"></div>
+<div id="not-calc"></div>
 <h3>OGTT plots</h3>
 <div id="plots" class="plots"></div>
 <div id="auc"></div>
@@ -119,7 +120,10 @@ export function mountCalculate(root: HTMLElement): () => void {
     $('#bmi-note').textContent = built.bmiFromHeight !== undefined
       ? `BMI from height and weight: ${Number(built.bmiFromHeight.toPrecision(4))} kg/m² (will be used because BMI is empty)` : '';
     const results = calculateAll(built.inputs, { settings: built.settings });
+    // Live update on every keystroke: keep the details block open if the user opened it.
+    const wasOpen = root.querySelector<HTMLDetailsElement>('#av-details')?.open ?? false;
     $('#avail').innerHTML = availabilityHtml(results);
+    if (wasOpen) root.querySelector<HTMLDetailsElement>('#av-details')!.open = true;
     if (snap) $('#stale').hidden = false;
   }
 
@@ -131,6 +135,7 @@ export function mountCalculate(root: HTMLElement): () => void {
     $('#stale').hidden = true;
     $('#cards').innerHTML = cardsHtml(oriented, snap);
     hydrateFormulas($('#cards'));
+    $('#not-calc').innerHTML = notCalculatedHtml(snap.results);
     $('#foot').innerHTML = resultsFooterHtml(snap);
     $('#auc').innerHTML = aucHtml(snap.built.inputs, snap.state, snap.built.settings);
   }
@@ -193,6 +198,10 @@ export function mountCalculate(root: HTMLElement): () => void {
     if (el.id === 'add-row') { st.rows.push({ time: '', glucose: '', insulin: '' }); renderRows(); refresh(); }
     else if (el.dataset["rm"] !== undefined && el.dataset["rm"] !== "0") { st.rows.splice(Number(el.dataset['rm']), 1); renderRows(); refresh(); }
     else if (el.id === 'calc') calculate();
+    else if (el.id === 'show-why') {
+      const d = root.querySelector<HTMLDetailsElement>('#av-details');
+      if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); }
+    }
     else if (el.id === 'clear') { st = { ...emptyState(st.units), insulinFactor: st.insulinFactor, glucoseFactor: st.glucoseFactor }; snap = undefined; $('#results').hidden = true; $('#calc-msg').textContent = ''; writeFields(); refresh(); }
     else if (el.id === 'example') { st = exampleState(st.units, st); writeFields(); refresh(); }
     else if (el.id === 'csv' && snap) {
