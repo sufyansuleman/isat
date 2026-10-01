@@ -5,8 +5,9 @@
   <ol>
     <li>Choose the units your lab reports (glucose, insulin, lipids).</li>
     <li>Fill in what you have. The row <strong>0 min (fasting)</strong> is the sample taken before the glucose drink; fasting glucose and insulin alone are enough for the fasting indices. The other rows are minutes after a 75 g oral glucose drink (OGTT); add them, lipids or body measures for more indices.</li>
-    <li>The panel <strong>Available calculations</strong> shows which indices can be calculated and what is missing for the others.</li>
-    <li>Press <strong>Calculate</strong>. Each result shows the value, what a higher value means, the formula, the reference and the limitations.</li>
+    <li>Grey values in empty boxes (e.g. 5.0) are examples for a typical healthy adult. They are only a guide and are never used unless you type them in.</li>
+    <li>The line showing how many indices <strong>can be calculated</strong> updates as you type; <strong>Show which and why</strong> lists what is missing for the others.</li>
+    <li>Press <strong>Calculate</strong>. Each result shows the value, what a higher value means, the formula, the population the index was derived in, the reference and the limitations.</li>
     <li>Use <strong>Download results CSV</strong> to save. <strong>Load example</strong> fills in a sample person.</li>
   </ol>
 
@@ -27,11 +28,11 @@
       <tr class="guide-group"><th colspan="2">Fasting values (sample taken before the glucose drink)</th></tr>
       <tr><td><code>G0</code> (or <code>fasting_glucose</code>)</td><td>Fasting glucose</td></tr>
       <tr><td><code>I0</code> (or <code>fasting_insulin</code>)</td><td>Fasting insulin</td></tr>
-      <tr><td><code>glucose_30</code>, <code>insulin_30</code>, <code>glucose_120</code>, ... (<code>glucose_&lt;min&gt;</code>, <code>insulin_&lt;min&gt;</code>)</td><td>Alternative spelling of <code>G30</code>, <code>I30</code>, <code>G120</code>, ... at any minute; use either spelling, not both for the same sample</td></tr>
       <tr><td><code>TG</code>, <code>HDL_c</code>, <code>FFA</code></td><td>Fasting triglycerides, HDL cholesterol, free fatty acids</td></tr>
       <tr class="guide-group"><th colspan="2">OGTT values (minutes after a 75 g oral glucose drink)</th></tr>
       <tr><td><code>G30</code>, <code>G60</code>, <code>G90</code>, <code>G120</code></td><td>Glucose 30, 60, 90 and 120 min after the drink</td></tr>
       <tr><td><code>I30</code>, <code>I60</code>, <code>I90</code>, <code>I120</code></td><td>Insulin 30, 60, 90 and 120 min after the drink</td></tr>
+      <tr><td><code>glucose_30</code>, <code>insulin_30</code>, <code>glucose_120</code>, ... (<code>glucose_&lt;min&gt;</code>, <code>insulin_&lt;min&gt;</code>)</td><td>Alternative spelling of <code>G30</code>, <code>I30</code>, <code>G120</code>, ... at any minute; use either spelling, not both for the same sample</td></tr>
       <tr class="guide-group"><th colspan="2">Person</th></tr>
       <tr><td><code>age</code>, <code>sex</code></td><td>Years; sex as 1 = male, 2 = female (or m/f, male/female)</td></tr>
       <tr><td><code>weight</code>, <code>bmi</code>, <code>waist</code></td><td>kg, kg/m², cm</td></tr>
@@ -44,6 +45,7 @@
   <ul>
     <li>Your data stay in this browser; nothing is uploaded.</li>
     <li>Results are surrogate indices of insulin sensitivity, not direct measurements and not a diagnosis.</li>
+    <li>Each index was developed in one population (shown as <em>Derived in</em>) and may behave differently in others. Compare values within your own study rather than against cut-offs from elsewhere.</li>
     <li>Insulin conversion uses 6.0 pmol/L per µU/mL by default; change it under <em>Conversion factors</em> if your lab uses another value.</li>
     <li>Column names match the R package InsuSensCalc, so existing files can be uploaded directly.</li>
   </ul>
