@@ -39,7 +39,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Adipo-IR = FFA × I0 (mU/L), Gastaldelli 2022 Table 3 / Eq. 9."
+    "source_verification_detail": "Adipo-IR = FFA × I0 (mU/L), Gastaldelli 2022 Table 3 / Eq. 9.",
+    "derived_in": {
+      "population": "Adults with normal glucose tolerance, impaired glucose tolerance or type 2 diabetes",
+      "n": "302",
+      "setting": "San Antonio, Texas, USA"
+    }
   },
   "atiri": {
     "id": "atiri",
@@ -78,7 +83,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "AT-IRI = RaPalmitate × I0 (mU/L), Gastaldelli 2022 Eq. 11; index introduced by Fabbrini 2012."
+    "source_verification_detail": "AT-IRI = RaPalmitate × I0 (mU/L), Gastaldelli 2022 Eq. 11; index introduced by Fabbrini 2012.",
+    "derived_in": {
+      "population": "Obese adults without diabetes (mean BMI 40)",
+      "n": "47",
+      "setting": "St. Louis, Missouri, USA"
+    }
   },
   "avignon_si0": {
     "id": "avignon_si0",
@@ -105,7 +115,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read."
+    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read.",
+    "derived_in": {
+      "population": "Adults: 31 normal glucose tolerance, 10 impaired glucose tolerance, 6 type 2 diabetes",
+      "n": "47",
+      "setting": "Montpellier, France"
+    }
   },
   "avignon_si120": {
     "id": "avignon_si120",
@@ -132,7 +147,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read."
+    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read.",
+    "derived_in": {
+      "population": "Adults: 31 normal glucose tolerance, 10 impaired glucose tolerance, 6 type 2 diabetes",
+      "n": "47",
+      "setting": "Montpellier, France"
+    }
   },
   "avignon_sim": {
     "id": "avignon_sim",
@@ -160,7 +180,12 @@ export const methodSpecs = {
       "difference": "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (re-derives Avignon's coefficient in the analysed cohort; InsuSensCalc / Suleman 2024 variant). Default is the published w = 0.137."
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read. PubMed abstract describes SiM only as 'averaging Sib and Si2h'; the full text (p.514) specifies the 0.137 balancing coefficient and that it was derived as mean Si2h / mean Sib in the study cohort."
+    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read. PubMed abstract describes SiM only as 'averaging Sib and Si2h'; the full text (p.514) specifies the 0.137 balancing coefficient and that it was derived as mean Si2h / mean Sib in the study cohort.",
+    "derived_in": {
+      "population": "Adults: 31 normal glucose tolerance, 10 impaired glucose tolerance, 6 type 2 diabetes",
+      "n": "47",
+      "setting": "Montpellier, France"
+    }
   },
   "belfiore": {
     "source": {
@@ -194,6 +219,10 @@ export const methodSpecs = {
           "ffa": 0.29625
         }
       }
+    },
+    "derived_in": {
+      "population": "No single cohort: the reference means are the average of the normal groups in six published studies. The paper advises each laboratory to use its own normal reference values",
+      "n": "6 studies"
     },
     "methods": [
       {
@@ -330,7 +359,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Adults with normal glucose tolerance (fasting below 7.0 and 2-h glucose below 7.8 mmol/L); 28 more for external validation",
+      "n": "258",
+      "setting": "Denmark"
+    }
   },
   "cederholm": {
     "id": "cederholm",
@@ -390,7 +424,11 @@ export const methodSpecs = {
       "Surrogate index from fasting values only; near-identical information to HOMA-IR."
     ],
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Duncan 1995 formula reproduced in secondary sources; primary not read."
+    "source_verification_detail": "Duncan 1995 formula reproduced in secondary sources; primary not read.",
+    "derived_in": {
+      "population": "Adults without diabetes (13 in the minimal-model comparison) and 30 with newly diagnosed type 2 diabetes",
+      "n": "13 + 30"
+    }
   },
   "gutt": {
     "id": "gutt",
@@ -426,7 +464,12 @@ export const methodSpecs = {
       "difference": "InsuSensCalc 0.1.0 uses MPG in mg/dL and ln, so ISAT = legacy x 18 x ln(10) exactly (given glucose factor 18); ranks identical."
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "Primary PDF (Gutt et al., 2000) read; Table 1 subgroup means reproduced."
+    "source_verification_detail": "Primary PDF (Gutt et al., 2000) read; Table 1 subgroup means reproduced.",
+    "derived_in": {
+      "population": "Adults aged 17-66 across a range of glucose tolerance and obesity: 50 men (22 Black, 28 White), 85 women (31 Black, 54 White)",
+      "n": "135",
+      "setting": "Miami, Florida, USA"
+    }
   },
   "hiri": {
     "id": "hiri",
@@ -461,7 +504,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503)."
+    "source_verification_detail": "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503).",
+    "derived_in": {
+      "population": "Mexican-American adults aged 18-70, BMI 20-65: 100 normal and 55 impaired glucose tolerance",
+      "n": "155",
+      "setting": "San Antonio, Texas, USA"
+    }
   },
   "homa2": {
     "id": "homa2",
@@ -502,7 +550,11 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "G mmol/L × I /22.5, stated in both the Avignon 1999 and Gutt 2000 PDFs."
+    "source_verification_detail": "G mmol/L × I /22.5, stated in both the Avignon 1999 and Gutt 2000 PDFs.",
+    "derived_in": {
+      "population": "12 adults without diabetes (aged 23-67) and 11 with type 2 diabetes; numbers differed between comparisons",
+      "n": "23"
+    }
   },
   "ifc": {
     "id": "ifc",
@@ -538,7 +590,11 @@ export const methodSpecs = {
       "Reflects insulin secretion and clearance dynamics as well as insulin action."
     ],
     "source_verification": "directly_verified",
-    "source_verification_detail": "PMC full text of Williamson 2023 read."
+    "source_verification_detail": "PMC full text of Williamson 2023 read.",
+    "derived_in": {
+      "population": "Not derived against a reference test: used as a genome-wide association trait in participants of three ancestry groups",
+      "n": "over 55,000"
+    }
   },
   "ig_ratio_120": {
     "id": "ig_ratio_120",
@@ -568,7 +624,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Pima or Tohono O'odham Indians of the Gila River Indian Community (clamp subgroup size not stated; 1,731 for diabetes incidence)",
+      "n": "not stated",
+      "setting": "Arizona, USA"
+    }
   },
   "ig_ratio_basal": {
     "id": "ig_ratio_basal",
@@ -603,7 +664,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "IGR = I0 (mU/L) / G0 (mmol/L), Gastaldelli 2022 Table 2, citing Hanson 2000."
+    "source_verification_detail": "IGR = I0 (mU/L) / G0 (mmol/L), Gastaldelli 2022 Table 2, citing Hanson 2000.",
+    "derived_in": {
+      "population": "Pima or Tohono O'odham Indians of the Gila River Indian Community (clamp subgroup size not stated; 1,731 for diabetes incidence)",
+      "n": "not stated",
+      "setting": "Arizona, USA"
+    }
   },
   "isi_120": {
     "id": "isi_120",
@@ -623,6 +689,13 @@ export const methodSpecs = {
     "notes": [
       "Hanson 2000 computed indices from G0, G120, I0 and I120; the exact 120-min form is not confirmed from the abstract."
     ],
+    "secondary_references": [
+      {
+        "citation": "Sluiter WJ, Erkelens DW, Terpstra P, Reitsma WD, Doorenbos H. Glucose tolerance and insulin release, a mathematical approach. II. Approximation of the peripheral insulin resistance after oral glucose loading. Diabetes. 1976;25(4):245-249. Origin of the 10^4/(I x G) form, there using insulin and glucose at the glucose peak after oral loading.",
+        "doi": "10.2337/diab.25.4.245",
+        "pmid": 773722
+      }
+    ],
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -632,7 +705,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Pima or Tohono O'odham Indians of the Gila River Indian Community (clamp subgroup size not stated; 1,731 for diabetes incidence)",
+      "n": "not stated",
+      "setting": "Arizona, USA"
+    }
   },
   "isi_basal": {
     "id": "isi_basal",
@@ -649,6 +727,13 @@ export const methodSpecs = {
       "doi": "10.1093/oxfordjournals.aje.a010187",
       "pmid": 10645822
     },
+    "secondary_references": [
+      {
+        "citation": "Sluiter WJ, Erkelens DW, Terpstra P, Reitsma WD, Doorenbos H. Glucose tolerance and insulin release, a mathematical approach. II. Approximation of the peripheral insulin resistance after oral glucose loading. Diabetes. 1976;25(4):245-249. Origin of the 10^4/(I x G) form, there using insulin and glucose at the glucose peak after oral loading.",
+        "doi": "10.2337/diab.25.4.245",
+        "pmid": 773722
+      }
+    ],
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -658,7 +743,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Hanson 2000 abstract defines ISI = 10^4/(I0 × G0); units not stated in the abstract."
+    "source_verification_detail": "Hanson 2000 abstract defines ISI = 10^4/(I0 × G0); units not stated in the abstract.",
+    "derived_in": {
+      "population": "Pima or Tohono O'odham Indians of the Gila River Indian Community (clamp subgroup size not stated; 1,731 for diabetes incidence)",
+      "n": "not stated",
+      "setting": "Arizona, USA"
+    }
   },
   "lap": {
     "id": "lap",
@@ -703,7 +793,12 @@ export const methodSpecs = {
       "WC in cm; TG and HDL in mmol/L"
     ],
     "source_verification": "directly_verified",
-    "source_verification_detail": "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women."
+    "source_verification_detail": "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women.",
+    "derived_in": {
+      "population": "US adults in NHANES III (survey-weighted, multi-ethnic)",
+      "n": "9,180",
+      "setting": "USA"
+    }
   },
   "lipo": {
     "id": "lipo",
@@ -742,7 +837,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Lipo-IR = RaGlycerol × I0 (mU/L), Gastaldelli 2022 Eq. 10, citing Rosso 2019."
+    "source_verification_detail": "Lipo-IR = RaGlycerol × I0 (mU/L), Gastaldelli 2022 Eq. 10, citing Rosso 2019.",
+    "derived_in": {
+      "population": "Adults without diabetes with biopsy-proven fatty liver disease (NAFLD)",
+      "n": "40",
+      "setting": "Turin, Italy"
+    }
   },
   "liri": {
     "id": "liri",
@@ -780,7 +880,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Formula as printed in Gastaldelli 2022 Table 3 (citing Vangipurapu 2011); coefficients not re-checked against the primary paper."
+    "source_verification_detail": "Formula as printed in Gastaldelli 2022 Table 3 (citing Vangipurapu 2011); coefficients not re-checked against the primary paper.",
+    "derived_in": {
+      "population": "Adults without diabetes, mean age 43, mean BMI 26",
+      "n": "368",
+      "setting": "Kuopio, Finland"
+    }
   },
   "matsuda_3pt": {
     "id": "matsuda_3pt",
@@ -806,7 +911,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant."
+    "source_verification_detail": "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant.",
+    "derived_in": {
+      "population": "Adults aged 18-71, BMI 20-65: 62 normal, 31 impaired glucose tolerance, 60 type 2 diabetes",
+      "n": "153",
+      "setting": "San Antonio, Texas, USA"
+    }
   },
   "matsuda_5pt": {
     "id": "matsuda_5pt",
@@ -833,7 +943,12 @@ export const methodSpecs = {
       "difference": "New in ISAT; no InsuSensCalc equivalent."
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant."
+    "source_verification_detail": "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant.",
+    "derived_in": {
+      "population": "Adults aged 18-71, BMI 20-65: 62 normal, 31 impaired glucose tolerance, 60 type 2 diabetes",
+      "n": "153",
+      "setting": "San Antonio, Texas, USA"
+    }
   },
   "matsuda_auc_3pt": {
     "id": "matsuda_auc_3pt",
@@ -859,7 +974,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT. AUC-based variant; not stated in the Matsuda 1999 abstract."
+    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT. AUC-based variant; not stated in the Matsuda 1999 abstract.",
+    "derived_in": {
+      "population": "Adults aged 18-71, BMI 20-65: 62 normal, 31 impaired glucose tolerance, 60 type 2 diabetes",
+      "n": "153",
+      "setting": "San Antonio, Texas, USA"
+    }
   },
   "mcauley": {
     "id": "mcauley",
@@ -884,7 +1004,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "directly_verified",
-    "source_verification_detail": "McAuley 2001 abstract: Mffm/I = exp[2.63 − 0.28 ln(insulin) − 0.31 ln(TAG)]."
+    "source_verification_detail": "McAuley 2001 abstract: Mffm/I = exp[2.63 − 0.28 ln(insulin) − 0.31 ln(TAG)].",
+    "derived_in": {
+      "population": "Adults aged 25-68 with normal glucose",
+      "n": "178",
+      "setting": "Dunedin, New Zealand"
+    }
   },
   "quicki": {
     "id": "quicki",
@@ -929,7 +1054,12 @@ export const methodSpecs = {
       "Less reliable in people with markedly impaired insulin secretion (e.g. advanced type 2 diabetes)."
     ],
     "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Katz 2000 formula plus a published reference range only consistent with log10."
+    "source_verification_detail": "Katz 2000 formula plus a published reference range only consistent with log10.",
+    "derived_in": {
+      "population": "28 non-obese, 13 obese and 15 type 2 diabetes; checked in a further 35 at another centre",
+      "n": "56",
+      "setting": "National Institutes of Health, USA"
+    }
   },
   "raynaud": {
     "id": "raynaud",
@@ -954,7 +1084,11 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Adults and adolescents without diabetes aged 11-73, BMI 17-43: 22 normal weight, 48 overweight; half women",
+      "n": "70"
+    }
   },
   "revised_quicki": {
     "id": "revised_quicki",
@@ -981,7 +1115,12 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Young, healthy, non-obese adults, 17 of them with a first-degree relative with type 2 diabetes",
+      "n": "57",
+      "setting": "Milan, Italy"
+    }
   },
   "stumvoll_dem": {
     "id": "stumvoll_dem",
@@ -1008,7 +1147,11 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula as printed in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), citing the Stumvoll 2001 letter (no abstract; not yet read). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here."
+    "source_verification_detail": "Formula as printed in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), citing the Stumvoll 2001 letter (no abstract; not yet read). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here.",
+    "derived_in": {
+      "population": "Adults without diabetes: 65 normal and 39 impaired glucose tolerance",
+      "n": "104"
+    }
   },
   "stumvoll_mod": {
     "id": "stumvoll_mod",
@@ -1042,7 +1185,11 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "0/120-min variant (uses G120); cited to the Stumvoll 2001 letter as in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), where the formula is printed identically. The 2001 letter itself (no abstract) not yet read; the 2000 paper gives the original equations using G90."
+    "source_verification_detail": "0/120-min variant (uses G120); cited to the Stumvoll 2001 letter as in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), where the formula is printed identically. The 2001 letter itself (no abstract) not yet read; the 2000 paper gives the original equations using G90.",
+    "derived_in": {
+      "population": "Adults without diabetes: 65 normal and 39 impaired glucose tolerance",
+      "n": "104"
+    }
   },
   "tg_hdl": {
     "id": "tg_hdl",
@@ -1069,7 +1216,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Overweight adults (BMI 25 or more) without diabetes",
+      "n": "258",
+      "setting": "Stanford, California, USA"
+    }
   },
   "tyg": {
     "id": "tyg",
@@ -1095,7 +1247,12 @@ export const methodSpecs = {
       "difference": "Legacy column is the negated index."
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Apparently healthy adults aged 18-65 (compared with HOMA-IR, not a clamp)",
+      "n": "748",
+      "setting": "Durango, Mexico"
+    }
   },
   "vai": {
     "id": "vai",
@@ -1142,6 +1299,11 @@ export const methodSpecs = {
       "WC in cm; TG and HDL in mmol/L"
     ],
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT.",
+    "derived_in": {
+      "population": "Healthy non-obese adults; then tested in 1,498 primary-care patients",
+      "n": "315",
+      "setting": "Palermo, Sicily, Italy"
+    }
   }
 } as const;
