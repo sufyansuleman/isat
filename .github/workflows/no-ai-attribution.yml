@@ -1,0 +1,22 @@
+name: No AI attribution
+# Repo rule: Claude/AI is never author, co-author or contributor. Fails if any commit says otherwise.
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan all commits
+        run: |
+          bad=0
+          for c in $(git rev-list HEAD); do
+            if git log -1 --format='%an <%ae>%n%cn <%ce>%n%B' "$c" | sh .githooks/check-attribution.sh; then :; else
+              echo "::error::commit $c contains AI/Claude attribution"; bad=1; fi
+            if git log -1 --format='%an %ae %cn %ce' "$c" | grep -Eiq 'claude|anthropic'; then
+              echo "::error::commit $c has an AI author/committer identity"; bad=1; fi
+          done
+          exit $bad

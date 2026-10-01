@@ -1,0 +1,15 @@
+#!/bin/sh
+# Reject commits whose message carries AI-assistant attribution.
+HOOK_DIR=$(dirname "$0")
+if ! sh "$HOOK_DIR/check-attribution.sh" < "$1"; then
+  echo "commit-msg: REJECTED - message contains AI/Claude attribution (repo rule: no AI co-authors)." >&2
+  echo "Remove the Co-Authored-By / 'Generated with' line and commit again." >&2
+  exit 1
+fi
+for who in "$(git var GIT_AUTHOR_IDENT)" "$(git var GIT_COMMITTER_IDENT)"; do
+  if printf '%s\n' "$who" | grep -Eiq 'claude|anthropic'; then
+    echo "commit-msg: REJECTED - author/committer identity looks like an AI assistant: $who" >&2
+    exit 1
+  fi
+done
+exit 0
