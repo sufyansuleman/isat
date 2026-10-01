@@ -25,3 +25,5 @@ verification:
   detail: Unit inferred from the 25 constant and the 2.7 reference limit; Duncan 1995 full text not yet read directly.
 limitations:
   - Surrogate index from fasting values only; near-identical information to HOMA-IR.
+source_verification: secondary_source_confirmed
+source_verification_detail: "Duncan 1995 formula reproduced in secondary sources; primary not read."

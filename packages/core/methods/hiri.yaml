@@ -11,3 +11,5 @@ legacy:
   insusenscalc_column: HIRI_inv
   relation: negated
   difference: "Legacy column is the negated index."
+source_verification: secondary_source_confirmed
+source_verification_detail: "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503)."

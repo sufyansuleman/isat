@@ -1,12 +1,11 @@
 id: bennett
-name: "Bennett index"
+name: "Bennett SI"
 category: fasting
-direction: higher_more_sensitive
-formula_latex: "1 / (\\ln I_{0,\\mu U/mL} \\cdot \\ln G_{0,mg/dL})"
-inputs: ["glucose_0 (mg/dL)", "insulin_0 (uU/mL)"]
-verification:
-  status: legacy_match
-  detail: "Formula matches InsuSensCalc; primary source not read."
+direction: unknown
+deferred:
+  reason: "the original definition (Anderson et al. 1995, Am J Epidemiol 142:724-732) could not be verified; unit convention and log base differ between later sources."
 legacy:
   insusenscalc_column: Bennett
-  relation: equal
+  relation: none
+source_verification: unresolved
+source_verification_detail: "Evidence collected: Anderson RL, Hamman RF, Savage PJ, et al. Am J Epidemiol 1995;142(7):724-732, doi:10.1093/aje/142.7.724, PMID 7572943. The original unit convention and log base were not inspected. Later sources differ: InsuSensCalc and Suleman 2024 (JCEM 109:2754, Table 2) use 1/(ln I uU/mL * ln G mg/dL); secondary literature reports a mmol/L convention. Logs are not unit-invariant, so the conventions give different values."

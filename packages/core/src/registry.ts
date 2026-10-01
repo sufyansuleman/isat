@@ -6,13 +6,17 @@ import { mk } from './indices/util';
 import { quicki } from './indices/quicki';
 import { firi } from './indices/firi';
 import { belfioreBasal, belfioreIsiGly, belfioreIsiFfa } from './indices/belfiore';
-import { homaIr, raynaud, isiBasal, igRatioBasal, bennett, hiri, ifc, liri, lipo, atiri } from './indices/fasting';
+import { homaIr, raynaud, isiBasal, igRatioBasal, hiri, ifc, liri, lipo, atiri } from './indices/fasting';
 import {
-  isi120, igRatio120, gutt, cederholm, matsuda3pt, matsudaAuc3pt, matsuda5pt,
+  isi120, igRatio120, gutt, matsuda3pt, matsudaAuc3pt, matsuda5pt,
   stumvollMod, stumvollDem, bigttSi, avignonSi0, avignonSi120, avignonSim, AVIGNON_1999_WEIGHT,
   type AvignonWeightSource,
 } from './indices/ogtt';
 import { revisedQuicki, mcauley, tyg, tgHdl, vai, lap, adipoIr } from './indices/lipid';
+
+export type SourceVerification =
+  | 'directly_verified' | 'reconstructed_from_original_method' | 'secondary_source_confirmed'
+  | 'author_verified_not_rechecked' | 'unresolved' | 'not_applicable';
 
 export type VerificationStatus = 'confirmed' | 'supported_secondary' | 'legacy_match' | 'provisional';
 export type LegacyRelation = 'equal' | 'negated' | 'different' | 'none';
@@ -26,6 +30,8 @@ export interface MethodEntry {
   name: string;
   category: string;
   direction: Direction;
+  source_verification: SourceVerification;
+  source_verification_detail: string;
   verification?: { status: VerificationStatus; detail?: string };
   legacy: { column: string | { male: string; female: string } | null; relation: LegacyRelation; scale_factor?: string };
   deferredReason?: string;
@@ -36,10 +42,10 @@ export interface MethodEntry {
 type Fn = (i: Inputs, s?: Partial<ConversionSettings>) => Result;
 const plain: Record<string, Fn> = {
   quicki, firi, homa_ir: homaIr, raynaud, isi_basal: isiBasal, ig_ratio_basal: igRatioBasal,
-  isi_120: isi120, ig_ratio_120: igRatio120, gutt, cederholm, matsuda_3pt: matsuda3pt,
+  isi_120: isi120, ig_ratio_120: igRatio120, gutt, matsuda_3pt: matsuda3pt,
   matsuda_auc_3pt: matsudaAuc3pt, matsuda_5pt: matsuda5pt, stumvoll_mod: stumvollMod,
   stumvoll_dem: stumvollDem, bigtt_si: bigttSi, avignon_si0: avignonSi0, avignon_si120: avignonSi120,
-  bennett, hiri, ifc, liri, lipo, atiri, revised_quicki: revisedQuicki, mcauley, tyg, tg_hdl: tgHdl, vai, lap, adipo_ir: adipoIr,
+  hiri, ifc, liri, lipo, atiri, revised_quicki: revisedQuicki, mcauley, tyg, tg_hdl: tgHdl, vai, lap, adipo_ir: adipoIr,
 };
 type RFn = (i: Inputs, r?: Reference, s?: Partial<ConversionSettings>) => Result;
 const withRef: Record<string, RFn> = {
@@ -74,10 +80,12 @@ function build(id: string): MethodEntry {
   const base = {
     id, name: sp.name as string, category: sp.category as string, direction: sp.direction as Direction,
     verification: sp.verification as MethodEntry['verification'], legacy,
+    source_verification: sp.source_verification as SourceVerification,
+    source_verification_detail: sp.source_verification_detail as string,
   };
   const provisional = (r: Result): Result =>
-    base.verification?.status === 'provisional'
-      ? { ...r, warnings: [...r.warnings, `Provisional method: ${base.verification.detail ?? 'formula not fully verified'}`] }
+    base.source_verification === 'reconstructed_from_original_method' || base.source_verification === 'unresolved'
+      ? { ...r, warnings: [...r.warnings, `Source verification (${base.source_verification}): ${base.source_verification_detail}`] }
       : r;
   if (sp.deferred) {
     const reason = `not included in this version: ${sp.deferred.reason}`;

@@ -48,11 +48,7 @@ describe('registry', () => {
     expect(rs.length).toBe(registry.length);
     expect(rs.find((r) => r.id === 'homa2')!.reasons[0]).toBe('not included in this version: closed-source model');
     expect(rs.find((r) => r.id === 'bennett')!.status).toBe('unavailable');
-  });
-  it('provisional methods carry a warning on every result', () => {
-    for (const id of ['cederholm']) {
-      expect(calculateAll({}).find((r) => r.id === id)!.warnings.length).toBeGreaterThan(0);
-    }
+    expect(rs.find((r) => r.id === 'cederholm')!.reasons[0]).toMatch(/^not included in this version: the original paper/);
   });
   it('Belfiore uses belfiore_1998 by default and records it; custom reference overrides', () => {
     const inp = { insulin: { 0: 65.71 }, glucose: { 0: 5.08 } };
@@ -149,3 +145,4 @@ describe('tracer methods', () => {
     expect(w.inputs.rate_palmitate).toBeUndefined();
   });
 });
+

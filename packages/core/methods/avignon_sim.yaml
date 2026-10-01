@@ -6,6 +6,8 @@ formula_latex: "(w \\cdot Si_b + Si_{2h}) / 2"
 inputs: ["glucose_0,120", "insulin_0,120", "weight"]
 reference:
   citation: "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+  doi: 10.1038/sj.ijo.0800864
+  pmid: 10375055
 verification:
   status: confirmed
   detail: "SiM = [(0.137·Sib) + Si2h]/2 (Avignon 1999, p.514). The coefficient 0.137 was obtained as the ratio of mean Si2h to mean Sib in the original cohort of 47 subjects."
@@ -13,3 +15,5 @@ legacy:
   insusenscalc_column: Avignon_Sim
   relation: equal
   difference: "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (re-derives Avignon's coefficient in the analysed cohort; InsuSensCalc / Suleman 2024 variant). Default is the published w = 0.137."
+source_verification: directly_verified
+source_verification_detail: "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read. PubMed abstract describes SiM only as 'averaging Sib and Si2h'; the full text (p.514) specifies the 0.137 balancing coefficient and that it was derived as mean Si2h / mean Sib in the study cohort."

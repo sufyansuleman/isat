@@ -30,7 +30,6 @@ All OGTT means and AUCs are computed from explicitly required time points. Parti
 | isi_120 | 10000 / (G120_mg × I120_uU) | 120 | sensitive | Isi_120 | = |
 | ig_ratio_120 | I120_uU / G120 | 120 | resistant | Ig_ratio_120 | − |
 | gutt | [(75000 + (G0_mg − G120_mg)·0.19·BW)/120] / MPG / log10(MSI); MPG = mean(G0,G120) in **mmol/L**, MSI = mean(I0,I120) µU/mL (Gutt 2000) | 0,120 + weight | sensitive | Gutt_index | ≠ constant factor: ISAT = legacy × 18·ln(10) |
-| cederholm | [75000 + (G0 − G120)[mmol/L]·1.15·180·0.19·BW]/120 / Gmean[mmol/L] / log10(Imean[µU/mL]); means over 0, 30, 60, 120 min (all four required) | 0,30,60,120 + weight | sensitive | Cederholm_index | ≠ |
 | matsuda_3pt | 10000 / sqrt(G0_mg·I0_uU·mean(G0,G30,G120)_mg·mean(I0,I30,I120)_uU) | 0,30,120 | sensitive | Matsuda_ISI | = (when all 3 present) |
 | matsuda_auc_3pt | 10000 / sqrt(G0_mg·I0_uU·Gm·Im), where Gm, Im = trapezoid AUC over 0/30/120 ÷ 120, i.e. (15v0+60v30+45v120)/120 | 0,30,120 | sensitive | Matsuda_Auc | = |
 | matsuda_5pt | 10000 / sqrt(G0_mg·I0_uU·mean(G0..G120)_mg·mean(I0..I120)_uU) | 0,30,60,90,120 | sensitive | — | new (Matsuda & DeFronzo 1999 original) |
@@ -59,21 +58,27 @@ OGTT summaries are reported as summaries, not indices:
 
 Note on VAI and LAP: ISAT computes the formula for the participant's own sex only. InsuSensCalc computes both formulas for every row.
 
-## Verification status (emit as metadata; `provisional` adds a warning to every result)
-- **confirmed:** quicki, homa_ir, matsuda_*, bigtt_si, vai, lap, mcauley, tyg, belfiore_* (formula).
-- **confirmed (primary sources read):** gutt (Gutt 2000; mg/dL glucose difference verified against Table 1, log10, MPG in mmol/L; result units mg·L²/(mmol·mU·min)), avignon_si0, avignon_si120 (VD = 150 mL/kg), avignon_sim (SiM = [(0.137·Sib) + Si2h]/2, Avignon 1999 p.514; 0.137 = ratio of mean Si2h to mean Sib in the original 47 subjects; `avignon_weight: 'sample'` re-derives it in the analysed cohort, the InsuSensCalc / Suleman 2024 variant, with a cohort-dependence warning).
-- **supported_secondary:** hiri (form tabulated in Gastaldelli 2022, doi:10.1002/oby.23503; Abdul-Ghani 2007 originally used 0–30 min AUCs, differing by a constant factor only), firi (Duncan 1995 reproduced in secondary sources; primary not read).
-- **legacy_match:** bennett, liri, lipo, atiri (formula reproduces InsuSensCalc; primary sources not read).
-- **confirmed (added 2026-10-01):** ifc, Williamson et al. Nat Genet 2023;55:973-983 (PMC7614755), IFC = ln(I120/I0).
-- **provisional:**
-  - cederholm: four-sample means per Gutt 2000's description of Cederholm & Wibell 1990 (Diabetes Res Clin Pract 10:167–175); log base inferred as log10 from Gutt's derived ISI0,120; original paper not yet read.
+## Source verification
+Every method YAML carries `source_verification` and `source_verification_detail`. Warnings are emitted for `reconstructed_from_original_method` and `unresolved`. `verification.status` is retained as secondary metadata.
+
+| level | methods |
+|---|---|
+| directly_verified | avignon_si0, avignon_si120, avignon_sim, gutt (primary PDFs read); ifc (PMC full text of Williamson 2023); belfiore_basal, belfiore_isi_gly, belfiore_isi_ffa (method from the 1998 abstract; default reference means not yet checked against the PDF) |
+| reconstructed_from_original_method | none currently (emits a warning on every result) |
+| secondary_source_confirmed | quicki, firi, hiri, homa_ir, matsuda_3pt, matsuda_auc_3pt, matsuda_5pt |
+| author_verified_not_rechecked | raynaud, isi_basal, ig_ratio_basal, isi_120, ig_ratio_120, stumvoll_mod, stumvoll_dem, bigtt_si, revised_quicki, mcauley, tyg, tg_hdl, vai, lap, adipo_ir, liri, lipo, atiri (formula verified by the InsuSensCalc author, NEWS 0.1.0 / Suleman 2024; not re-read for ISAT) |
+| unresolved | bennett, cederholm (excluded from V1, see below; a warning would be emitted on every result if ever enabled) |
+| not_applicable | homa2 |
+
 - **Belfiore default reference means** are transcribed from Belfiore 1998, user-supplied on 2026-10-01 and not yet checked against the PDF. Ship them as the default reference set `belfiore_1998`. The user can override it.
   - basal: insulin 65.71 pmol/L, glucose 5.08 mmol/L, FFA 398.88 µmol/L (0.39888 mmol/L).
   - 0–2 h area: insulin 363.04 pmol/L·h, glucose 10.26 mmol/L·h, FFA 478.00 µmol/L·h.
   - 0–1–2 h area: insulin 638.00 pmol/L·h, glucose 11.36 mmol/L·h, FFA 296.25 µmol/L·h.
 
-## Deferred (registered as `unavailable` with reason "not included in this version: <why>")
+## Deferred / excluded (registered as `unavailable` with reason "not included in this version: <why>")
 - homa2: closed-source model.
+- bennett: the original definition (Anderson et al. 1995, Am J Epidemiol 142:724-732, PMID 7572943) could not be verified; unit convention and log base differ between later sources. Legacy column Bennett is not compared.
+- cederholm: the original paper (Cederholm & Wibell 1990, Diabetes Res Clin Pract 10:167-175, PMID 2261853) could not be verified; log base and sampling time points are uncertain. The abstract confirms SI = (M/mean blood glucose)/log(mean serum insulin) only.
 
 ## Orientation
 `orient(results, mode)`: 'published' (default) changes nothing. 'sensitivity' negates every result whose direction is resistant and whose YAML legacy relation is `negated`, renames it `<id>_inv`, sets `orientation: 'sensitivity'` and `details.orientation_note` ("negated published index (InsuSensCalc convention): higher = more sensitive"). It reproduces the InsuSensCalc `_inv` columns.

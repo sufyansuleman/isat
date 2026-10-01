@@ -23,16 +23,6 @@ export const gutt = (i: Inputs, s?: S): Result =>
     };
   });
 
-export const cederholm = (i: Inputs, s?: S): Result =>
-  run('cederholm', S_, i, s, ['G0', 'G30', 'G60', 'G120', 'I0', 'I30', 'I60', 'I120', 'weight'], (v, c) => {
-    const gm = mean(v.G0!, v.G30!, v.G60!, v.G120!);
-    const im = mean(c.iu(v.I0!), c.iu(v.I30!), c.iu(v.I60!), c.iu(v.I120!));
-    return {
-      value: (75000 + (v.G0! - v.G120!) * 1.15 * 180 * 0.19 * v.weight!) / 120 / gm / Math.log10(im),
-      details: { mean_glucose_mmol_L: gm, mean_insulin_uU_mL: im, time_points: [0, 30, 60, 120] },
-    };
-  });
-
 function matsuda(
   id: string, i: Inputs, s: S, times: number[],
   gm: (g: number[]) => number, im: (x: number[]) => number,

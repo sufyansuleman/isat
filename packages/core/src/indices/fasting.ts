@@ -18,8 +18,6 @@ export const igRatioBasal = (i: Inputs, s?: S): Result =>
 const mean = (...x: number[]) => x.reduce((a, b) => a + b, 0) / x.length;
 const TRACER = 'tracer rate units as supplied by user';
 
-export const bennett = (i: Inputs, s?: S): Result =>
-  run('bennett', S_, i, s, ['G0', 'I0'], (v, c) => 1 / (Math.log(c.iu(v.I0!)) * Math.log(c.gmg(v.G0!))));
 export const hiri = (i: Inputs, s?: S): Result =>
   run('hiri', R, i, s, ['G0', 'G30', 'I0', 'I30'], (v, c) => ({
     value: (mean(c.gmg(v.G0!), c.gmg(v.G30!)) / 100) * mean(c.iu(v.I0!), c.iu(v.I30!)),

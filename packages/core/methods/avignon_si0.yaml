@@ -6,9 +6,13 @@ formula_latex: "10^8 / (G_{0,mg/dL} I_{0,\\mu U/mL} BW \\cdot 150)"
 inputs: ["glucose_0", "insulin_0", "weight"]
 reference:
   citation: "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+  doi: 10.1038/sj.ijo.0800864
+  pmid: 10375055
 verification:
   status: confirmed
   detail: "Sib = 10^8/(I·G·VD), glucose mg/dL, insulin µU/mL, VD = 150 mL/kg body weight"
 legacy:
   insusenscalc_column: Avignon_Si0
   relation: equal
+source_verification: directly_verified
+source_verification_detail: "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read."

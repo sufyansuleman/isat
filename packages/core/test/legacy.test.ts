@@ -67,20 +67,6 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
     }
   }
 
-  it('sanity: Cederholm > 0 where all four time points exist, unavailable otherwise; legacy is negative for EX1', () => {
-    for (const row of rows) {
-      const r = calculateAll(row.inputs).find((x) => x.id === 'cederholm')!;
-      if ([0, 30, 60, 120].every((tt) => row.inputs.glucose?.[tt] !== undefined && row.inputs.insulin?.[tt] !== undefined)) {
-        expect(r.status).toBe('ok');
-        expect(r.value as number).toBeGreaterThan(0);
-      } else {
-        expect(r.status).toBe('unavailable');
-        expect(r.reasons.join(' ')).toMatch(/60-min/);
-      }
-    }
-    expect(legacyById.get('EX1')!['Cederholm_index'] as number).toBeLessThan(0);
-  });
-
   it('sanity: Belfiore ISI(gly) in (0, 2) for NGT rows, with reference set recorded', () => {
     for (const row of rows.filter((r) => r.participant_id!.startsWith('NGT'))) {
       const r = calculateAll(row.inputs).find((x) => x.id === 'belfiore_isi_gly')!;
@@ -127,6 +113,12 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
       '| row | method | ISAT value | legacy value | ratio |',
       '|---|---|---|---|---|',
       ...scaleRows,
+      '',
+      '## Excluded methods (deferred, not compared)',
+      '',
+      '| method | legacy column | reason |',
+      '|---|---|---|',
+      ...registry.filter((m) => m.deferredReason).map((m) => `| ${m.id} | ${typeof m.legacy.column === 'string' ? m.legacy.column : 'none'} | not included in this version: ${m.deferredReason} |`),
       '',
       '## ISAT unavailable (reason given; legacy value shown)',
       '',

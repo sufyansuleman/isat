@@ -12,3 +12,5 @@ legacy:
   insusenscalc_column: null
   relation: none
   difference: "New in ISAT; no InsuSensCalc equivalent."
+source_verification: secondary_source_confirmed
+source_verification_detail: "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."

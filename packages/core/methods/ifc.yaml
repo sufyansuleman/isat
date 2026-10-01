@@ -22,3 +22,5 @@ legacy:
 limitations:
   - "Weak correlation with clamp-derived insulin sensitivity in RISC (rho = -0.18 vs M/I, P = 3.3e-9), expected because M/I reflects whole-body rather than post-challenge insulin sensitivity."
   - "Reflects insulin secretion and clearance dynamics as well as insulin action."
+source_verification: directly_verified
+source_verification_detail: "PMC full text of Williamson 2023 read."

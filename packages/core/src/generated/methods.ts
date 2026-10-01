@@ -18,7 +18,9 @@ export const methodSpecs = {
       "insusenscalc_column": "Adipo_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "atiri": {
     "id": "atiri",
@@ -41,7 +43,9 @@ export const methodSpecs = {
       "insusenscalc_column": "ATIRI_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "avignon_si0": {
     "id": "avignon_si0",
@@ -55,7 +59,9 @@ export const methodSpecs = {
       "weight"
     ],
     "reference": {
-      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517.",
+      "doi": "10.1038/sj.ijo.0800864",
+      "pmid": 10375055
     },
     "verification": {
       "status": "confirmed",
@@ -64,7 +70,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Avignon_Si0",
       "relation": "equal"
-    }
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read."
   },
   "avignon_si120": {
     "id": "avignon_si120",
@@ -78,7 +86,9 @@ export const methodSpecs = {
       "weight"
     ],
     "reference": {
-      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517.",
+      "doi": "10.1038/sj.ijo.0800864",
+      "pmid": 10375055
     },
     "verification": {
       "status": "confirmed",
@@ -87,7 +97,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Avignon_Si120",
       "relation": "equal"
-    }
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read."
   },
   "avignon_sim": {
     "id": "avignon_sim",
@@ -101,7 +113,9 @@ export const methodSpecs = {
       "weight"
     ],
     "reference": {
-      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517.",
+      "doi": "10.1038/sj.ijo.0800864",
+      "pmid": 10375055
     },
     "verification": {
       "status": "confirmed",
@@ -111,7 +125,9 @@ export const methodSpecs = {
       "insusenscalc_column": "Avignon_Sim",
       "relation": "equal",
       "difference": "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (re-derives Avignon's coefficient in the analysed cohort; InsuSensCalc / Suleman 2024 variant). Default is the published w = 0.137."
-    }
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read. PubMed abstract describes SiM only as 'averaging Sib and Si2h'; the full text (p.514) specifies the 0.137 balancing coefficient and that it was derived as mean Si2h / mean Sib in the study cohort."
   },
   "belfiore": {
     "source": {
@@ -149,6 +165,8 @@ export const methodSpecs = {
     "methods": [
       {
         "id": "belfiore_basal",
+        "source_verification": "directly_verified",
+        "source_verification_detail": "method (normal-mean normalisation, area definitions) from the Belfiore 1998 abstract; default reference means transcribed by the user, not yet checked against the PDF",
         "verification": {
           "status": "confirmed",
           "detail": "Formula confirmed; default reference means not yet verified against the PDF."
@@ -172,6 +190,8 @@ export const methodSpecs = {
       },
       {
         "id": "belfiore_isi_gly",
+        "source_verification": "directly_verified",
+        "source_verification_detail": "method (normal-mean normalisation, area definitions) from the Belfiore 1998 abstract; default reference means transcribed by the user, not yet checked against the PDF",
         "verification": {
           "status": "confirmed",
           "detail": "Formula confirmed; default reference means not yet verified against the PDF."
@@ -199,6 +219,8 @@ export const methodSpecs = {
       },
       {
         "id": "belfiore_isi_ffa",
+        "source_verification": "directly_verified",
+        "source_verification_detail": "method (normal-mean normalisation, area definitions) from the Belfiore 1998 abstract; default reference means transcribed by the user, not yet checked against the PDF",
         "verification": {
           "status": "confirmed",
           "detail": "Formula confirmed; default reference means not yet verified against the PDF."
@@ -237,22 +259,18 @@ export const methodSpecs = {
   },
   "bennett": {
     "id": "bennett",
-    "name": "Bennett index",
+    "name": "Bennett SI",
     "category": "fasting",
-    "direction": "higher_more_sensitive",
-    "formula_latex": "1 / (\\ln I_{0,\\mu U/mL} \\cdot \\ln G_{0,mg/dL})",
-    "inputs": [
-      "glucose_0 (mg/dL)",
-      "insulin_0 (uU/mL)"
-    ],
-    "verification": {
-      "status": "legacy_match",
-      "detail": "Formula matches InsuSensCalc; primary source not read."
+    "direction": "unknown",
+    "deferred": {
+      "reason": "the original definition (Anderson et al. 1995, Am J Epidemiol 142:724-732) could not be verified; unit convention and log base differ between later sources."
     },
     "legacy": {
       "insusenscalc_column": "Bennett",
-      "relation": "equal"
-    }
+      "relation": "none"
+    },
+    "source_verification": "unresolved",
+    "source_verification_detail": "Evidence collected: Anderson RL, Hamman RF, Savage PJ, et al. Am J Epidemiol 1995;142(7):724-732, doi:10.1093/aje/142.7.724, PMID 7572943. The original unit convention and log base were not inspected. Later sources differ: InsuSensCalc and Suleman 2024 (JCEM 109:2754, Table 2) use 1/(ln I uU/mL * ln G mg/dL); secondary literature reports a mmol/L convention. Logs are not unit-invariant, so the conventions give different values."
   },
   "bigtt_si": {
     "id": "bigtt_si",
@@ -272,34 +290,24 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "BigttSi",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "cederholm": {
     "id": "cederholm",
     "name": "Cederholm index",
     "category": "ogtt",
-    "direction": "higher_more_sensitive",
-    "formula_latex": "\\frac{(75000 + (G_0 - G_{120})_{mmol/L}\\cdot 1.15\\cdot 180\\cdot 0.19\\cdot BW)/120}{\\bar G_{mmol/L}\\cdot \\log_{10}\\bar I_{\\mu U/mL}}",
-    "inputs": [
-      "glucose_0,30,60,120",
-      "insulin_0,30,60,120",
-      "weight (kg)"
-    ],
-    "reference": {
-      "citation": "Cederholm J, Wibell L. Insulin release and peripheral sensitivity at the oral glucose tolerance test. Diabetes Res Clin Pract. 1990;10:167-175. (formula as described in: Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184.)"
-    },
-    "notes": [
-      "Gmean and Imean use the 0, 30, 60 and 120 min samples; all four are required."
-    ],
-    "verification": {
-      "status": "provisional",
-      "detail": "Four-sample means per Gutt 2000's description of Cederholm & Wibell 1990; log base inferred as log10 from Gutt's derived ISI0,120; original paper not yet read."
+    "direction": "unknown",
+    "deferred": {
+      "reason": "the original paper (Cederholm & Wibell 1990, Diabetes Res Clin Pract 10:167-175) could not be verified; log base and sampling time points are uncertain."
     },
     "legacy": {
       "insusenscalc_column": "Cederholm_index",
-      "relation": "different",
-      "difference": "InsuSensCalc 0.1.0 uses mg/dL glucose in the correction term and 0/120 means with ln, which can drive the index negative. Intentional correction."
-    }
+      "relation": "none"
+    },
+    "source_verification": "unresolved",
+    "source_verification_detail": "Evidence collected: Cederholm J, Wibell L. Diabetes Res Clin Pract 1990;10(2):167-175, doi:10.1016/0168-8227(90)90040-Z, PMID 2261853. The abstract confirms SI = (M/mean blood glucose)/log(mean serum insulin). The 1.15·180·0.19·BW constants and 0/30/60/120 four-sample means are known only from Gutt 2000's description; log base inferred as log10 from Gutt's derived ISI0,120; full paper not inspected."
   },
   "firi": {
     "id": "firi",
@@ -341,7 +349,9 @@ export const methodSpecs = {
     },
     "limitations": [
       "Surrogate index from fasting values only; near-identical information to HOMA-IR."
-    ]
+    ],
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Duncan 1995 formula reproduced in secondary sources; primary not read."
   },
   "gutt": {
     "id": "gutt",
@@ -373,7 +383,9 @@ export const methodSpecs = {
       "relation": "different",
       "scale_factor": "18*ln(10) (constant; ranks identical)",
       "difference": "InsuSensCalc 0.1.0 uses MPG in mg/dL and ln, so ISAT = legacy x 18 x ln(10) exactly (given glucose factor 18); ranks identical."
-    }
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Primary PDF (Gutt et al., 2000) read; Table 1 subgroup means reproduced."
   },
   "hiri": {
     "id": "hiri",
@@ -393,7 +405,9 @@ export const methodSpecs = {
       "insusenscalc_column": "HIRI_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503)."
   },
   "homa2": {
     "id": "homa2",
@@ -406,7 +420,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": null,
       "relation": "none"
-    }
+    },
+    "source_verification": "not_applicable",
+    "source_verification_detail": "Closed-source model; not implemented."
   },
   "homa_ir": {
     "id": "homa_ir",
@@ -426,7 +442,9 @@ export const methodSpecs = {
       "insusenscalc_column": "Homa_IR_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "G mmol/L × I /22.5, stated in both the Avignon 1999 and Gutt 2000 PDFs."
   },
   "ifc": {
     "id": "ifc",
@@ -460,7 +478,9 @@ export const methodSpecs = {
     "limitations": [
       "Weak correlation with clamp-derived insulin sensitivity in RISC (rho = -0.18 vs M/I, P = 3.3e-9), expected because M/I reflects whole-body rather than post-challenge insulin sensitivity.",
       "Reflects insulin secretion and clearance dynamics as well as insulin action."
-    ]
+    ],
+    "source_verification": "directly_verified",
+    "source_verification_detail": "PMC full text of Williamson 2023 read."
   },
   "ig_ratio_120": {
     "id": "ig_ratio_120",
@@ -480,7 +500,9 @@ export const methodSpecs = {
       "insusenscalc_column": "Ig_ratio_120",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "ig_ratio_basal": {
     "id": "ig_ratio_basal",
@@ -500,7 +522,9 @@ export const methodSpecs = {
       "insusenscalc_column": "Ig_ratio_basal",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "isi_120": {
     "id": "isi_120",
@@ -519,7 +543,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Isi_120",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "isi_basal": {
     "id": "isi_basal",
@@ -538,7 +564,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Isi_basal",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "lap": {
     "id": "lap",
@@ -562,7 +590,9 @@ export const methodSpecs = {
       },
       "relation": "negated",
       "difference": "Legacy computes both sexes for every row and negates."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "lipo": {
     "id": "lipo",
@@ -585,7 +615,9 @@ export const methodSpecs = {
       "insusenscalc_column": "Lipo_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "liri": {
     "id": "liri",
@@ -608,7 +640,9 @@ export const methodSpecs = {
       "insusenscalc_column": "LIRI_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "matsuda_3pt": {
     "id": "matsuda_3pt",
@@ -627,7 +661,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Matsuda_ISI",
       "relation": "equal"
-    }
+    },
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
   },
   "matsuda_5pt": {
     "id": "matsuda_5pt",
@@ -648,7 +684,9 @@ export const methodSpecs = {
       "insusenscalc_column": null,
       "relation": "none",
       "difference": "New in ISAT; no InsuSensCalc equivalent."
-    }
+    },
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
   },
   "matsuda_auc_3pt": {
     "id": "matsuda_auc_3pt",
@@ -667,7 +705,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Matsuda_Auc",
       "relation": "equal"
-    }
+    },
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
   },
   "mcauley": {
     "id": "mcauley",
@@ -685,7 +725,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "McAuley_index",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "quicki": {
     "id": "quicki",
@@ -728,7 +770,9 @@ export const methodSpecs = {
       "Surrogate index derived from fasting values only; reflects mainly hepatic insulin sensitivity.",
       "Mathematically a transform of HOMA-IR; carries no independent information beyond it.",
       "Less reliable in people with markedly impaired insulin secretion (e.g. advanced type 2 diabetes)."
-    ]
+    ],
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Katz 2000 formula plus a published reference range only consistent with log10."
   },
   "raynaud": {
     "id": "raynaud",
@@ -747,7 +791,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Raynaud",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "revised_quicki": {
     "id": "revised_quicki",
@@ -767,7 +813,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Revised_QUICKI",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "stumvoll_dem": {
     "id": "stumvoll_dem",
@@ -787,7 +835,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Stumvoll_Demographics",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "stumvoll_mod": {
     "id": "stumvoll_mod",
@@ -807,7 +857,9 @@ export const methodSpecs = {
     "legacy": {
       "insusenscalc_column": "Modified_stumvoll",
       "relation": "equal"
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "tg_hdl": {
     "id": "tg_hdl",
@@ -827,7 +879,9 @@ export const methodSpecs = {
       "insusenscalc_column": "TG_HDL_C_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "tyg": {
     "id": "tyg",
@@ -846,7 +900,9 @@ export const methodSpecs = {
       "insusenscalc_column": "TyG_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   },
   "vai": {
     "id": "vai",
@@ -872,6 +928,8 @@ export const methodSpecs = {
       },
       "relation": "negated",
       "difference": "Legacy computes both sexes for every row and negates."
-    }
+    },
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   }
 } as const;

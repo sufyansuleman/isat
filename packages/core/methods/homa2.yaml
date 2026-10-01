@@ -7,3 +7,5 @@ deferred:
 legacy:
   insusenscalc_column: null
   relation: none
+source_verification: not_applicable
+source_verification_detail: "Closed-source model; not implemented."

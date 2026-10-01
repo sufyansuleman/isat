@@ -18,3 +18,5 @@ legacy:
   relation: different
   scale_factor: "18*ln(10) (constant; ranks identical)"
   difference: "InsuSensCalc 0.1.0 uses MPG in mg/dL and ln, so ISAT = legacy x 18 x ln(10) exactly (given glucose factor 18); ranks identical."
+source_verification: directly_verified
+source_verification_detail: "Primary PDF (Gutt et al., 2000) read; Table 1 subgroup means reproduced."

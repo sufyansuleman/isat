@@ -27,6 +27,8 @@ reference_means:
 
 methods:
   - id: belfiore_basal
+    source_verification: directly_verified
+    source_verification_detail: "method (normal-mean normalisation, area definitions) from the Belfiore 1998 abstract; default reference means transcribed by the user, not yet checked against the PDF"
     verification: { status: confirmed, detail: "Formula confirmed; default reference means not yet verified against the PDF." }
     legacy: { insusenscalc_column: Belfiore_basal, relation: different }
     name: Belfiore ISI (basal)
@@ -37,6 +39,8 @@ methods:
     reference_inputs: [ref_insulin_0, ref_glucose_0]
 
   - id: belfiore_isi_gly
+    source_verification: directly_verified
+    source_verification_detail: "method (normal-mean normalisation, area definitions) from the Belfiore 1998 abstract; default reference means transcribed by the user, not yet checked against the PDF"
     verification: { status: confirmed, detail: "Formula confirmed; default reference means not yet verified against the PDF." }
     legacy: { insusenscalc_column: Belfiore_isi_gly, relation: different }
     name: Belfiore ISI(gly)
@@ -49,6 +53,8 @@ methods:
     note: 30-min values are not part of the Belfiore area and are ignored.
 
   - id: belfiore_isi_ffa
+    source_verification: directly_verified
+    source_verification_detail: "method (normal-mean normalisation, area definitions) from the Belfiore 1998 abstract; default reference means transcribed by the user, not yet checked against the PDF"
     verification: { status: confirmed, detail: "Formula confirmed; default reference means not yet verified against the PDF." }
     legacy: { insusenscalc_column: Belfiore_inv_FFA, relation: different }
     name: Belfiore ISI(FFA)

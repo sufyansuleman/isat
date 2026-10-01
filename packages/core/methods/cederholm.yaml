@@ -1,17 +1,11 @@
 id: cederholm
 name: "Cederholm index"
 category: ogtt
-direction: higher_more_sensitive
-formula_latex: "\\frac{(75000 + (G_0 - G_{120})_{mmol/L}\\cdot 1.15\\cdot 180\\cdot 0.19\\cdot BW)/120}{\\bar G_{mmol/L}\\cdot \\log_{10}\\bar I_{\\mu U/mL}}"
-inputs: ["glucose_0,30,60,120", "insulin_0,30,60,120", "weight (kg)"]
-reference:
-  citation: "Cederholm J, Wibell L. Insulin release and peripheral sensitivity at the oral glucose tolerance test. Diabetes Res Clin Pract. 1990;10:167-175. (formula as described in: Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184.)"
-notes:
-  - "Gmean and Imean use the 0, 30, 60 and 120 min samples; all four are required."
-verification:
-  status: provisional
-  detail: "Four-sample means per Gutt 2000's description of Cederholm & Wibell 1990; log base inferred as log10 from Gutt's derived ISI0,120; original paper not yet read."
+direction: unknown
+deferred:
+  reason: "the original paper (Cederholm & Wibell 1990, Diabetes Res Clin Pract 10:167-175) could not be verified; log base and sampling time points are uncertain."
 legacy:
   insusenscalc_column: Cederholm_index
-  relation: different
-  difference: "InsuSensCalc 0.1.0 uses mg/dL glucose in the correction term and 0/120 means with ln, which can drive the index negative. Intentional correction."
+  relation: none
+source_verification: unresolved
+source_verification_detail: "Evidence collected: Cederholm J, Wibell L. Diabetes Res Clin Pract 1990;10(2):167-175, doi:10.1016/0168-8227(90)90040-Z, PMID 2261853. The abstract confirms SI = (M/mean blood glucose)/log(mean serum insulin). The 1.15·180·0.19·BW constants and 0/30/60/120 four-sample means are known only from Gutt 2000's description; log base inferred as log10 from Gutt's derived ISI0,120; full paper not inspected."

@@ -26,3 +26,5 @@ limitations:
   - Surrogate index derived from fasting values only; reflects mainly hepatic insulin sensitivity.
   - Mathematically a transform of HOMA-IR; carries no independent information beyond it.
   - Less reliable in people with markedly impaired insulin secretion (e.g. advanced type 2 diabetes).
+source_verification: secondary_source_confirmed
+source_verification_detail: "Katz 2000 formula plus a published reference range only consistent with log10."

@@ -11,3 +11,5 @@ legacy:
   insusenscalc_column: Homa_IR_inv
   relation: negated
   difference: "Legacy column is the negated index."
+source_verification: secondary_source_confirmed
+source_verification_detail: "G mmol/L × I /22.5, stated in both the Avignon 1999 and Gutt 2000 PDFs."
