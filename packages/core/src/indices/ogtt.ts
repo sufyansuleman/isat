@@ -14,20 +14,22 @@ export const igRatio120 = (i: Inputs, s?: S): Result =>
 
 export const gutt = (i: Inputs, s?: S): Result =>
   run('gutt', S_, i, s, ['G0', 'G120', 'I0', 'I120', 'weight'], (v, c) => {
+    // Gutt 2000: [(75000 + (G0 - G120)[mg/dL]*0.19*BW)/120] / MPG[mmol/L] / log10(MSI[uU/mL])
     const g0 = c.gmg(v.G0!), g120 = c.gmg(v.G120!);
-    const gm = mean(g0, g120), im = mean(c.iu(v.I0!), c.iu(v.I120!));
+    const mpg = mean(v.G0!, v.G120!), msi = mean(c.iu(v.I0!), c.iu(v.I120!));
     return {
-      value: (75000 + (g0 - g120) * 0.19 * v.weight!) / (120 * gm * Math.log(im)),
-      details: { mean_glucose_mg_dL: gm, mean_insulin_uU_mL: im, time_points: [0, 120] },
+      value: (75000 + (g0 - g120) * 0.19 * v.weight!) / 120 / mpg / Math.log10(msi),
+      details: { mean_glucose_mmol_L: mpg, mean_insulin_uU_mL: msi, time_points: [0, 120] },
     };
   });
 
 export const cederholm = (i: Inputs, s?: S): Result =>
-  run('cederholm', S_, i, s, ['G0', 'G120', 'I0', 'I120', 'weight'], (v, c) => {
-    const gm = mean(v.G0!, v.G120!), im = mean(c.iu(v.I0!), c.iu(v.I120!));
+  run('cederholm', S_, i, s, ['G0', 'G30', 'G60', 'G120', 'I0', 'I30', 'I60', 'I120', 'weight'], (v, c) => {
+    const gm = mean(v.G0!, v.G30!, v.G60!, v.G120!);
+    const im = mean(c.iu(v.I0!), c.iu(v.I30!), c.iu(v.I60!), c.iu(v.I120!));
     return {
-      value: (75000 + (v.G0! - v.G120!) * 1.15 * 180 * 0.19 * v.weight!) / (120 * gm * Math.log(im)),
-      details: { mean_glucose_mmol_L: gm, mean_insulin_uU_mL: im, time_points: [0, 120] },
+      value: (75000 + (v.G0! - v.G120!) * 1.15 * 180 * 0.19 * v.weight!) / 120 / gm / Math.log10(im),
+      details: { mean_glucose_mmol_L: gm, mean_insulin_uU_mL: im, time_points: [0, 30, 60, 120] },
     };
   });
 

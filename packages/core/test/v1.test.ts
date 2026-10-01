@@ -50,7 +50,7 @@ describe('registry', () => {
     expect(rs.find((r) => r.id === 'bennett')!.status).toBe('unavailable');
   });
   it('provisional methods carry a warning on every result', () => {
-    for (const id of ['gutt', 'cederholm']) {
+    for (const id of ['cederholm']) {
       expect(calculateAll({}).find((r) => r.id === id)!.warnings.length).toBeGreaterThan(0);
     }
   });

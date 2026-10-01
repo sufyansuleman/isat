@@ -27,7 +27,7 @@ export interface MethodEntry {
   category: string;
   direction: Direction;
   verification?: { status: VerificationStatus; detail?: string };
-  legacy: { column: string | { male: string; female: string } | null; relation: LegacyRelation };
+  legacy: { column: string | { male: string; female: string } | null; relation: LegacyRelation; scale_factor?: string };
   deferredReason?: string;
   needsReference: boolean;
   run: (inputs: Inputs, settings?: Partial<ConversionSettings>, reference?: Reference, extra?: RunExtra) => Result;
@@ -66,7 +66,11 @@ for (const spec of Object.values(methodSpecs) as unknown as Spec[]) {
 function build(id: string): MethodEntry {
   const sp = flat[id];
   if (!sp) throw new Error(`No YAML spec for method ${id}`);
-  const legacy = { column: sp.legacy?.insusenscalc_column ?? null, relation: sp.legacy?.relation as LegacyRelation };
+  const legacy = {
+    column: sp.legacy?.insusenscalc_column ?? null,
+    relation: sp.legacy?.relation as LegacyRelation,
+    scale_factor: sp.legacy?.scale_factor as string | undefined,
+  };
   const base = {
     id, name: sp.name as string, category: sp.category as string, direction: sp.direction as Direction,
     verification: sp.verification as MethodEntry['verification'], legacy,
@@ -140,7 +144,7 @@ export function calculateBatch(
       const m = (k: 0 | 1) => pairs.reduce((acc, p) => acc + p[k], 0) / pairs.length;
       avignon = {
         w: m(1) / m(0), source: 'sample',
-        warnings: ['InsuSensCalc / Suleman 2024 data-driven weight: the result depends on the cohort analysed.'],
+        warnings: ['Sample-derived Avignon coefficient (InsuSensCalc / Suleman 2024 variant; ratio of mean Si120 to mean Si0 in the analysed cohort): the result depends on the cohort analysed.'],
       };
     } else {
       avignon = {

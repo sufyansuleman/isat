@@ -45,7 +45,7 @@ export const methodSpecs = {
   },
   "avignon_si0": {
     "id": "avignon_si0",
-    "name": "Avignon Si0",
+    "name": "Avignon Sib (Si0)",
     "category": "ogtt",
     "direction": "higher_more_sensitive",
     "formula_latex": "10^8 / (G_{0,mg/dL} I_{0,\\mu U/mL} BW \\cdot 150)",
@@ -54,9 +54,12 @@ export const methodSpecs = {
       "insulin_0",
       "weight"
     ],
+    "reference": {
+      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+    },
     "verification": {
-      "status": "legacy_match",
-      "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+      "status": "confirmed",
+      "detail": "Sib = 10^8/(I·G·VD), glucose mg/dL, insulin µU/mL, VD = 150 mL/kg body weight"
     },
     "legacy": {
       "insusenscalc_column": "Avignon_Si0",
@@ -65,7 +68,7 @@ export const methodSpecs = {
   },
   "avignon_si120": {
     "id": "avignon_si120",
-    "name": "Avignon Si120",
+    "name": "Avignon Si2h (Si120)",
     "category": "ogtt",
     "direction": "higher_more_sensitive",
     "formula_latex": "10^8 / (G_{120,mg/dL} I_{120,\\mu U/mL} BW \\cdot 150)",
@@ -74,9 +77,12 @@ export const methodSpecs = {
       "insulin_120",
       "weight"
     ],
+    "reference": {
+      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+    },
     "verification": {
-      "status": "legacy_match",
-      "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+      "status": "confirmed",
+      "detail": "Sib = 10^8/(I·G·VD), glucose mg/dL, insulin µU/mL, VD = 150 mL/kg body weight"
     },
     "legacy": {
       "insusenscalc_column": "Avignon_Si120",
@@ -85,23 +91,26 @@ export const methodSpecs = {
   },
   "avignon_sim": {
     "id": "avignon_sim",
-    "name": "Avignon Sim",
+    "name": "Avignon SiM",
     "category": "ogtt",
     "direction": "higher_more_sensitive",
-    "formula_latex": "(w \\cdot Si_0 + Si_{120}) / 2",
+    "formula_latex": "(w \\cdot Si_b + Si_{2h}) / 2",
     "inputs": [
       "glucose_0,120",
       "insulin_0,120",
       "weight"
     ],
+    "reference": {
+      "citation": "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
+    },
     "verification": {
-      "status": "supported_secondary",
-      "detail": "SiM = (0.137·Sib + Si2h)/2 per Avignon 1999 as reported in secondary sources; the abstract does not state the coefficient."
+      "status": "confirmed",
+      "detail": "SiM = [(0.137·Sib) + Si2h]/2 (Avignon 1999, p.514). The coefficient 0.137 was obtained as the ratio of mean Si2h to mean Sib in the original cohort of 47 subjects."
     },
     "legacy": {
       "insusenscalc_column": "Avignon_Sim",
       "relation": "equal",
-      "difference": "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (InsuSensCalc / Suleman 2024 data-driven weight, w = mean(Si120)/mean(Si0)). Default is the published w = 0.137."
+      "difference": "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (re-derives Avignon's coefficient in the analysed cohort; InsuSensCalc / Suleman 2024 variant). Default is the published w = 0.137."
     }
   },
   "belfiore": {
@@ -270,22 +279,26 @@ export const methodSpecs = {
     "name": "Cederholm index",
     "category": "ogtt",
     "direction": "higher_more_sensitive",
-    "formula_latex": "\\frac{75000 + (G_0 - G_{120})\\cdot 1.15\\cdot 180\\cdot 0.19\\cdot BW}{120\\cdot \\bar G\\cdot \\ln \\bar I}",
+    "formula_latex": "\\frac{(75000 + (G_0 - G_{120})_{mmol/L}\\cdot 1.15\\cdot 180\\cdot 0.19\\cdot BW)/120}{\\bar G_{mmol/L}\\cdot \\log_{10}\\bar I_{\\mu U/mL}}",
     "inputs": [
-      "glucose_0",
-      "glucose_120",
-      "insulin_0",
-      "insulin_120",
-      "weight"
+      "glucose_0,30,60,120",
+      "insulin_0,30,60,120",
+      "weight (kg)"
+    ],
+    "reference": {
+      "citation": "Cederholm J, Wibell L. Insulin release and peripheral sensitivity at the oral glucose tolerance test. Diabetes Res Clin Pract. 1990;10:167-175. (formula as described in: Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184.)"
+    },
+    "notes": [
+      "Gmean and Imean use the 0, 30, 60 and 120 min samples; all four are required."
     ],
     "verification": {
       "status": "provisional",
-      "detail": "Glucose in mmol/L. Log base unconfirmed; whether means use 0/120 only or all OGTT samples is unconfirmed."
+      "detail": "Four-sample means per Gutt 2000's description of Cederholm & Wibell 1990; log base inferred as log10 from Gutt's derived ISI0,120; original paper not yet read."
     },
     "legacy": {
       "insusenscalc_column": "Cederholm_index",
       "relation": "different",
-      "difference": "InsuSensCalc 0.1.0 uses glucose in mg/dL in the numerator correction term, which can drive the index negative. Intentional correction."
+      "difference": "InsuSensCalc 0.1.0 uses mg/dL glucose in the correction term and 0/120 means with ln, which can drive the index negative. Intentional correction."
     }
   },
   "firi": {
@@ -332,24 +345,34 @@ export const methodSpecs = {
   },
   "gutt": {
     "id": "gutt",
-    "name": "Gutt index",
+    "name": "Gutt index (ISI0,120)",
     "category": "ogtt",
     "direction": "higher_more_sensitive",
-    "formula_latex": "\\frac{75000 + (G_0 - G_{120})\\cdot 0.19\\cdot BW}{120\\cdot \\bar G\\cdot \\ln \\bar I}",
+    "formula_latex": "\\frac{(75000 + (G_{0,mg/dL} - G_{120,mg/dL})\\cdot 0.19\\cdot BW)/120}{MPG_{mmol/L}\\cdot \\log_{10} MSI_{\\mu U/mL}}",
     "inputs": [
       "glucose_0",
       "glucose_120",
       "insulin_0",
       "insulin_120",
-      "weight"
+      "weight (kg)"
+    ],
+    "reference": {
+      "citation": "Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184."
+    },
+    "notes": [
+      "Units of the result: mg·L²/(mmol·mU·min) per Gutt 2000.",
+      "Gutt's text labels the glucose difference in m as mg/L, but the paper's Table 1 subgroup means are reproduced with mg/dL (IGT 45.7 vs reported 46.0; diabetic 24.0 vs 23.0), so mg/dL is used.",
+      "log10 and MPG in mmol/L are required to reproduce the reported scale; ln gives values about 2.3x too small."
     ],
     "verification": {
-      "status": "provisional",
-      "detail": "Log base not stated in any source read; ln matches InsuSensCalc. Glucose in mg/dL, insulin in uU/mL, weight in kg."
+      "status": "confirmed",
+      "detail": "Gutt 2000 formula: MPG = mean(G0,G120) in mmol/L, MSI = mean(I0,I120) in uU/mL, log10."
     },
     "legacy": {
       "insusenscalc_column": "Gutt_index",
-      "relation": "equal"
+      "relation": "different",
+      "scale_factor": "18*ln(10) (constant; ranks identical)",
+      "difference": "InsuSensCalc 0.1.0 uses MPG in mg/dL and ln, so ISAT = legacy x 18 x ln(10) exactly (given glucose factor 18); ranks identical."
     }
   },
   "hiri": {

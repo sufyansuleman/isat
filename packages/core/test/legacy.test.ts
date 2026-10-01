@@ -17,6 +17,7 @@ const relDiff = (a: number, b: number) => Math.abs(a - b) / Math.max(Math.abs(a)
 
 const batch = calculateBatch(rows.map((r) => r.inputs), { avignon_weight: 'sample' }); // avignon_sim needs the full-sample weight
 const diffRows: string[] = [];
+const scaleRows: string[] = [];
 const unavailRows: string[] = [];
 let matched = 0;
 const counts = new Map<string, number>();
@@ -53,7 +54,11 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
           counts.set(m.id, (counts.get(m.id) ?? 0) + 1);
         } else {
           expect(m.legacy.relation).toBe('different');
-          if (L !== null) {
+          if (L !== null && m.legacy.scale_factor) {
+            // known constant-factor difference: gutt, ISAT = legacy x 18 x ln(10)
+            expect(relDiff(v / L, 18 * Math.LN10)).toBeLessThan(1e-9);
+            scaleRows.push(`| ${id} | ${m.id} | ${v} | ${L} | ${v / L} |`);
+          } else if (L !== null) {
             expect(relDiff(v, L)).toBeGreaterThan(1e-9);
             diffRows.push(`| ${id} | ${m.id} | ${v} | ${L} |`);
           }
@@ -62,11 +67,16 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
     }
   }
 
-  it('sanity: Cederholm > 0 for all rows; legacy is negative for EX1', () => {
+  it('sanity: Cederholm > 0 where all four time points exist, unavailable otherwise; legacy is negative for EX1', () => {
     for (const row of rows) {
       const r = calculateAll(row.inputs).find((x) => x.id === 'cederholm')!;
-      expect(r.status).toBe('ok');
-      expect(r.value as number).toBeGreaterThan(0);
+      if ([0, 30, 60, 120].every((tt) => row.inputs.glucose?.[tt] !== undefined && row.inputs.insulin?.[tt] !== undefined)) {
+        expect(r.status).toBe('ok');
+        expect(r.value as number).toBeGreaterThan(0);
+      } else {
+        expect(r.status).toBe('unavailable');
+        expect(r.reasons.join(' ')).toMatch(/60-min/);
+      }
     }
     expect(legacyById.get('EX1')!['Cederholm_index'] as number).toBeLessThan(0);
   });
@@ -111,6 +121,12 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
       '| row | method | ISAT value | legacy value |',
       '|---|---|---|---|',
       ...diffRows,
+      '',
+      '## Known constant-factor differences (ISAT = legacy x 18 x ln(10) = ' + 18 * Math.LN10 + ')',
+      '',
+      '| row | method | ISAT value | legacy value | ratio |',
+      '|---|---|---|---|---|',
+      ...scaleRows,
       '',
       '## ISAT unavailable (reason given; legacy value shown)',
       '',

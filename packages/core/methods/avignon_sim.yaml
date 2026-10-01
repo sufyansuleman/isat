@@ -1,13 +1,15 @@
 id: avignon_sim
-name: "Avignon Sim"
+name: "Avignon SiM"
 category: ogtt
 direction: higher_more_sensitive
-formula_latex: "(w \\cdot Si_0 + Si_{120}) / 2"
+formula_latex: "(w \\cdot Si_b + Si_{2h}) / 2"
 inputs: ["glucose_0,120", "insulin_0,120", "weight"]
+reference:
+  citation: "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
 verification:
-  status: supported_secondary
-  detail: "SiM = (0.137·Sib + Si2h)/2 per Avignon 1999 as reported in secondary sources; the abstract does not state the coefficient."
+  status: confirmed
+  detail: "SiM = [(0.137·Sib) + Si2h]/2 (Avignon 1999, p.514). The coefficient 0.137 was obtained as the ratio of mean Si2h to mean Sib in the original cohort of 47 subjects."
 legacy:
   insusenscalc_column: Avignon_Sim
   relation: equal
-  difference: "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (InsuSensCalc / Suleman 2024 data-driven weight, w = mean(Si120)/mean(Si0)). Default is the published w = 0.137."
+  difference: "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (re-derives Avignon's coefficient in the analysed cohort; InsuSensCalc / Suleman 2024 variant). Default is the published w = 0.137."

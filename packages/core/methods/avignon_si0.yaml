@@ -1,12 +1,14 @@
 id: avignon_si0
-name: "Avignon Si0"
+name: "Avignon Sib (Si0)"
 category: ogtt
 direction: higher_more_sensitive
 formula_latex: "10^8 / (G_{0,mg/dL} I_{0,\\mu U/mL} BW \\cdot 150)"
 inputs: ["glucose_0", "insulin_0", "weight"]
+reference:
+  citation: "Avignon A, Boegner C, Mariano-Goulart D, Colette C, Monnier L. Assessment of insulin sensitivity from plasma insulin and glucose in the fasting or post oral glucose-load state. Int J Obes Relat Metab Disord. 1999;23(5):512-517."
 verification:
-  status: legacy_match
-  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+  status: confirmed
+  detail: "Sib = 10^8/(I·G·VD), glucose mg/dL, insulin µU/mL, VD = 150 mL/kg body weight"
 legacy:
   insusenscalc_column: Avignon_Si0
   relation: equal

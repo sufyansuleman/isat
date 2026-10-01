@@ -1,12 +1,20 @@
 id: gutt
-name: "Gutt index"
+name: "Gutt index (ISI0,120)"
 category: ogtt
 direction: higher_more_sensitive
-formula_latex: "\\frac{75000 + (G_0 - G_{120})\\cdot 0.19\\cdot BW}{120\\cdot \\bar G\\cdot \\ln \\bar I}"
-inputs: ["glucose_0", "glucose_120", "insulin_0", "insulin_120", "weight"]
+formula_latex: "\\frac{(75000 + (G_{0,mg/dL} - G_{120,mg/dL})\\cdot 0.19\\cdot BW)/120}{MPG_{mmol/L}\\cdot \\log_{10} MSI_{\\mu U/mL}}"
+inputs: ["glucose_0", "glucose_120", "insulin_0", "insulin_120", "weight (kg)"]
+reference:
+  citation: "Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184."
+notes:
+  - "Units of the result: mg·L²/(mmol·mU·min) per Gutt 2000."
+  - "Gutt's text labels the glucose difference in m as mg/L, but the paper's Table 1 subgroup means are reproduced with mg/dL (IGT 45.7 vs reported 46.0; diabetic 24.0 vs 23.0), so mg/dL is used."
+  - "log10 and MPG in mmol/L are required to reproduce the reported scale; ln gives values about 2.3x too small."
 verification:
-  status: provisional
-  detail: "Log base not stated in any source read; ln matches InsuSensCalc. Glucose in mg/dL, insulin in uU/mL, weight in kg."
+  status: confirmed
+  detail: "Gutt 2000 formula: MPG = mean(G0,G120) in mmol/L, MSI = mean(I0,I120) in uU/mL, log10."
 legacy:
   insusenscalc_column: Gutt_index
-  relation: equal
+  relation: different
+  scale_factor: "18*ln(10) (constant; ranks identical)"
+  difference: "InsuSensCalc 0.1.0 uses MPG in mg/dL and ln, so ISAT = legacy x 18 x ln(10) exactly (given glucose factor 18); ranks identical."
