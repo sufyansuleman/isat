@@ -20,9 +20,11 @@ describe('landing counts', () => {
     expect(c.available).toBe(fromSpecs);
     expect(c.available + c.notIncluded).toBe(registry.length);
   });
-  it('are rendered on the landing page with the privacy statement', () => {
+  it('are rendered on the merged Calculate page with the privacy statement', () => {
     const c = methodCounts();
-    const html = landing();
+    const html = pageFor('/');
+    expect(html).toContain('id="calculate-root"');
+    expect(landing()).toContain('href="#/methods"');
     expect(html).toContain(`${c.available} methods available`);
     expect(html).toContain(`${c.notIncluded} listed but not included`);
     expect(html).toContain(PRIVACY_STATEMENT);

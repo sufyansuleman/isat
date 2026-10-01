@@ -2,7 +2,7 @@ import { CANONICAL, orient, toUnit, type ConversionSettings, type Inputs, type O
 import { clean } from '../calculate/format';
 import { hydrateFormulas } from '../calculate/mathml';
 import { drawChart, downloadPng, seriesPoints, type Chart } from '../calculate/plots';
-import { aucHtml, cardsHtml, resultsFooterHtml, type Snapshot } from '../calculate/results';
+import { aucHtml, summaryHtml, wireSummary, resultsFooterHtml, type Snapshot } from '../calculate/results';
 import { emptyState, type FormState, type UnitChoice } from '../calculate/state';
 import { ISAT_VERSION } from '../version';
 import { runRow, type AvignonUse } from './batch';
@@ -40,9 +40,10 @@ export function renderPerson(
     state: st, built: { inputs, settings, errors: {} }, results: runRow(inputs, settings, av),
     calculatedAt: new Date(), version: ISAT_VERSION,
   };
-  host.innerHTML = `<div class="cards" data-part="cards"></div><h3>OGTT plots</h3><div class="plots" data-part="plots"></div><div data-part="auc"></div><div data-part="foot"></div>`;
+  host.innerHTML = `<h3>OGTT plots</h3><div class="plots" data-part="plots"></div><h3>Summary</h3><div data-part="cards"></div><div data-part="auc"></div><div data-part="foot"></div>`;
   const part = (n: string) => host.querySelector<HTMLElement>(`[data-part="${n}"]`)!;
-  part('cards').innerHTML = cardsHtml(orient(snap.results, mode), snap);
+  part('cards').innerHTML = summaryHtml(orient(snap.results, mode), snap);
+  wireSummary(part('cards'));
   hydrateFormulas(part('cards'));
   part('auc').innerHTML = aucHtml(inputs, st, settings);
   part('foot').innerHTML = resultsFooterHtml(snap);

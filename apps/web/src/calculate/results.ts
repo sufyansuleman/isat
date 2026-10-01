@@ -276,3 +276,60 @@ export function csvRows(oriented: Result[], snap: Snapshot): string[][] {
 export function csvText(oriented: Result[], snap: Snapshot): string {
   return [CSV_COLUMNS.join(','), ...csvRows(oriented, snap).map((r) => r.map(q).join(','))].join('\r\n') + '\r\n';
 }
+
+// ---------- summary table (one row per result, grouped by category, full card on demand) ----------
+const SUMMARY_GROUPS: Array<[string, string]> = [
+  ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'], ['tracer_dxa', 'Tracer & DXA'],
+];
+const SHORT_DIRECTION: Record<string, string> = {
+  higher_more_sensitive: 'higher = more sensitive',
+  higher_more_resistant: 'higher = more resistant',
+  unknown: 'not specified',
+};
+
+/** Compact table grouped by registry category; each row's full card is hidden until its Details toggle is used. */
+export function summaryHtml(oriented: Result[], snap: Snapshot, open: ReadonlySet<string> = new Set()): string {
+  const shown = oriented.filter((r) => r.status === 'ok' || r.status === 'error');
+  if (!shown.length) return '<p>No method could be calculated with the current inputs. See the availability panel for the reasons.</p>';
+  const catOf = (r: Result) => registry.find((x) => x.id === baseId(r.id))?.category ?? '';
+  const groups = SUMMARY_GROUPS.map(([k, label]) => [label, shown.filter((r) => catOf(r) === k)] as const);
+  const known = new Set(SUMMARY_GROUPS.map(([k]) => k));
+  const other = shown.filter((r) => !known.has(catOf(r)));
+  if (other.length) groups.push(['Other', other]);
+  const rows = groups.filter(([, rs]) => rs.length).map(([label, rs]) => {
+    const body = rs.map((r) => {
+      const id = esc(r.id);
+      const name = esc(registry.find((x) => x.id === baseId(r.id))?.name ?? baseId(r.id));
+      const isOpen = open.has(r.id);
+      const val = r.status === 'ok'
+        ? `<span class="num">${fmt4(r.value as number)}</span>${r.unit ? ` <span class="unit">${esc(r.unit)}</span>` : ''}`
+        : '<span class="err-msg">error</span>';
+      const dir = r.status === 'ok' ? (SHORT_DIRECTION[r.direction] ?? '') : '';
+      return `<tr class="srow" data-row="${id}"><th scope="row">${name}</th><td>${val}</td><td>${dir}</td>
+<td><button type="button" class="linklike" data-toggle="${id}" aria-expanded="${isOpen}">Details</button></td></tr>
+<tr class="sdetail" data-detail="${id}"${isOpen ? '' : ' hidden'}><td colspan="4">${cardHtml(r, snap)}</td></tr>`;
+    }).join('');
+    return `<tbody><tr class="scat"><th colspan="4" scope="colgroup">${esc(label)}</th></tr>${body}</tbody>`;
+  }).join('');
+  return `<p class="actions"><button type="button" data-expand="all">Expand all</button> <button type="button" data-expand="none">Collapse all</button></p>
+<div class="table-wrap"><table class="summary"><caption class="sr">Calculated indices by category</caption>
+<thead><tr><th scope="col">Index</th><th scope="col">Value</th><th scope="col">Direction</th><th scope="col">Details</th></tr></thead>${rows}</table></div>`;
+}
+
+/** Handle Details / Expand all / Collapse all inside `host`; `open` (optional) records which rows are expanded. */
+export function wireSummary(host: HTMLElement, open?: Set<string>): void {
+  const set = (id: string, on: boolean) => {
+    host.querySelectorAll<HTMLElement>('[data-detail]').forEach((d) => { if (d.dataset['detail'] === id) d.hidden = !on; });
+    host.querySelectorAll<HTMLElement>('[data-toggle]').forEach((b) => { if (b.dataset['toggle'] === id) b.setAttribute('aria-expanded', String(on)); });
+    if (open) { if (on) open.add(id); else open.delete(id); }
+  };
+  host.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (!b) return;
+    if (b.dataset['toggle'] !== undefined) set(b.dataset['toggle'], b.getAttribute('aria-expanded') !== 'true');
+    else if (b.dataset['expand'] !== undefined) {
+      const on = b.dataset['expand'] === 'all';
+      host.querySelectorAll<HTMLElement>('[data-toggle]').forEach((t) => set(t.dataset['toggle']!, on));
+    }
+  });
+}

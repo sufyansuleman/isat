@@ -41,6 +41,15 @@ ${exampleDetailsHtml()}
 <div id="up-loaded" hidden></div>
 <section id="up-results" aria-labelledby="up-h-res" hidden></section>`;
 
+/** Summary line for the collapsed column-mapping table. */
+export function columnMappingSummary(columns: Array<{ kind: string }>): { text: string; notRecognised: number } {
+  const notRecognised = columns.filter((c) => c.kind === 'ignored').length;
+  return {
+    text: `${columns.length - notRecognised} of ${columns.length} columns recognised${notRecognised ? ` — ${notRecognised} not recognised` : ''}`,
+    notRecognised,
+  };
+}
+
 export function mountUpload(root: HTMLElement): () => void {
   root.innerHTML = html;
   const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
@@ -80,6 +89,8 @@ export function mountUpload(root: HTMLElement): () => void {
     const recognised = l.columns.filter((c) => c.kind === 'variable').length;
     const shown = (c: (typeof l.columns)[number]) => c.kind === "ignored" ? "ignored" : esc(c.variable ?? "") + (c.canonical && c.canonical.toLowerCase() !== c.name.trim().toLowerCase() ? ` (${esc(c.canonical)})` : "");
     const map = l.columns.map((c) => `<tr><td>${esc(c.name)}</td><td>${shown(c)}</td></tr>`).join("");
+    const { text: mapSummary, notRecognised } = columnMappingSummary(l.columns);
+    const mapOpen = notRecognised > 0 || l.fileErrors.length > 0;
     const blocked = recognised === 0 || l.fileErrors.length > 0;
     const probs = l.problems.slice(0, 20).map((p) => `<li>Row ${p.row} (${esc(p.id)}): ${p.messages.map(esc).join('; ')}</li>`).join('');
     const cols = l.header.map((h) => `<th scope="col">${esc(h)}</th>`).join('');
@@ -95,8 +106,8 @@ ${l.duplicateIds.length ? `<li class="warn">Warning: ${l.duplicateIds.length} du
 ${recognised === 0 ? '<li class="err">No recognised data columns. Check the column names.</li>' : ''}
 ${l.fileErrors.map((e) => `<li class="err">${esc(e)}.</li>`).join("")}
 </ul>
-<h3>Column mapping</h3>
-<div class="table-wrap"><table class="ogtt"><thead><tr><th scope="col">Column</th><th scope="col">Recognised as</th></tr></thead><tbody>${map}</tbody></table></div>
+<details class="map-details"${mapOpen ? ' open' : ''}><summary>${mapSummary}</summary>
+<div class="table-wrap"><table class="ogtt"><thead><tr><th scope="col">Column</th><th scope="col">Recognised as</th></tr></thead><tbody>${map}</tbody></table></div></details>
 </section>
 <div id="up-units">${unitsSectionHtml(units, 'u')}</div>
 <section aria-labelledby="up-h-av"><h2 id="up-h-av">Avignon SiM weight</h2>
@@ -180,8 +191,8 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
       const c = r.counts[m.id]!;
       const reasons = (map: Record<string, number>) => topReasons(map).map(([k, v]) => `${esc(k)} (${v})`).join('<br>');
       return `<tr><th scope="row">${esc(m.name)}</th><td>${c.ok.toLocaleString('en-GB')} of ${n.toLocaleString('en-GB')}</td>
-<td>${c.unavailable.toLocaleString('en-GB')}${c.unavailable ? `<br><span class="hint">${reasons(c.unavailableReasons)}</span>` : ''}</td>
-<td>${c.error.toLocaleString('en-GB')}${c.error ? `<br><span class="hint">${reasons(c.errorReasons)}</span>` : ''}</td></tr>`;
+<td>${c.unavailable.toLocaleString('en-GB')}${c.unavailable ? `<details class="why"><summary>why</summary><span class="hint">${reasons(c.unavailableReasons)}</span></details>` : ''}</td>
+<td>${c.error.toLocaleString('en-GB')}${c.error ? `<details class="why"><summary>why</summary><span class="hint">${reasons(c.errorReasons)}</span></details>` : ''}</td></tr>`;
     }).join('');
     const avText = `Avignon SiM weight ${r.av.w} (${r.av.source === 'sample' ? 'derived from this cohort' : 'Avignon 1999'}).`;
     const res = $('#up-results');
@@ -189,7 +200,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     res.innerHTML = `<h2 id="up-h-res">Results</h2>
 <p>${n.toLocaleString('en-GB')} participants calculated. ${esc(avText)} Belfiore indices use the belfiore_1998 reference set. Surrogate indices; not direct measurements of insulin sensitivity and not a diagnosis.</p>
 <div class="table-wrap"><table class="ogtt"><caption class="sr">Calculated counts per method</caption>
-<thead><tr><th scope="col">Method</th><th scope="col">Calculated</th><th scope="col">Not calculated (top reasons)</th><th scope="col">Errors (top reasons)</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+<thead><tr><th scope="col">Method</th><th scope="col">Calculated</th><th scope="col">Not calculated</th><th scope="col">Errors</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
 <fieldset class="orient"><legend>Orientation (applies to the download and the participant view)</legend>
 <label><input type="radio" name="up-orient" value="published"${orientMode === 'published' ? ' checked' : ''}> Published direction</label>
 <label><input type="radio" name="up-orient" value="sensitivity"${orientMode === 'sensitivity' ? ' checked' : ''}> InsuSensCalc convention (resistance indices negated, _inv)</label>

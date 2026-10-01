@@ -8,7 +8,7 @@ export const SURROGATE_NOTE =
   'These are surrogate indices of insulin sensitivity, not direct measurements, and are not a diagnosis.';
 
 const NAV: Array<[Route, string]> = [
-  ['/', 'Home'], ['/calculate', 'Calculate'], ['/methods', 'Methods'], ['/about', 'About'],
+  ['/', 'Calculate'], ['/methods', 'Methods'], ['/about', 'About'],
 ];
 
 export function landing(): string {
@@ -16,21 +16,15 @@ export function landing(): string {
   return `
 <h1>ISAT</h1>
 <p class="subtitle">Insulin Sensitivity Analysis Tool</p>
-<p>Calculate and explore insulin sensitivity indices from metabolic data.</p>
-<p class="actions">
-  <a class="button primary" href="#/calculate">Start calculation</a>
-  <a class="button" href="#/calculate?mode=upload">Upload data</a>
-  <a class="button" href="#/methods">Methods</a>
-</p>
-<p id="method-counts"><strong>${c.available} methods available</strong>; ${c.notIncluded} listed but not included.</p>
-<p class="note">${PRIVACY_STATEMENT}</p>
-<p class="note">${SURROGATE_NOTE}</p>`;
+<p class="lede">Calculate and explore insulin sensitivity indices from metabolic data, for one person or a whole file, entirely in your browser.</p>
+<p id="method-counts" class="lede"><strong>${c.available} methods available</strong>; ${c.notIncluded} listed but not included. <a href="#/methods">See the methods</a>.</p>
+<p class="notice">${PRIVACY_STATEMENT}</p>
+<p class="notice">${SURROGATE_NOTE}</p>`;
 }
 
 export function pageFor(route: Route): string {
   switch (route) {
-    case '/': return landing();
-    case '/calculate': return '<h1>Calculate</h1><div id="calculate-root"></div>';
+    case '/': return `${landing()}<div id="calculate-root"></div>`;
     case '/methods': return '<h1>Methods</h1><div id="methods-root"></div>';
     case '/about': return aboutHtml;
   }

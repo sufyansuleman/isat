@@ -474,7 +474,7 @@ export const methodSpecs = {
   "hiri": {
     "id": "hiri",
     "name": "Hepatic insulin resistance index",
-    "category": "fasting",
+    "category": "ogtt",
     "direction": "higher_more_resistant",
     "formula_latex": "\\frac{\\overline{G}_{0,30,mg/dL}}{100}\\cdot \\overline{I}_{0,30,\\mu U/mL}",
     "inputs": [

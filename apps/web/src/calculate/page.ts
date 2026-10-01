@@ -24,7 +24,7 @@ export function mountCalculatePage(root: HTMLElement, initial: Mode): () => void
       panel(k).hidden = !on;
     }
     if (focus) tab(m).focus();
-    try { history.replaceState(null, '', m === 'upload' ? '#/calculate?mode=upload' : '#/calculate'); } catch { /* ignore */ }
+    try { history.replaceState(null, '', m === 'upload' ? '#/?mode=upload' : '#/'); } catch { /* ignore */ }
   }
   root.querySelector('[role="tablist"]')!.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');

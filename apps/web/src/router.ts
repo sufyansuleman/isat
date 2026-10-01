@@ -1,4 +1,4 @@
-export const ROUTES = ['/', '/calculate', '/methods', '/about'] as const;
+export const ROUTES = ['/', '/methods', '/about'] as const;
 export type Route = (typeof ROUTES)[number];
 export type Mode = 'manual' | 'upload';
 
@@ -6,7 +6,8 @@ export interface Location { route: Route; mode: Mode; methodId?: string }
 
 /**
  * Map a location hash to a route and, for the calculate page, an input mode.
- * "#/calculate?mode=upload", "#/calculate/upload" and the retired "#/batch" open upload mode.
+ * Calculate is the home page: "#/calculate" is an alias of "/", and "#/?mode=upload", "#/calculate?mode=upload",
+ * "#/calculate/upload" and the retired "#/batch" open the upload tab.
  * Unknown or empty hashes fall back to the landing page.
  */
 export function parseLocation(hash: string): Location {
@@ -16,9 +17,10 @@ export function parseLocation(hash: string): Location {
   if (p.length > 1) p = p.replace(/\/+$/, '');
   const mm = /^\/methods\/([A-Za-z0-9_]+)$/.exec(p);
   if (mm) return { route: '/methods', mode: 'manual', methodId: mm[1] };
-  if (p === '/batch' || p === '/calculate/upload') return { route: '/calculate', mode: 'upload' };
+  if (p === '/batch' || p === '/calculate/upload') return { route: '/', mode: 'upload' };
+  if (p === '/calculate') p = '/';
   if (!(ROUTES as readonly string[]).includes(p)) return { route: '/', mode: 'manual' };
-  const mode: Mode = p === '/calculate' && new URLSearchParams(query).get('mode') === 'upload' ? 'upload' : 'manual';
+  const mode: Mode = p === '/' && new URLSearchParams(query).get('mode') === 'upload' ? 'upload' : 'manual';
   return { route: p as Route, mode };
 }
 

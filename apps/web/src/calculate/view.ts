@@ -4,7 +4,7 @@ import { esc } from './format';
 import { exampleState } from './example';
 import { buildInputs, emptyState, settingsOf, type FormState, type UnitChoice } from './state';
 import {
-  aucHtml, availabilityHtml, notCalculatedHtml, cardsHtml, csvText, resultsFooterHtml, unitLabel, type Snapshot,
+  aucHtml, availabilityHtml, notCalculatedHtml, summaryHtml, wireSummary, csvText, resultsFooterHtml, unitLabel, type Snapshot,
 } from './results';
 import { hydrateFormulas } from './mathml';
 import { unitsSectionHtml } from './units';
@@ -49,7 +49,7 @@ ${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
 </details>
 </section>
 
-<p class="actions"><button type="button" class="primary" id="calc">Calculate</button>
+<p class="actions sticky-actions"><button type="button" class="primary" id="calc">Calculate</button>
 <button type="button" id="example">Load example</button> <button type="button" id="clear">Clear</button></p>
 <p id="calc-msg" class="err" role="alert"></p>
 
@@ -57,15 +57,16 @@ ${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
 <div id="avail"></div></section>
 
 <section id="results" aria-labelledby="h-res" hidden><h2 id="h-res">Results</h2>
-<p id="stale" class="warn-banner" hidden>Inputs have changed since this calculation. Press Calculate to update.</p>
+<p class="hint">Results update automatically when you change the inputs.</p>
 <fieldset class="orient"><legend>Orientation</legend>
 <label><input type="radio" name="orient" value="published" checked> Published direction</label>
 <label><input type="radio" name="orient" value="sensitivity"> InsuSensCalc convention (resistance indices negated, _inv)</label>
 </fieldset>
-<div id="cards" class="cards"></div>
-<div id="not-calc"></div>
 <h3>OGTT plots</h3>
 <div id="plots" class="plots"></div>
+<h3>Summary</h3>
+<div id="summary"></div>
+<div id="not-calc"></div>
 <div id="auc"></div>
 <div id="foot"></div>
 <p><button type="button" id="csv">Download results CSV</button></p>
@@ -77,6 +78,8 @@ export function mountCalculate(root: HTMLElement): () => void {
   let snap: Snapshot | undefined;
   let charts: Chart[] = [];
   let orientMode: OrientMode = 'published';
+  const openCards = new Set<string>();
+  let autoTimer: ReturnType<typeof setTimeout> | undefined;
   root.innerHTML = formHtml(st);
   const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
 
@@ -137,7 +140,7 @@ export function mountCalculate(root: HTMLElement): () => void {
     const wasOpen = root.querySelector<HTMLDetailsElement>('#av-details')?.open ?? false;
     $('#avail').innerHTML = availabilityHtml(results);
     if (wasOpen) root.querySelector<HTMLDetailsElement>('#av-details')!.open = true;
-    if (snap) $('#stale').hidden = false;
+    if (snap) { clearTimeout(autoTimer); autoTimer = setTimeout(() => calculate(false), 300); }
   }
 
   // ----- results -----
@@ -145,9 +148,8 @@ export function mountCalculate(root: HTMLElement): () => void {
     if (!snap) return;
     const oriented = orient(snap.results, orientMode);
     $('#results').hidden = false;
-    $('#stale').hidden = true;
-    $('#cards').innerHTML = cardsHtml(oriented, snap);
-    hydrateFormulas($('#cards'));
+    $('#summary').innerHTML = summaryHtml(oriented, snap, openCards);
+    hydrateFormulas($('#summary'));
     $('#not-calc').innerHTML = notCalculatedHtml(snap.results);
     $('#foot').innerHTML = resultsFooterHtml(snap);
     $('#auc').innerHTML = aucHtml(snap.built.inputs, snap.state, snap.built.settings);
@@ -173,7 +175,7 @@ export function mountCalculate(root: HTMLElement): () => void {
     });
   }
 
-  function calculate(): void {
+  function calculate(manual = true): void {
     const built = buildInputs(st);
     const msg = $('#calc-msg');
     if (Object.keys(built.errors).length) { msg.textContent = 'Fix the highlighted entries before calculating.'; return; }
@@ -184,7 +186,7 @@ export function mountCalculate(root: HTMLElement): () => void {
     };
     renderResults();
     renderPlots();
-    $('#results').scrollIntoView();
+    if (manual) $('#results').scrollIntoView();
   }
 
   // ----- events -----
@@ -215,13 +217,14 @@ export function mountCalculate(root: HTMLElement): () => void {
       const d = root.querySelector<HTMLDetailsElement>('#av-details');
       if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); }
     }
-    else if (el.id === 'clear') { st = { ...emptyState(st.units), insulinFactor: st.insulinFactor, glucoseFactor: st.glucoseFactor }; snap = undefined; $('#results').hidden = true; $('#calc-msg').textContent = ''; writeFields(); refresh(); }
+    else if (el.id === 'clear') { st = { ...emptyState(st.units), insulinFactor: st.insulinFactor, glucoseFactor: st.glucoseFactor }; clearTimeout(autoTimer); openCards.clear(); snap = undefined; $('#results').hidden = true; $('#calc-msg').textContent = ''; writeFields(); refresh(); }
     else if (el.id === 'example') { st = exampleState(st.units, st); writeFields(); refresh(); }
     else if (el.id === 'csv' && snap) {
       saveBlob(new Blob([csvText(orient(snap.results, orientMode), snap)], { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
     }
   });
 
+  wireSummary($('#summary'), openCards);
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   const onScheme = () => renderPlots();
   mq.addEventListener('change', onScheme);
@@ -229,5 +232,5 @@ export function mountCalculate(root: HTMLElement): () => void {
   void settingsOf;
   writeFields();
   refresh();
-  return () => { charts.forEach((c) => c.destroy()); mq.removeEventListener('change', onScheme); };
+  return () => { clearTimeout(autoTimer); charts.forEach((c) => c.destroy()); mq.removeEventListener('change', onScheme); };
 }
