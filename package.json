@@ -1,5 +1,6 @@
 {
   "name": "isat",
+  "version": "0.0.1",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -8,6 +9,8 @@
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:web": "npm run dev -w @isat/web",
+    "build:web": "npm run build -w @isat/web",
     "prepare": "git config core.hooksPath .githooks || true"
   }
 }
