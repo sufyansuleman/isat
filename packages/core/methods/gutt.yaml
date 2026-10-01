@@ -1,0 +1,12 @@
+id: gutt
+name: "Gutt index"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "\\frac{75000 + (G_0 - G_{120})\\cdot 0.19\\cdot BW}{120\\cdot \\bar G\\cdot \\ln \\bar I}"
+inputs: ["glucose_0", "glucose_120", "insulin_0", "insulin_120", "weight"]
+verification:
+  status: provisional
+  detail: "Log base not stated in any source read; ln matches InsuSensCalc. Glucose in mg/dL, insulin in uU/mL, weight in kg."
+legacy:
+  insusenscalc_column: Gutt_index
+  relation: equal

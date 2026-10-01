@@ -1,0 +1,12 @@
+id: matsuda_auc_3pt
+name: "Matsuda ISI (3-point, trapezoid mean)"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "10000 / \\sqrt{G_0 I_0 \\bar G \\bar I},\\ \\bar v = (15v_0+60v_{30}+45v_{120})/120"
+inputs: ["glucose_0,30,120", "insulin_0,30,120"]
+verification:
+  status: confirmed
+  detail: "Means are trapezoid AUC over 0/30/120 divided by 120."
+legacy:
+  insusenscalc_column: Matsuda_Auc
+  relation: equal

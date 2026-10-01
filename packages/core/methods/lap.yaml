@@ -1,0 +1,15 @@
+id: lap
+name: "Lipid Accumulation Product"
+category: lipid
+direction: higher_more_resistant
+formula_latex: "male: (waist-65) TG; female: (waist-58) TG"
+inputs: ["waist", "tg (mmol/L)", "sex"]
+verification:
+  status: confirmed
+  detail: "Computed for the participant's own sex only."
+legacy:
+  insusenscalc_column:
+    male: LAP_Men_inv
+    female: LAP_Women_inv
+  relation: negated
+  difference: "Legacy computes both sexes for every row and negates."

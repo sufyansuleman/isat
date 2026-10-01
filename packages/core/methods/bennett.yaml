@@ -1,0 +1,9 @@
+id: bennett
+name: "Bennett index"
+category: deferred
+direction: unknown
+deferred:
+  reason: "source not verified"
+legacy:
+  insusenscalc_column: Bennett
+  relation: none

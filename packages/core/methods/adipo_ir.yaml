@@ -1,0 +1,13 @@
+id: adipo_ir
+name: "Adipo-IR"
+category: lipid
+direction: higher_more_resistant
+formula_latex: "FFA \\times I_{0,\\mu U/mL}"
+inputs: ["ffa_0 (mmol/L)", "insulin_0 (uU/mL)"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Adipo_inv
+  relation: negated
+  difference: "Legacy column is the negated index."

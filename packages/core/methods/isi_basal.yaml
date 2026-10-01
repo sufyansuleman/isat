@@ -1,0 +1,12 @@
+id: isi_basal
+name: "ISI basal"
+category: fasting
+direction: higher_more_sensitive
+formula_latex: "10000 / (G_{0,mg/dL} \\times I_{0,\\mu U/mL})"
+inputs: ["glucose_0 (mg/dL)", "insulin_0 (uU/mL)"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Isi_basal
+  relation: equal

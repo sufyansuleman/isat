@@ -1,0 +1,9 @@
+id: homa2
+name: "HOMA2"
+category: deferred
+direction: unknown
+deferred:
+  reason: "closed-source model"
+legacy:
+  insusenscalc_column: null
+  relation: none

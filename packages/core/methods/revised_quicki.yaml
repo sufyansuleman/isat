@@ -1,0 +1,12 @@
+id: revised_quicki
+name: "Revised QUICKI"
+category: lipid
+direction: higher_more_sensitive
+formula_latex: "1 / (\\log_{10} I_0 + \\log_{10} G_0 + \\log_{10} FFA)"
+inputs: ["insulin_0 (uU/mL)", "glucose_0 (mg/dL)", "ffa_0 (mmol/L)"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Revised_QUICKI
+  relation: equal

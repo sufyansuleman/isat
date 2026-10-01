@@ -1,0 +1,11 @@
+id: mcauley
+name: "McAuley index"
+category: lipid
+direction: higher_more_sensitive
+formula_latex: "\\exp(2.63 - 0.28 \\ln I_0 - 0.31 \\ln TG)"
+inputs: ["insulin_0 (uU/mL)", "tg (mmol/L)"]
+verification:
+  status: confirmed
+legacy:
+  insusenscalc_column: McAuley_index
+  relation: equal

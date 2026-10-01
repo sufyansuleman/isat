@@ -1,0 +1,13 @@
+id: ig_ratio_120
+name: "Insulin-to-glucose ratio 120 min"
+category: ogtt
+direction: higher_more_resistant
+formula_latex: "I_{120,\\mu U/mL} / G_{120,mmol/L}"
+inputs: ["glucose_120", "insulin_120"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Ig_ratio_120
+  relation: negated
+  difference: "Legacy column is the negated index."

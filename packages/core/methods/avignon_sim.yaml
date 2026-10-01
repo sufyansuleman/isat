@@ -1,0 +1,9 @@
+id: avignon_sim
+name: "Avignon Sim"
+category: deferred
+direction: unknown
+deferred:
+  reason: "sample-dependent weight"
+legacy:
+  insusenscalc_column: Avignon_Sim
+  relation: none

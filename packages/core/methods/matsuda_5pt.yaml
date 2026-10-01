@@ -1,0 +1,14 @@
+id: matsuda_5pt
+name: "Matsuda ISI (5-point)"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "10000 / \\sqrt{G_0 I_0 \\bar G \\bar I}"
+inputs: ["glucose_0,30,60,90,120", "insulin_0,30,60,90,120"]
+source: "Matsuda and DeFronzo 1999 (full citation to be added)"
+verification:
+  status: confirmed
+  detail: "Original Matsuda and DeFronzo 1999 definition; arithmetic means of all five points. No legacy column."
+legacy:
+  insusenscalc_column: null
+  relation: none
+  difference: "New in ISAT; no InsuSensCalc equivalent."

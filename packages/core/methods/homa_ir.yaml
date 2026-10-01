@@ -1,0 +1,13 @@
+id: homa_ir
+name: "HOMA-IR"
+category: fasting
+direction: higher_more_resistant
+formula_latex: "G_0 \\times I_{0,\\mu U/mL} / 22.5"
+inputs: ["glucose_0 (mmol/L)", "insulin_0 (uU/mL)"]
+source: "Matthews 1985 (full citation to be added)"
+verification:
+  status: confirmed
+legacy:
+  insusenscalc_column: Homa_IR_inv
+  relation: negated
+  difference: "Legacy column is the negated index."

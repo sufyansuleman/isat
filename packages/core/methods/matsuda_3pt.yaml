@@ -1,0 +1,12 @@
+id: matsuda_3pt
+name: "Matsuda ISI (3-point)"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "10000 / \\sqrt{G_0 I_0 \\bar G \\bar I}"
+inputs: ["glucose_0,30,120", "insulin_0,30,120"]
+verification:
+  status: confirmed
+  detail: "Arithmetic mean of 0/30/120 values; equal to legacy only when all three points are present."
+legacy:
+  insusenscalc_column: Matsuda_ISI
+  relation: equal

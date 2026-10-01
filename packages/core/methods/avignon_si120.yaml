@@ -1,0 +1,12 @@
+id: avignon_si120
+name: "Avignon Si120"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "10^8 / (G_{120,mg/dL} I_{120,\\mu U/mL} BW \\cdot 150)"
+inputs: ["glucose_120", "insulin_120", "weight"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Avignon_Si120
+  relation: equal

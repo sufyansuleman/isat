@@ -1,0 +1,13 @@
+id: cederholm
+name: "Cederholm index"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "\\frac{75000 + (G_0 - G_{120})\\cdot 1.15\\cdot 180\\cdot 0.19\\cdot BW}{120\\cdot \\bar G\\cdot \\ln \\bar I}"
+inputs: ["glucose_0", "glucose_120", "insulin_0", "insulin_120", "weight"]
+verification:
+  status: provisional
+  detail: "Glucose in mmol/L. Log base unconfirmed; whether means use 0/120 only or all OGTT samples is unconfirmed."
+legacy:
+  insusenscalc_column: Cederholm_index
+  relation: different
+  difference: "InsuSensCalc 0.1.0 uses glucose in mg/dL in the numerator correction term, which can drive the index negative. Intentional correction."

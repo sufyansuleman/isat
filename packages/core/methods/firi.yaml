@@ -1,0 +1,27 @@
+id: firi
+name: FIRI
+full_name: Fasting Insulin Resistance Index
+category: fasting
+direction: higher_more_resistant
+formula_latex: '\mathrm{FIRI} = \frac{G_0 \times I_0}{25}'
+inputs:
+  - { var: glucose_0, unit: mmol_per_L }
+  - { var: insulin_0, unit: uU_per_mL }
+constraints:
+  - glucose_0 > 0
+  - insulin_0 > 0
+reference:
+  citation: "Duncan MH, Singh BM, Wise PH, Carter G, Alaghband-Zadeh J. A simple measure of insulin resistance. Lancet. 1995;346(8967):120-121."
+  pmid: 7564822
+notes:
+  - Glucose in mmol/L. The constant 25 is on the mmol/L scale (cf. HOMA-IR, 22.5 in mmol/L vs 405 in mg/dL).
+  - Reported upper limit of normal 2.7 corresponds to 6.1 mmol/L x 11.2 mU/L / 25.
+legacy:
+  insusenscalc_column: Firi
+  relation: different
+  difference: InsuSensCalc 0.1.0 uses glucose in mg/dL (18x larger). Intentional correction.
+verification:
+  status: supported_secondary
+  detail: Unit inferred from the 25 constant and the 2.7 reference limit; Duncan 1995 full text not yet read directly.
+limitations:
+  - Surrogate index from fasting values only; near-identical information to HOMA-IR.

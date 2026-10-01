@@ -1,0 +1,12 @@
+id: stumvoll_dem
+name: "Stumvoll (demographics)"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "0.222 - 0.00333 BMI - 0.0000779 I_{120} - 0.000422 age"
+inputs: ["insulin_120 (pmol/L)", "bmi", "age"]
+verification:
+  status: supported_secondary
+  detail: "Coefficients from secondary reproductions; primary not read in this project."
+legacy:
+  insusenscalc_column: Stumvoll_Demographics
+  relation: equal

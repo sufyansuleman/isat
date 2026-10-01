@@ -1,0 +1,12 @@
+id: tyg
+name: "TyG index"
+category: lipid
+direction: higher_more_resistant
+formula_latex: "\\ln(TG_{mg/dL} G_{0,mg/dL} / 2)"
+inputs: ["tg", "glucose_0"]
+verification:
+  status: confirmed
+legacy:
+  insusenscalc_column: TyG_inv
+  relation: negated
+  difference: "Legacy column is the negated index."

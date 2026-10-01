@@ -1,0 +1,13 @@
+id: tg_hdl
+name: "TG/HDL-C ratio"
+category: lipid
+direction: higher_more_resistant
+formula_latex: "TG_{mg/dL} / HDL_{mg/dL}"
+inputs: ["tg", "hdl"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: TG_HDL_C_inv
+  relation: negated
+  difference: "Legacy column is the negated index."

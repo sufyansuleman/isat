@@ -1,0 +1,28 @@
+id: quicki
+name: QUICKI
+full_name: Quantitative Insulin Sensitivity Check Index
+category: fasting
+direction: higher_more_sensitive
+formula_latex: '\mathrm{QUICKI} = \frac{1}{\log_{10}(I_0) + \log_{10}(G_0)}'
+inputs:
+  - { var: insulin_0, unit: uU_per_mL }
+  - { var: glucose_0, unit: mg_per_dL }
+constraints:
+  - insulin_0 > 0
+  - glucose_0 > 0
+  - log10(insulin_0) + log10(glucose_0) != 0
+reference:
+  citation: "Katz A, et al. Quantitative insulin sensitivity check index: a simple, accurate method for assessing insulin sensitivity in humans. J Clin Endocrinol Metab. 2000;85(7):2402-2410."
+  doi: 10.1210/jcem.85.7.6661
+notes:
+  - Logarithm is base 10. Healthy adults typically fall around 0.33-0.38; values near 0.2 indicate a natural-log implementation.
+verification:
+  status: confirmed
+legacy:
+  insusenscalc_column: Quicki
+  relation: different
+  difference: InsuSensCalc 0.1.0 uses natural log; values are not comparable. Intentional correction.
+limitations:
+  - Surrogate index derived from fasting values only; reflects mainly hepatic insulin sensitivity.
+  - Mathematically a transform of HOMA-IR; carries no independent information beyond it.
+  - Less reliable in people with markedly impaired insulin secretion (e.g. advanced type 2 diabetes).

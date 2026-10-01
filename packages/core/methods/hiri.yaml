@@ -1,0 +1,9 @@
+id: hiri
+name: "Hepatic insulin resistance index"
+category: deferred
+direction: unknown
+deferred:
+  reason: "source not verified"
+legacy:
+  insusenscalc_column: HIRI_inv
+  relation: none

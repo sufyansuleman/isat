@@ -1,0 +1,9 @@
+id: atiri
+name: "ATIRI"
+category: deferred
+direction: unknown
+deferred:
+  reason: "tracer/DXA, arbitrary units"
+legacy:
+  insusenscalc_column: null
+  relation: none

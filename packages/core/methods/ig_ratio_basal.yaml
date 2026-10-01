@@ -1,0 +1,13 @@
+id: ig_ratio_basal
+name: "Fasting insulin-to-glucose ratio"
+category: fasting
+direction: higher_more_resistant
+formula_latex: "I_{0,\\mu U/mL} / G_{0,mmol/L}"
+inputs: ["glucose_0 (mmol/L)", "insulin_0 (uU/mL)"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Ig_ratio_basal
+  relation: negated
+  difference: "Legacy column is the negated index."

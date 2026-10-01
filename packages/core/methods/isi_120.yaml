@@ -1,0 +1,12 @@
+id: isi_120
+name: "ISI 120"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "10000 / (G_{120,mg/dL} \\times I_{120,\\mu U/mL})"
+inputs: ["glucose_120", "insulin_120"]
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Isi_120
+  relation: equal

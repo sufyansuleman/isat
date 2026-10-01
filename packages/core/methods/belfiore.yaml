@@ -1,0 +1,71 @@
+# Three related methods from one source. All are SENSITIVITY indices (no inversion needed).
+# Every measured level/area is divided by the mean value of a normal reference group
+# ("taking the mean normal value as unit"), so a normal subject scores ~1 (range 0-2).
+source:
+  citation: "Belfiore F, Iannello S, Volpicelli G. Insulin sensitivity indices calculated from basal and OGTT-induced insulin, glucose, and FFA levels. Mol Genet Metab. 1998;63(2):134-141."
+  pmid: 9562967
+
+area_definitions:   # Belfiore areas are in units*h, NOT trapezoid in minutes
+  area_0_1_2h: '0.5*v(0) + v(60) + 0.5*v(120)'   # preferred
+  area_0_2h:   'v(0) + v(120)'                   # WHO 0/2 h simplification
+
+reference_means:
+  required: true
+  default_set: belfiore_1998
+  default_status: "Transcribed from Belfiore 1998 (user-supplied 2026-10-01); NOT yet verified against the PDF."
+  rule: >
+    Belfiore indices need normal-group reference means for the same quantities (basal level or the
+    same area definition). A default set, belfiore_1998, is provided and used unless the caller supplies
+    their own. If a caller supplies a reference set lacking a needed value the method is unavailable:
+    "requires normal-population reference means". The reference set name and values are recorded in
+    the details of every Belfiore result.
+  unit_handling: reference means pass through the central unit module, so subject/reference ratios are unit-free.
+  belfiore_1998:   # canonical units (insulin pmol/L, glucose mmol/L, FFA mmol/L; areas in unit*h)
+    basal: { insulin: 65.71, glucose: 5.08, ffa: 0.39888 }        # FFA 398.88 umol/L
+    area_0_2h: { insulin: 363.04, glucose: 10.26, ffa: 0.478 }    # FFA 478.00 umol/L*h
+    area_0_1_2h: { insulin: 638.00, glucose: 11.36, ffa: 0.29625 } # FFA 296.25 umol/L*h
+
+methods:
+  - id: belfiore_basal
+    verification: { status: confirmed, detail: "Formula confirmed; default reference means not yet verified against the PDF." }
+    legacy: { insusenscalc_column: Belfiore_basal, relation: different }
+    name: Belfiore ISI (basal)
+    category: fasting
+    direction: higher_more_sensitive
+    formula_latex: '\mathrm{ISI}_{basal} = \frac{2}{\frac{I_0}{\bar I_{0,ref}}\cdot\frac{G_0}{\bar G_{0,ref}} + 1}'
+    inputs: [insulin_0, glucose_0]
+    reference_inputs: [ref_insulin_0, ref_glucose_0]
+
+  - id: belfiore_isi_gly
+    verification: { status: confirmed, detail: "Formula confirmed; default reference means not yet verified against the PDF." }
+    legacy: { insusenscalc_column: Belfiore_isi_gly, relation: different }
+    name: Belfiore ISI(gly)
+    category: ogtt
+    direction: higher_more_sensitive
+    formula_latex: '\mathrm{ISI}_{gly} = \frac{2}{\frac{A_I}{\bar A_{I,ref}}\cdot\frac{A_G}{\bar A_{G,ref}} + 1}'
+    inputs: [insulin_0, insulin_120, glucose_0, glucose_120]   # + insulin_60, glucose_60 for 0-1-2 h
+    area: area_0_1_2h if 60-min values present, else area_0_2h; the variant used is reported with the result
+    reference_inputs: [ref_insulin_area, ref_glucose_area]     # must match the area variant used
+    note: 30-min values are not part of the Belfiore area and are ignored.
+
+  - id: belfiore_isi_ffa
+    verification: { status: confirmed, detail: "Formula confirmed; default reference means not yet verified against the PDF." }
+    legacy: { insusenscalc_column: Belfiore_inv_FFA, relation: different }
+    name: Belfiore ISI(FFA)
+    category: lipid
+    direction: higher_more_sensitive
+    formula_latex: '\mathrm{ISI}_{ffa} = \frac{2}{\frac{A_I}{\bar A_{I,ref}}\cdot\frac{A_F}{\bar A_{F,ref}} + 1}'
+    inputs: [insulin series, ffa series]   # basal form allowed: I0 and FFA0 with basal reference means
+    reference_inputs: [ref_insulin_(area|0), ref_ffa_(area|0)]
+    note: A single FFA value supports ONLY the basal form; an area is never synthesised from one value.
+
+legacy:
+  insusenscalc_columns: [Belfiore_basal, Belfiore_isi_gly, Belfiore_inv_FFA]
+  difference: >
+    InsuSensCalc 0.1.0 multiplies raw (unnormalised) values and minute-trapezoid areas, so results
+    collapse towards 0; Belfiore_inv_FFA builds an FFA "area" from a single value and negates a
+    sensitivity index. All three intentionally corrected.
+
+limitations:
+  - Results depend entirely on the chosen reference means; report them with every result.
+  - 'Reference means should match the local assay and population (Belfiore: "each laboratory should have its normal reference values").'

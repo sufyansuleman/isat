@@ -1,0 +1,11 @@
+id: bigtt_si
+name: "BIGTT-SI"
+category: ogtt
+direction: higher_more_sensitive
+formula_latex: "\\exp(4.90 - 0.00402 I_0 - 0.000556 I_{30} - 0.00127 I_{120} - 0.152 G_0 - 0.00871 G_{30} - 0.0373 G_{120} - 0.145\\,male - 0.0376 BMI)"
+inputs: ["glucose_0,30,120 (mmol/L)", "insulin_0,30,120 (pmol/L)", "bmi", "sex"]
+verification:
+  status: confirmed
+legacy:
+  insusenscalc_column: BigttSi
+  relation: equal

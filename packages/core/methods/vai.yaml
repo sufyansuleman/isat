@@ -1,0 +1,15 @@
+id: vai
+name: "Visceral Adiposity Index"
+category: lipid
+direction: higher_more_resistant
+formula_latex: "sex-specific; see docs/v1-methods-spec.md"
+inputs: ["waist", "bmi", "tg (mmol/L)", "hdl (mmol/L)", "sex"]
+verification:
+  status: confirmed
+  detail: "Computed for the participant's own sex only."
+legacy:
+  insusenscalc_column:
+    male: VAI_Men_inv
+    female: VAI_Women_inv
+  relation: negated
+  difference: "Legacy computes both sexes for every row and negates."

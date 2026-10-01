@@ -1,0 +1,13 @@
+id: raynaud
+name: "Raynaud index"
+category: fasting
+direction: higher_more_sensitive
+formula_latex: "40 / I_{0,\\mu U/mL}"
+inputs: ["insulin_0 (uU/mL)"]
+source: "Raynaud 1999 (full citation to be added)"
+verification:
+  status: legacy_match
+  detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
+legacy:
+  insusenscalc_column: Raynaud
+  relation: equal
