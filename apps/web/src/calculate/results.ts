@@ -176,7 +176,7 @@ export function cardHtml(r: Result, snap: Snapshot): string {
   return `<article class="card" data-id="${esc(r.id)}" data-status="ok">${head}
 <p class="value"><span class="num" data-full="${v}">${fmt4(v)}</span>${r.unit ? ` <span class="unit">${esc(r.unit)}</span>` : ''}</p>
 <p class="dir">${DIRECTION[r.direction] ?? ''}</p>
-${spec.formula_latex ? `<div class="formula" aria-label="Formula" data-latex="${esc(spec.formula_latex)}"><code>${esc(spec.formula_latex)}</code></div>` : ''}
+${cardFormulaHtml(spec, snap.state.sex)}
 <p><span class="badge" data-sv="${esc(sv)}">${esc(badgeText(sv))}</span></p>
 ${extra.join('')}
 ${inputs.length ? `<div class="extra"><strong>Inputs used:</strong><ul>${inputs.map((i) => `<li>${i}</li>`).join('')}</ul></div>` : ''}
@@ -184,7 +184,23 @@ ${warns ? `<div class="extra warn"><strong>Warnings:</strong><ul>${warns}</ul></
 ${lims ? `<div class="extra"><strong>Limitations:</strong><ul>${lims}</ul></div>` : ''}
 ${citationHtml(spec)}
 <details><summary>Verification note</summary><p>${esc(m?.source_verification_detail ?? '')}</p></details>
+<p class="method-link"><a href="#/methods/${esc(id)}">Method details</a></p>
 </article>`;
+}
+
+/** Formula block for a card; sex-specific variants (VAI, LAP) are all shown, the one used is highlighted. */
+export function cardFormulaHtml(spec: Spec, sex: '' | 'male' | 'female'): string {
+  const formula = (latex: string) =>
+    `<div class="formula" aria-label="Formula" data-latex="${esc(latex)}"><code>${esc(latex)}</code></div>`;
+  const variants = (spec.formula_variants ?? []) as Array<{ label: string; latex: string }>;
+  if (variants.length) {
+    const usedLabel = sex === 'male' ? 'Men' : sex === 'female' ? 'Women' : '';
+    return variants.map((v) => {
+      const used = v.label === usedLabel;
+      return `<div class="variant${used ? ' variant-used' : ''}"><span class="vlabel">${esc(v.label)}${used ? ' (used)' : ''}</span>${formula(v.latex)}</div>`;
+    }).join('');
+  }
+  return spec.formula_latex ? formula(spec.formula_latex) : '';
 }
 
 export function cardsHtml(oriented: Result[], snap: Snapshot): string {

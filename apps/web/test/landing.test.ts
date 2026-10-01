@@ -27,7 +27,11 @@ describe('landing counts', () => {
     expect(html).toContain(`${c.notIncluded} listed but not included`);
     expect(html).toContain(PRIVACY_STATEMENT);
   });
-  it('placeholder pages say under construction', () => {
-    expect(pageFor('/about')).toContain('under construction in this release');
+  it('about page has author, citation and privacy statement', () => {
+    const a = pageFor('/about');
+    expect(a).toContain('0000-0001-6612-6915');
+    expect(a).toContain('10.1210/clinem/dgae275');
+    expect(a).toContain('not sent to any server');
+    expect(a).not.toContain('under construction');
   });
 });

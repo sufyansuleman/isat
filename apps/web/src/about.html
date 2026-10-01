@@ -1,0 +1,37 @@
+<h1>About ISAT</h1>
+
+<p>ISAT (Insulin Sensitivity Analysis Tool) calculates surrogate indices of insulin sensitivity and resistance from fasting, oral glucose tolerance test (OGTT), lipid, anthropometric and tracer/DXA measurements. It is open source and runs entirely in the web browser.</p>
+
+<h2>Scientific scope</h2>
+<ul>
+  <li>The indices are <strong>surrogate measures</strong> derived from routine measurements. They are not direct measurements of insulin sensitivity (such as the hyperinsulinaemic-euglycaemic clamp) and are not a diagnosis.</li>
+  <li>ISAT does not apply universal cut-offs or classify results. Interpretation depends on the population, protocol and assay.</li>
+  <li>Every formula, reference and verification level is listed on the <a href="#/methods">Methods</a> page, which is generated from the same method files the calculation engine uses.</li>
+</ul>
+
+<h2>Privacy</h2>
+<p>All calculations run locally in your browser. Data you enter or upload are not sent to any server; the site is built to block outgoing network requests. Nothing is stored after you close the page.</p>
+
+<h2>Relationship to InsuSensCalc</h2>
+<p>ISAT is the successor to the R package <a href="https://github.com/sufyansuleman/InsuSensCalc">InsuSensCalc</a>. It accepts the same input column names. Where formulas are identical, results agree with InsuSensCalc 0.1.0 to a relative tolerance of 1e-9; a small number of indices were deliberately corrected to their published definitions, and each difference is documented on the Methods page.</p>
+
+<h2>How to cite</h2>
+<p>If you use ISAT, please cite the study for which the underlying index set was assembled:</p>
+<p class="citation">Suleman S, Madsen AL, Ängquist LH, Schubert M, Linneberg A, Loos RJF, Hansen T, Grarup N. Genetic Underpinnings of Fasting and Oral Glucose-stimulated Based Insulin Sensitivity Indices. J Clin Endocrinol Metab. 2024;109(11):2754-2763. doi: <a href="https://doi.org/10.1210/clinem/dgae275">10.1210/clinem/dgae275</a>. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/38635292/">38635292</a>.</p>
+<p>Please also cite the original publication of each index you report; these are listed with every result and on the Methods page. Please state the ISAT version (shown at the bottom of every page and in every results file).</p>
+
+<h2>Author</h2>
+<p><strong>Sufyan Suleman</strong><br>
+Department of Biomedicine, Aarhus University, Aarhus, Denmark<br>
+Affiliate Scientist, NNF Center for Genomic Mechanisms of Disease, Broad Institute of MIT and Harvard, Cambridge, MA, USA</p>
+<ul class="links">
+  <li>ORCID: <a href="https://orcid.org/0000-0001-6612-6915">0000-0001-6612-6915</a></li>
+  <li>Website: <a href="https://sufyansuleman.github.io/">sufyansuleman.github.io</a></li>
+  <li>GitHub: <a href="https://github.com/sufyansuleman">github.com/sufyansuleman</a></li>
+</ul>
+
+<h2>Contact, issues and contributions</h2>
+<p>Questions, bug reports and suggestions are welcome as <a href="https://github.com/sufyansuleman/isat/issues">GitHub issues</a>. The source code is at <a href="https://github.com/sufyansuleman/isat">github.com/sufyansuleman/isat</a>.</p>
+
+<h2>Licence</h2>
+<p>ISAT is released under the MIT licence. It is provided as is, without warranty, for research and educational use.</p>

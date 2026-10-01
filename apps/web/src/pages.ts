@@ -1,5 +1,6 @@
 import type { Route } from './router';
 import { methodCounts } from './counts';
+import aboutHtml from './about.html?raw';
 
 export const PRIVACY_STATEMENT =
   'Your data are processed locally in your browser and are not uploaded to a server for calculation.';
@@ -26,16 +27,12 @@ export function landing(): string {
 <p class="note">${SURROGATE_NOTE}</p>`;
 }
 
-function placeholder(title: string): string {
-  return `<h1>${title}</h1>\n<p>This page is under construction in this release.</p>`;
-}
-
 export function pageFor(route: Route): string {
   switch (route) {
     case '/': return landing();
     case '/calculate': return '<h1>Calculate</h1><div id="calculate-root"></div>';
     case '/methods': return '<h1>Methods</h1><div id="methods-root"></div>';
-    case '/about': return placeholder('About');
+    case '/about': return aboutHtml;
   }
 }
 

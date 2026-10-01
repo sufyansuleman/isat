@@ -151,7 +151,6 @@ export function conversionsHtml(): string {
 /** Notes that state reference ranges or cut-offs are not displayed. */
 const JUDGEMENT = /\b(abnormal|normal|good|bad|cut-?off)\b/i;
 
-const GH = 'https://github.com/sufyansuleman/isat/blob/main/';
 
 export function methodsHtml(): string {
   const included = registry.filter((m) => m.deferredReason === undefined);
@@ -165,8 +164,5 @@ export function methodsHtml(): string {
 <p id="m-count" class="hint" aria-live="polite"></p>
 <section id="m-main"><h2>Methods</h2>${included.map(entryHtml).join('\n')}</section>
 <section id="m-excluded"><h2>Not included in this version</h2>${excluded.map(entryHtml).join('\n')}</section>
-<h2>Unit conversions</h2>${conversionsHtml()}
-<h2>Validation</h2>
-<p>Where ISAT's formula is identical to InsuSensCalc 0.1.0, results agree to a relative tolerance of 1e-9 on the validation participants. Every method was also re-implemented independently in R from the published definitions; both implementations agree to 1e-9. Intentional differences are listed per method above.</p>
-<ul><li><a href="${GH}validation/run_insusenscalc.R">validation/run_insusenscalc.R</a></li><li><a href="${GH}validation/independent_check.R">validation/independent_check.R</a></li><li><a href="${GH}validation/legacy-differences.md">validation/legacy-differences.md</a></li></ul>`;
+<h2>Unit conversions</h2>${conversionsHtml()}`;
 }

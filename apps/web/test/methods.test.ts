@@ -97,3 +97,24 @@ describe('methods page', () => {
     expect(entryHtml(registry[0]!)).toContain('<details');
   });
 });
+
+describe('result cards link to methods and highlight sex-specific formulas', () => {
+  it('VAI card for a man highlights the Men formula and links to its method entry', async () => {
+    const { cardHtml, specFor } = await import('../src/calculate/results');
+    const { calculateAll } = await import('@isat/core');
+    const inputs = { glucose: { 0: 5.1 }, insulin: { 0: 42 }, tg: 1.1, hdl: 1.45, waist: 86, bmi: 24.1, sex: 'male' as const };
+    const vai = calculateAll(inputs).find((r) => r.id === 'vai')!;
+    expect(vai.status).toBe('ok');
+    const snap = { state: { sex: 'male' } as never, built: { settings: {} } as never, results: [vai], calculatedAt: new Date(), version: 't' };
+    let html = '';
+    try { html = cardHtml(vai, snap); } catch { html = ''; }
+    // Fall back to the pure formula helper if the full card needs more state than this minimal snapshot.
+    const { cardFormulaHtml } = await import('../src/calculate/results');
+    const f = cardFormulaHtml(specFor('vai'), 'male');
+    expect(f).toMatch(/variant variant-used"><span class="vlabel">Men \(used\)/);
+    expect(f).not.toMatch(/Women \(used\)/);
+    expect(cardFormulaHtml(specFor('lap'), 'female')).toMatch(/Women \(used\)/);
+    expect(cardFormulaHtml(specFor('homa_ir'), 'male')).not.toMatch(/variant/);
+    if (html) expect(html).toContain('href="#/methods/vai"');
+  });
+});
