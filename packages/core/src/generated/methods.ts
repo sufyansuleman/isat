@@ -407,26 +407,37 @@ export const methodSpecs = {
   },
   "ifc": {
     "id": "ifc",
-    "name": "Insulin fold change",
+    "name": "Insulin fold change (IFC)",
     "category": "ogtt",
     "direction": "higher_more_resistant",
-    "formula_latex": "\\ln(I_{120}/I_0)",
+    "formula_latex": "\\mathrm{IFC} = \\ln(I_{120}/I_0)",
     "inputs": [
       "insulin_0",
       "insulin_120"
     ],
+    "reference": {
+      "citation": "Williamson A, et al. Genome-wide association study and functional characterization identifies candidate genes for insulin-stimulated glucose uptake. Nat Genet. 2023;55(6):973-983.",
+      "doi": "10.1038/s41588-023-01408-9",
+      "pmid": 37291194,
+      "pmcid": "PMC7614755"
+    },
     "notes": [
-      "insulin fold change; not a clamp-validated insulin sensitivity index"
+      "Defined as ln(Insulin120 [pmol/L] / Insulin0 [pmol/L]); the ratio is unit-free, so any consistent insulin unit gives the same value.",
+      "Intended as a marker of post-challenge (postprandial) insulin resistance rather than whole-body or fasting insulin sensitivity."
     ],
     "verification": {
-      "status": "legacy_match",
-      "detail": "Formula matches InsuSensCalc."
+      "status": "confirmed",
+      "detail": "Definition confirmed in Williamson et al. 2023 (PMC full text); identical to InsuSensCalc."
     },
     "legacy": {
       "insusenscalc_column": "Ifc_inv",
       "relation": "negated",
       "difference": "Legacy column is the negated index."
-    }
+    },
+    "limitations": [
+      "Weak correlation with clamp-derived insulin sensitivity in RISC (rho = -0.18 vs M/I, P = 3.3e-9), expected because M/I reflects whole-body rather than post-challenge insulin sensitivity.",
+      "Reflects insulin secretion and clearance dynamics as well as insulin action."
+    ]
   },
   "ig_ratio_120": {
     "id": "ig_ratio_120",
