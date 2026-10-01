@@ -28,6 +28,6 @@ describe('landing counts', () => {
     expect(html).toContain(PRIVACY_STATEMENT);
   });
   it('placeholder pages say under construction', () => {
-    expect(pageFor('/batch')).toContain('under construction in this release');
+    expect(pageFor('/methods')).toContain('under construction in this release');
   });
 });

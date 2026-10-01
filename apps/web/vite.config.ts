@@ -26,5 +26,6 @@ export default defineConfig({
   define: { __ISAT_VERSION__: JSON.stringify(rootPkg.version) },
   plugins: [cspPlugin()],
   build: { modulePreload: { polyfill: false } },
+  worker: { format: 'es' },
   test: { environment: 'node' },
 });

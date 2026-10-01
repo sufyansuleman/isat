@@ -7,6 +7,7 @@ import {
   aucHtml, availabilityHtml, cardsHtml, csvText, resultsFooterHtml, unitLabel, type Snapshot,
 } from './results';
 import { hydrateFormulas } from './mathml';
+import { unitsSectionHtml } from './units';
 import { drawChart, downloadPng, saveBlob, seriesPoints, type Chart } from './plots';
 
 const opt = (v: string, cur: string, label = unitLabel(v)) => `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
@@ -18,27 +19,9 @@ function field(key: string, label: string, hint = ''): string {
 }
 
 function formHtml(st: FormState): string {
-  const u = st.units;
-  const sel = (key: string, o: string) => `<select id="u-${key}" data-u="${key}">${o}</select>`;
   return `
-<section aria-labelledby="h-units"><h2 id="h-units">Units</h2>
-<div class="units">
-  <label for="u-glucose">Glucose</label>${sel('glucose', opt('mmol/L', u.glucose) + opt('mg/dL', u.glucose))}
-  <label for="u-insulin">Insulin</label>${sel('insulin', opt('pmol/L', u.insulin) + opt('uU/mL', u.insulin, 'µU/mL (= mU/L)'))}
-  <label for="u-tg">TG</label>${sel('tg', opt('mmol/L', u.tg) + opt('mg/dL', u.tg))}
-  <label for="u-hdl">HDL</label>${sel('hdl', opt('mmol/L', u.hdl) + opt('mg/dL', u.hdl))}
-  <label for="u-ffa">FFA</label>${sel('ffa', opt('mmol/L', u.ffa) + opt('umol/L', u.ffa))}
-</div>
-<details class="factors"><summary>Conversion factors</summary>
-  <div class="units">
-    <label for="x-insulin">Insulin, pmol/L per µU/mL</label>
-    <select id="x-insulin" data-x="insulinFactor"><option value="6">6.0 (default)</option><option value="6.945">6.945</option></select>
-    <label for="x-glucose">Glucose, mg/dL per mmol/L</label>
-    <select id="x-glucose" data-x="glucoseFactor"><option value="18">18 (default)</option><option value="18.016">18.016</option></select>
-  </div>
-</details>
+${unitsSectionHtml(st.units, "m")}
 <p class="hint">Changing a unit changes how your typed numbers are interpreted; it does not rewrite them.</p>
-</section>
 
 <section aria-labelledby="h-table"><h2 id="h-table">Fasting and OGTT values</h2>
 <div class="table-wrap"><table class="ogtt"><thead><tr>

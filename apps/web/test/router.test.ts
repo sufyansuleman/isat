@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseHash, ROUTES } from '../src/router';
+import { parseHash, parseLocation, ROUTES } from '../src/router';
 
 describe('parseHash', () => {
   it('maps known routes', () => {
@@ -11,6 +11,14 @@ describe('parseHash', () => {
     expect(parseHash('#/nope')).toBe('/');
   });
   it('ignores a trailing slash', () => {
-    expect(parseHash('#/batch/')).toBe('/batch');
+    expect(parseHash('#/methods/')).toBe('/methods');
+  });
+
+  it('opens upload mode from the query, the sub-path and the retired batch route', () => {
+    expect(parseLocation('#/calculate?mode=upload')).toEqual({ route: '/calculate', mode: 'upload' });
+    expect(parseLocation('#/calculate/upload')).toEqual({ route: '/calculate', mode: 'upload' });
+    expect(parseLocation('#/batch')).toEqual({ route: '/calculate', mode: 'upload' });
+    expect(parseLocation('#/calculate')).toEqual({ route: '/calculate', mode: 'manual' });
+    expect(parseLocation('#/methods?mode=upload').mode).toBe('manual');
   });
 });

@@ -7,7 +7,7 @@ export const SURROGATE_NOTE =
   'These are surrogate indices of insulin sensitivity, not direct measurements, and are not a diagnosis.';
 
 const NAV: Array<[Route, string]> = [
-  ['/', 'Home'], ['/calculate', 'Calculate'], ['/batch', 'Batch'], ['/methods', 'Methods'], ['/about', 'About'],
+  ['/', 'Home'], ['/calculate', 'Calculate'], ['/methods', 'Methods'], ['/about', 'About'],
 ];
 
 export function landing(): string {
@@ -18,8 +18,7 @@ export function landing(): string {
 <p>Calculate and explore insulin sensitivity indices from metabolic data.</p>
 <p class="actions">
   <a class="button primary" href="#/calculate">Start calculation</a>
-  <a class="button" href="#/batch">Upload data</a>
-  <a class="button" href="#/batch">Batch analysis</a>
+  <a class="button" href="#/calculate?mode=upload">Upload data</a>
   <a class="button" href="#/methods">Methods</a>
 </p>
 <p id="method-counts"><strong>${c.available} methods available</strong>; ${c.notIncluded} listed but not included.</p>
@@ -35,7 +34,6 @@ export function pageFor(route: Route): string {
   switch (route) {
     case '/': return landing();
     case '/calculate': return '<h1>Calculate</h1><div id="calculate-root"></div>';
-    case '/batch': return placeholder('Batch analysis');
     case '/methods': return placeholder('Methods');
     case '/about': return placeholder('About');
   }
