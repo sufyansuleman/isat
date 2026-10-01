@@ -31,3 +31,6 @@ desktop.ini
 *.log
 npm-debug.log*
 .hooktest/
+
+# Local audit notes (not published)
+docs/audit.md
