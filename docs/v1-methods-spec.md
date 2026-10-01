@@ -61,7 +61,7 @@ Note on VAI and LAP: ISAT computes the formula for the participant's own sex onl
 
 ## Verification status (emit as metadata; `provisional` adds a warning to every result)
 - **confirmed:** quicki, homa_ir, matsuda_*, bigtt_si, vai, lap, mcauley, tyg, belfiore_* (formula).
-- **supported_secondary:** hiri (form tabulated in Gastaldelli 2022, doi:10.1002/oby.23503; Abdul-Ghani 2007 originally used 0–30 min AUCs, differing by a constant factor only), avignon_sim (SiM = (0.137·Sib + Si2h)/2 per Avignon 1999 as reported in secondary sources; the abstract does not state the coefficient), firi (Duncan 1995 reproduced in secondary sources; primary not read).
+- **supported_secondary:** hiri (form tabulated in Gastaldelli 2022, doi:10.1002/oby.23503; Abdul-Ghani 2007 originally used 0â€“30 min AUCs, differing by a constant factor only), avignon_sim (SiM = (0.137Â·Sib + Si2h)/2 per Avignon 1999 as reported in secondary sources; the abstract does not state the coefficient), firi (Duncan 1995 reproduced in secondary sources; primary not read).
 - **legacy_match:** bennett, liri, lipo, atiri (formula reproduces InsuSensCalc; primary sources not read).
 - **confirmed (added 2026-10-01):** ifc, Williamson et al. Nat Genet 2023;55:973-983 (PMC7614755), IFC = ln(I120/I0).
 - **provisional:**
