@@ -95,3 +95,13 @@ table { border-collapse: collapse; width: 100%; }
 .plist { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .plist button { padding: 2px 8px; }
 progress { width: min(100%, 20rem); vertical-align: middle; }
+
+/* Usage guide */
+.guide { border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; margin: 8px 0 16px; background: var(--surface); }
+.guide summary { font-weight: 600; font-size: 1.05rem; padding: 10px 0; color: var(--accent); }
+.guide[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.guide h3 { margin: 14px 0 4px; }
+.guide ol, .guide ul { margin: 4px 0; padding-left: 1.4rem; }
+.guide-table { display: block; max-width: 100%; overflow-x: auto; font-size: 0.875rem; }
+.guide-table th, .guide-table td { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.guide code { font-size: 0.85em; overflow-wrap: anywhere; }

@@ -29,7 +29,7 @@ interface Run {
 const html = `
 <section aria-labelledby="up-h-file"><h2 id="up-h-file">Upload a file</h2>
 <div id="up-drop" class="drop">
-  <p><label for="up-file">Choose a .csv or .tsv file</label>
+  <p><label for="up-file">Choose a .csv or .tsv file</label> (<a href="isat-template.csv" download>Download a template</a>)
   <input id="up-file" type="file" accept=".csv,.tsv"></p>
   <p class="hint">or drop it here. The file is read in this browser and is not uploaded. Limit: 100,000 rows / 25 MB.</p>
 </div>

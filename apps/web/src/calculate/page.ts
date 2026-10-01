@@ -1,5 +1,6 @@
 import { mountCalculate } from './view';
 import { mountUpload } from '../upload/view';
+import guideHtml from './guide.html?raw';
 
 export type Mode = 'manual' | 'upload';
 
@@ -7,7 +8,7 @@ const TABS: Array<[Mode, string]> = [['manual', 'Enter values (one person)'], ['
 
 /** Calculate page: accessible tabs (roving tabindex, arrow keys, Home/End) over the two modes. */
 export function mountCalculatePage(root: HTMLElement, initial: Mode): () => void {
-  root.innerHTML = `<div role="tablist" aria-label="Input method" class="tabs">${TABS.map(([m, label]) =>
+  root.innerHTML = `${guideHtml}<div role="tablist" aria-label="Input method" class="tabs">${TABS.map(([m, label]) =>
     `<button type="button" role="tab" id="tab-${m}" aria-controls="panel-${m}" data-mode="${m}">${label}</button>`).join('')}</div>
 <div role="tabpanel" id="panel-manual" aria-labelledby="tab-manual"></div>
 <div role="tabpanel" id="panel-upload" aria-labelledby="tab-upload" hidden></div>`;

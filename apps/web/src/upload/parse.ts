@@ -56,7 +56,7 @@ export function parseDelimited(input: string, delimiter: string): string[][] {
 // ---------- column recognition (mirrors core parseWideRow) ----------
 export interface ColumnInfo { name: string; kind: 'id' | 'variable' | 'ignored'; variable?: string }
 
-const SCALARS: Record<string, string> = {
+export const SCALARS: Record<string, string> = {
   tg: 'triglycerides', hdl: 'HDL cholesterol', hdl_c: 'HDL cholesterol', weight: 'weight', bmi: 'BMI', waist: 'waist',
   age: 'age', fat_mass: 'fat mass', rate_glycerol: 'glycerol Ra', rate_palmitate: 'palmitate Ra', sex: 'sex',
 };
