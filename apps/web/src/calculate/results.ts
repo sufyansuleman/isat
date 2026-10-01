@@ -78,7 +78,7 @@ export function usedInputs(id: string, r: Result, snap: Snapshot): string[] {
       for (const t of ts) {
         const raw = q === 'ffa' ? st.ffa.trim() : enteredSeries(st, q, t);
         const key = `${q}${t}`;
-        if (raw && !seen.has(key)) { seen.add(key); out.push(`${q} at ${t} min: ${esc(raw)} ${esc(unitLabel(st.units[q]))}`); }
+        if (raw && !seen.has(key)) { seen.add(key); out.push(`${t === 0 ? `${q}, fasting` : `${q} at ${t} min`}: ${esc(raw)} ${esc(unitLabel(st.units[q]))}`); }
       }
       continue;
     }
@@ -211,7 +211,7 @@ export function aucHtml(inputs: Inputs, st: FormState, settings: Built['settings
   const row = (label: string, q: 'glucose' | 'insulin', canon: Unit) => {
     const s = sm[q];
     const u = st.units[q] as Unit;
-    const t = s.time_points.length ? s.time_points.join(', ') + ' min' : 'none';
+    const t = s.time_points.length ? s.time_points.map((x) => (x === 0 ? 'fasting' : String(x))).join(', ') + ' min' : 'none';
     const val = s.auc === null ? `not available (${esc(s.reason ?? '')})` : `${fmt4(toUnit(s.auc, q, canon, u, settings))} ${esc(unitLabel(u))}·min`;
     return `<tr><th scope="row">${label}</th><td>${val}</td><td>${esc(t)}</td></tr>`;
   };

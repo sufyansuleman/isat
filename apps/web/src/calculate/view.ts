@@ -23,7 +23,8 @@ function formHtml(st: FormState): string {
 ${unitsSectionHtml(st.units, "m")}
 <p class="hint">Changing a unit changes how your typed numbers are interpreted; it does not rewrite them.</p>
 
-<section aria-labelledby="h-table"><h2 id="h-table">Fasting and OGTT values</h2>
+<section aria-labelledby="h-table"><h2 id="h-table">Glucose and insulin: fasting and OGTT</h2>
+<p>Row 0 is the fasting sample, taken before the 75 g oral glucose drink. Other rows are minutes after the drink. For fasting-only data, fill row 0 and leave the others empty.</p>
 <div class="table-wrap"><table class="ogtt"><thead><tr>
 <th scope="col">Time (min)</th><th scope="col">Glucose (<span data-ul="glucose"></span>)</th><th scope="col">Insulin (<span data-ul="insulin"></span>)</th><th scope="col"><span class="sr">Remove row</span></th>
 </tr></thead><tbody id="rows"></tbody></table></div>
@@ -78,11 +79,16 @@ export function mountCalculate(root: HTMLElement): () => void {
 
   // ----- DOM <-> state -----
   function renderRows(): void {
-    $('#rows').innerHTML = st.rows.map((r, k) => `<tr>
-<td><input data-r="${k}" data-c="time" type="text" inputmode="decimal" aria-label="Time in minutes, row ${k + 1}" value="${esc(r.time)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:time"></span></td>
-<td><input data-r="${k}" data-c="glucose" type="text" inputmode="decimal" aria-label="Glucose, row ${k + 1}" value="${esc(r.glucose)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:glucose"></span></td>
-<td><input data-r="${k}" data-c="insulin" type="text" inputmode="decimal" aria-label="Insulin, row ${k + 1}" value="${esc(r.insulin)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:insulin"></span></td>
-<td><button type="button" data-rm="${k}" aria-label="Remove row ${k + 1}">Remove</button></td></tr>`).join('');
+    $('#rows').innerHTML = st.rows.map((r, k) => {
+      const time = k === 0
+        ? `<span class="fasting-label">0 min — fasting (before glucose drink)</span>`
+        : `<input data-r="${k}" data-c="time" type="text" inputmode="decimal" aria-label="Minutes after drink, row ${k + 1}" value="${esc(r.time)}" placeholder="—" autocomplete="off"> <span class="after">min after drink</span><span class="err" data-e="row:${k}:time"></span>`;
+      const rm = k === 0 ? '' : `<button type="button" data-rm="${k}" aria-label="Remove row ${k + 1}">Remove</button>`;
+      return `<tr><td>${time}</td>
+<td><input data-r="${k}" data-c="glucose" type="text" inputmode="decimal" aria-label="Glucose, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.glucose)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:glucose"></span></td>
+<td><input data-r="${k}" data-c="insulin" type="text" inputmode="decimal" aria-label="Insulin, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.insulin)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:insulin"></span></td>
+<td>${rm}</td></tr>`;
+    }).join('');
   }
   function writeFields(): void {
     root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-f]').forEach((el) => {
@@ -185,7 +191,7 @@ export function mountCalculate(root: HTMLElement): () => void {
     const el = (e.target as HTMLElement).closest('button');
     if (!el) return;
     if (el.id === 'add-row') { st.rows.push({ time: '', glucose: '', insulin: '' }); renderRows(); refresh(); }
-    else if (el.dataset['rm'] !== undefined) { st.rows.splice(Number(el.dataset['rm']), 1); renderRows(); refresh(); }
+    else if (el.dataset["rm"] !== undefined && el.dataset["rm"] !== "0") { st.rows.splice(Number(el.dataset['rm']), 1); renderRows(); refresh(); }
     else if (el.id === 'calc') calculate();
     else if (el.id === 'clear') { st = { ...emptyState(st.units), insulinFactor: st.insulinFactor, glucoseFactor: st.glucoseFactor }; snap = undefined; $('#results').hidden = true; $('#calc-msg').textContent = ''; writeFields(); refresh(); }
     else if (el.id === 'example') { st = exampleState(st.units, st); writeFields(); refresh(); }

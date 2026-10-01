@@ -75,7 +75,7 @@ describe('parsing', () => {
   it('maps columns case-insensitively and marks unknown ones ignored', () => {
     expect(classifyColumn('HDL_c').variable).toBe('HDL cholesterol');
     expect(classifyColumn('g120').variable).toBe('glucose at 120 min');
-    expect(classifyColumn('FFA').variable).toBe('FFA at 0 min');
+    expect(classifyColumn('FFA').variable).toBe('fasting FFA');
     expect(classifyColumn('Id').kind).toBe('id');
     expect(classifyColumn('notes').kind).toBe('ignored');
   });

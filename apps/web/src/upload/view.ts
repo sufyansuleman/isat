@@ -29,7 +29,7 @@ interface Run {
 const html = `
 <section aria-labelledby="up-h-file"><h2 id="up-h-file">Upload a file</h2>
 <div id="up-drop" class="drop">
-  <p><label for="up-file">Choose a .csv or .tsv file</label> (<a href="isat-template.csv" download>Download a template</a>)
+  <p><label for="up-file">Choose a .csv or .tsv file</label> (<a href="isat-template.csv" download>Download an example file</a>)
   <input id="up-file" type="file" accept=".csv,.tsv"></p>
   <p class="hint">or drop it here. The file is read in this browser and is not uploaded. Limit: 100,000 rows / 25 MB.</p>
 </div>
@@ -76,7 +76,9 @@ export function mountUpload(root: HTMLElement): () => void {
     const l = loaded!;
     const idCol = l.columns.find((c) => c.kind === 'id');
     const recognised = l.columns.filter((c) => c.kind === 'variable').length;
-    const map = l.columns.map((c) => `<tr><td>${esc(c.name)}</td><td>${c.kind === 'ignored' ? 'ignored' : esc(c.variable ?? '')}</td></tr>`).join('');
+    const shown = (c: (typeof l.columns)[number]) => c.kind === "ignored" ? "ignored" : esc(c.variable ?? "") + (c.canonical && c.canonical.toLowerCase() !== c.name.trim().toLowerCase() ? ` (${esc(c.canonical)})` : "");
+    const map = l.columns.map((c) => `<tr><td>${esc(c.name)}</td><td>${shown(c)}</td></tr>`).join("");
+    const blocked = recognised === 0 || l.fileErrors.length > 0;
     const probs = l.problems.slice(0, 20).map((p) => `<li>Row ${p.row} (${esc(p.id)}): ${p.messages.map(esc).join('; ')}</li>`).join('');
     const cols = l.header.map((h) => `<th scope="col">${esc(h)}</th>`).join('');
     const prev = l.preview.map((r) => `<tr>${l.header.map((_, k) => `<td>${esc(r[k] ?? '')}</td>`).join('')}</tr>`).join('');
@@ -89,6 +91,7 @@ export function mountUpload(root: HTMLElement): () => void {
 <li>${idCol ? `Participant IDs from column "${esc(idCol.name)}", kept exactly as text.` : 'No participant_id column found; IDs generated as row_1, row_2, ...'}</li>
 ${l.duplicateIds.length ? `<li class="warn">Warning: ${l.duplicateIds.length} duplicate ID${l.duplicateIds.length > 1 ? 's' : ''} (for example ${esc(l.duplicateIds.slice(0, 3).join(', '))}).</li>` : ''}
 ${recognised === 0 ? '<li class="err">No recognised data columns. Check the column names.</li>' : ''}
+${l.fileErrors.map((e) => `<li class="err">${esc(e)}.</li>`).join("")}
 </ul>
 <h3>Column mapping</h3>
 <div class="table-wrap"><table class="ogtt"><thead><tr><th scope="col">Column</th><th scope="col">Recognised as</th></tr></thead><tbody>${map}</tbody></table></div>
@@ -105,7 +108,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
 <h3>Preview (first ${l.preview.length} rows)</h3>
 <div class="table-wrap"><table class="ogtt"><thead><tr>${cols}</tr></thead><tbody>${prev}</tbody></table></div>
 </section>
-<p class="actions"><button type="button" class="primary" id="up-calc"${recognised === 0 ? ' disabled' : ''}>Calculate</button></p>
+<p class="actions"><button type="button" class="primary" id="up-calc"${blocked ? " disabled" : ""}>Calculate</button></p>
 <div id="up-progress-box" hidden>
 <p><progress id="up-progress" max="100" value="0" aria-label="Progress"></progress> <span id="up-progress-text" aria-live="polite"></span>
 <button type="button" id="up-cancel">Cancel</button></p></div>`;
@@ -125,6 +128,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
 
   // ---------- calculation ----------
   function startRun(): void {
+    if (loaded!.fileErrors.length) return;
     const l = loaded!;
     resetResults();
     const settings = { glucose_mg_per_dL_per_mmol: Number(factors.glucose), insulin_pmol_per_uU: Number(factors.insulin) };

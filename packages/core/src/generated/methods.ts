@@ -83,7 +83,7 @@ export const methodSpecs = {
   "avignon_si0": {
     "id": "avignon_si0",
     "name": "Avignon Sib (Si0)",
-    "category": "ogtt",
+    "category": "fasting",
     "direction": "higher_more_sensitive",
     "formula_latex": "10^8 / (G_{0,mg/dL} I_{0,\\mu U/mL} BW \\cdot 150)",
     "inputs": [

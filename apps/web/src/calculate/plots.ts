@@ -43,7 +43,7 @@ export function drawChart(block: HTMLElement, pts: PlotPoints, label: string, un
       scales: { x: { time: false } },
       cursor: { drag: { x: false, y: false } },
       axes: [
-        { ...axis, label: 'Time (min)', labelFont: '13px system-ui, sans-serif', font: '12px system-ui, sans-serif' },
+        { ...axis, label: 'Time (min); 0 = fasting sample', values: (_u: unknown, vals: number[]) => vals.map((v) => (v === 0 ? '0 (fasting)' : String(v))), labelFont: '13px system-ui, sans-serif', font: '12px system-ui, sans-serif' },
         { ...axis, label: `${label} (${unitLabel(unit)})`, labelFont: '13px system-ui, sans-serif', font: '12px system-ui, sans-serif', size: 60 },
       ],
       series: [
