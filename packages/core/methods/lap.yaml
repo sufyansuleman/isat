@@ -4,6 +4,11 @@ category: lipid
 direction: higher_more_resistant
 formula_latex: "male: (waist-65) TG; female: (waist-58) TG"
 inputs: ["waist", "tg (mmol/L)", "sex"]
+reference:
+  citation: "Kahn HS. The \"lipid accumulation product\" performs better than the body mass index for recognizing cardiovascular risk: a population-based comparison. BMC Cardiovasc Disord. 2005;5:26."
+  doi: 10.1186/1471-2261-5-26
+  pmid: 16150143
+  pmcid: PMC1236917
 verification:
   status: confirmed
   detail: "Computed for the participant's own sex only."
@@ -13,5 +18,5 @@ legacy:
     female: LAP_Women_inv
   relation: negated
   difference: "Legacy computes both sexes for every row and negates."
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: directly_verified
+source_verification_detail: "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women."

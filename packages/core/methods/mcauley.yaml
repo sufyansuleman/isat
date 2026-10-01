@@ -4,10 +4,14 @@ category: lipid
 direction: higher_more_sensitive
 formula_latex: "\\exp(2.63 - 0.28 \\ln I_0 - 0.31 \\ln TG)"
 inputs: ["insulin_0 (uU/mL)", "tg (mmol/L)"]
+reference:
+  citation: "McAuley KA, Williams SM, Mann JI, Walker RJ, Lewis-Barned NJ, Temple LA, Duncan AW. Diagnosing insulin resistance in the general population. Diabetes Care. 2001;24(3):460-464."
+  doi: 10.2337/diacare.24.3.460
+  pmid: 11289468
 verification:
   status: confirmed
 legacy:
   insusenscalc_column: McAuley_index
   relation: equal
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: directly_verified
+source_verification_detail: "McAuley 2001 abstract: Mffm/I = exp[2.63 − 0.28 ln(insulin) − 0.31 ln(TAG)]."

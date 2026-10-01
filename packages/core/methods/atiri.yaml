@@ -4,6 +4,16 @@ category: tracer_dxa
 direction: higher_more_resistant
 formula_latex: "rate_{palmitate} \\times I_{0,\\mu U/mL}"
 inputs: ["rate_palmitate (as supplied)", "insulin_0"]
+reference:
+  citation: "Fabbrini E, Magkos F, Conte C, Mittendorfer B, Patterson BW, Okunade AL, Klein S. Validation of a novel index to assess insulin resistance of adipose tissue lipolytic activity in obese subjects. J Lipid Res. 2012;53(2):321-324."
+  doi: 10.1194/jlr.d020321
+  pmid: 22147838
+  pmcid: PMC3269158
+secondary_references:
+  - citation: "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563."
+    doi: 10.1002/oby.23503
+    pmid: 35894085
+    pmcid: PMC9542105
 notes: ["tracer rate units as supplied by user"]
 verification:
   status: legacy_match
@@ -12,5 +22,5 @@ legacy:
   insusenscalc_column: ATIRI_inv
   relation: negated
   difference: "Legacy column is the negated index."
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: secondary_source_confirmed
+source_verification_detail: "AT-IRI = RaPalmitate × I0 (mU/L), Gastaldelli 2022 Eq. 11; index introduced by Fabbrini 2012."

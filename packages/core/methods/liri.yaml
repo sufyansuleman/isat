@@ -4,6 +4,15 @@ category: tracer_dxa
 direction: higher_more_resistant
 formula_latex: "-0.091 + 0.4\\log_{10}\\bar I_{0,30,pmol/L} + 0.346\\log_{10}(FM/BW\\cdot 100) - 0.408\\log_{10}HDL_{mg/dL} + 0.435\\log_{10}BMI"
 inputs: ["insulin_0,30", "fat_mass (kg)", "weight (kg)", "hdl", "bmi"]
+reference:
+  citation: "Vangipurapu J, Stančáková A, Kuulasmaa T, Paananen J, Kuusisto J; EGIR-RISC Study Group; Ferrannini E, Laakso M. A novel surrogate index for hepatic insulin resistance. Diabetologia. 2011;54(3):540-543."
+  doi: 10.1007/s00125-010-1966-7
+  pmid: 21107521
+secondary_references:
+  - citation: "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563."
+    doi: 10.1002/oby.23503
+    pmid: 35894085
+    pmcid: PMC9542105
 verification:
   status: legacy_match
   detail: "Formula matches InsuSensCalc. Insulin mean goes through the units module so the configured insulin factor is respected."
@@ -11,5 +20,5 @@ legacy:
   insusenscalc_column: LIRI_inv
   relation: negated
   difference: "Legacy column is the negated index."
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: secondary_source_confirmed
+source_verification_detail: "Formula as printed in Gastaldelli 2022 Table 3 (citing Vangipurapu 2011); coefficients not re-checked against the primary paper."

@@ -4,6 +4,19 @@ category: lipid
 direction: higher_more_resistant
 formula_latex: "FFA \\times I_{0,\\mu U/mL}"
 inputs: ["ffa_0 (mmol/L)", "insulin_0 (uU/mL)"]
+reference:
+  citation: "Gastaldelli A, Gaggini M, DeFronzo RA. Role of Adipose Tissue Insulin Resistance in the Natural History of Type 2 Diabetes: Results From the San Antonio Metabolism Study. Diabetes. 2017;66(4):815-822."
+  doi: 10.2337/db16-1167
+  pmid: 28052966
+secondary_references:
+  - citation: "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563."
+    doi: 10.1002/oby.23503
+    pmid: 35894085
+    pmcid: PMC9542105
+  - citation: "Groop LC, Bonadonna RC, DelPrato S, Ratheiser K, Zyck K, Ferrannini E, DeFronzo RA. Glucose and free fatty acid metabolism in non-insulin-dependent diabetes mellitus. Evidence for multiple sites of insulin resistance. J Clin Invest. 1989;84(1):205-213."
+    doi: 10.1172/jci114142
+    pmid: 2661589
+    pmcid: PMC303971
 verification:
   status: legacy_match
   detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -11,5 +24,5 @@ legacy:
   insusenscalc_column: Adipo_inv
   relation: negated
   difference: "Legacy column is the negated index."
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: secondary_source_confirmed
+source_verification_detail: "Adipo-IR = FFA × I0 (mU/L), Gastaldelli 2022 Table 3 / Eq. 9."

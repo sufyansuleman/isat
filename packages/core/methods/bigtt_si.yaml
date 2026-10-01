@@ -4,6 +4,10 @@ category: ogtt
 direction: higher_more_sensitive
 formula_latex: "\\exp(4.90 - 0.00402 I_0 - 0.000556 I_{30} - 0.00127 I_{120} - 0.152 G_0 - 0.00871 G_{30} - 0.0373 G_{120} - 0.145\\,male - 0.0376 BMI)"
 inputs: ["glucose_0,30,120 (mmol/L)", "insulin_0,30,120 (pmol/L)", "bmi", "sex"]
+reference:
+  citation: "Hansen T, Drivsholm T, Urhammer SA, Palacios RT, Vølund A, Borch-Johnsen K, Pedersen O. The BIGTT test: a novel test for simultaneous measurement of pancreatic beta-cell function, insulin sensitivity, and glucose tolerance. Diabetes Care. 2007;30(2):257-262."
+  doi: 10.2337/dc06-1240
+  pmid: 17259491
 verification:
   status: confirmed
 legacy:

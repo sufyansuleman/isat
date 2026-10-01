@@ -4,7 +4,10 @@ category: fasting
 direction: higher_more_resistant
 formula_latex: "G_0 \\times I_{0,\\mu U/mL} / 22.5"
 inputs: ["glucose_0 (mmol/L)", "insulin_0 (uU/mL)"]
-source: "Matthews 1985 (full citation to be added)"
+reference:
+  citation: "Matthews DR, Hosker JP, Rudenski AS, Naylor BA, Treacher DF, Turner RC. Homeostasis model assessment: insulin resistance and beta-cell function from fasting plasma glucose and insulin concentrations in man. Diabetologia. 1985;28(7):412-419."
+  doi: 10.1007/bf00280883
+  pmid: 3899825
 verification:
   status: confirmed
 legacy:

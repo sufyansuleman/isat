@@ -4,6 +4,10 @@ category: lipid
 direction: higher_more_resistant
 formula_latex: "\\ln(TG_{mg/dL} G_{0,mg/dL} / 2)"
 inputs: ["tg", "glucose_0"]
+reference:
+  citation: "Simental-Mendía LE, Rodríguez-Morán M, Guerrero-Romero F. The product of fasting glucose and triglycerides as surrogate for identifying insulin resistance in apparently healthy subjects. Metab Syndr Relat Disord. 2008;6(4):299-304."
+  doi: 10.1089/met.2008.0034
+  pmid: 19067533
 verification:
   status: confirmed
 legacy:

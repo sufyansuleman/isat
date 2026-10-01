@@ -1,0 +1,222 @@
+import { calculateAll, orient, type OrientMode, type Result } from '@isat/core';
+import { ISAT_VERSION } from '../version';
+import { esc } from './format';
+import { exampleState } from './example';
+import { buildInputs, emptyState, settingsOf, type FormState, type UnitChoice } from './state';
+import {
+  aucHtml, availabilityHtml, cardsHtml, csvText, resultsFooterHtml, unitLabel, type Snapshot,
+} from './results';
+import { hydrateFormulas } from './mathml';
+import { drawChart, downloadPng, saveBlob, seriesPoints, type Chart } from './plots';
+
+const opt = (v: string, cur: string, label = unitLabel(v)) => `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
+
+function field(key: string, label: string, hint = ''): string {
+  return `<div class="field"><label for="f-${key}">${label}</label>
+<input id="f-${key}" data-f="${key}" type="text" inputmode="decimal" autocomplete="off" placeholder="—" aria-describedby="e-${key}">
+<span class="hint">${hint}</span><span class="err" id="e-${key}" role="alert"></span></div>`;
+}
+
+function formHtml(st: FormState): string {
+  const u = st.units;
+  const sel = (key: string, o: string) => `<select id="u-${key}" data-u="${key}">${o}</select>`;
+  return `
+<section aria-labelledby="h-units"><h2 id="h-units">Units</h2>
+<div class="units">
+  <label for="u-glucose">Glucose</label>${sel('glucose', opt('mmol/L', u.glucose) + opt('mg/dL', u.glucose))}
+  <label for="u-insulin">Insulin</label>${sel('insulin', opt('pmol/L', u.insulin) + opt('uU/mL', u.insulin, 'µU/mL (= mU/L)'))}
+  <label for="u-tg">TG</label>${sel('tg', opt('mmol/L', u.tg) + opt('mg/dL', u.tg))}
+  <label for="u-hdl">HDL</label>${sel('hdl', opt('mmol/L', u.hdl) + opt('mg/dL', u.hdl))}
+  <label for="u-ffa">FFA</label>${sel('ffa', opt('mmol/L', u.ffa) + opt('umol/L', u.ffa))}
+</div>
+<details class="factors"><summary>Conversion factors</summary>
+  <div class="units">
+    <label for="x-insulin">Insulin, pmol/L per µU/mL</label>
+    <select id="x-insulin" data-x="insulinFactor"><option value="6">6.0 (default)</option><option value="6.945">6.945</option></select>
+    <label for="x-glucose">Glucose, mg/dL per mmol/L</label>
+    <select id="x-glucose" data-x="glucoseFactor"><option value="18">18 (default)</option><option value="18.016">18.016</option></select>
+  </div>
+</details>
+<p class="hint">Changing a unit changes how your typed numbers are interpreted; it does not rewrite them.</p>
+</section>
+
+<section aria-labelledby="h-table"><h2 id="h-table">Fasting and OGTT values</h2>
+<div class="table-wrap"><table class="ogtt"><thead><tr>
+<th scope="col">Time (min)</th><th scope="col">Glucose (<span data-ul="glucose"></span>)</th><th scope="col">Insulin (<span data-ul="insulin"></span>)</th><th scope="col"><span class="sr">Remove row</span></th>
+</tr></thead><tbody id="rows"></tbody></table></div>
+<p><button type="button" id="add-row">Add row</button></p>
+<p class="hint">Leave a cell empty if it was not measured; empty is treated as missing, never as 0.</p>
+</section>
+
+<section aria-labelledby="h-other"><h2 id="h-other">Lipids and anthropometrics</h2>
+<div class="grid">
+${field('tg', 'Triglycerides (fasting)')}${field('hdl', 'HDL cholesterol (fasting)')}${field('ffa', 'Free fatty acids (fasting)')}
+${field('age', 'Age (years)')}
+<div class="field"><label for="f-sex">Sex</label><select id="f-sex" data-f="sex"><option value="">not given</option><option value="male">male</option><option value="female">female</option></select><span class="hint"></span></div>
+${field('weight', 'Weight (kg)')}${field('height', 'Height (cm), optional', 'used only to derive BMI when BMI is empty')}
+${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
+</div>
+<p id="bmi-note" class="hint" aria-live="polite"></p>
+<details class="factors"><summary>Advanced: tracer / DXA</summary>
+<p class="hint">Tracer rates are used in the units you supply.</p>
+<div class="grid">${field('fat_mass', 'Fat mass (kg)')}${field('rate_glycerol', 'Glycerol Ra')}${field('rate_palmitate', 'Palmitate Ra')}</div>
+</details>
+</section>
+
+<p class="actions"><button type="button" class="primary" id="calc">Calculate</button>
+<button type="button" id="example">Load example</button> <button type="button" id="clear">Clear</button></p>
+<p id="calc-msg" class="err" role="alert"></p>
+
+<section aria-labelledby="h-avail"><h2 id="h-avail">Availability</h2>
+<div id="avail" aria-live="polite"></div></section>
+
+<section id="results" aria-labelledby="h-res" hidden><h2 id="h-res">Results</h2>
+<p id="stale" class="warn-banner" hidden>Inputs have changed since this calculation. Press Calculate to update.</p>
+<fieldset class="orient"><legend>Orientation</legend>
+<label><input type="radio" name="orient" value="published" checked> Published direction</label>
+<label><input type="radio" name="orient" value="sensitivity"> InsuSensCalc convention (resistance indices negated, _inv)</label>
+</fieldset>
+<div id="cards" class="cards"></div>
+<h3>OGTT plots</h3>
+<div id="plots" class="plots"></div>
+<div id="auc"></div>
+<div id="foot"></div>
+<p><button type="button" id="csv">Download results CSV</button></p>
+</section>`;
+}
+
+export function mountCalculate(root: HTMLElement): () => void {
+  let st: FormState = emptyState();
+  let snap: Snapshot | undefined;
+  let charts: Chart[] = [];
+  let orientMode: OrientMode = 'published';
+  root.innerHTML = formHtml(st);
+  const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+
+  // ----- DOM <-> state -----
+  function renderRows(): void {
+    $('#rows').innerHTML = st.rows.map((r, k) => `<tr>
+<td><input data-r="${k}" data-c="time" type="text" inputmode="decimal" aria-label="Time in minutes, row ${k + 1}" value="${esc(r.time)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:time"></span></td>
+<td><input data-r="${k}" data-c="glucose" type="text" inputmode="decimal" aria-label="Glucose, row ${k + 1}" value="${esc(r.glucose)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:glucose"></span></td>
+<td><input data-r="${k}" data-c="insulin" type="text" inputmode="decimal" aria-label="Insulin, row ${k + 1}" value="${esc(r.insulin)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:insulin"></span></td>
+<td><button type="button" data-rm="${k}" aria-label="Remove row ${k + 1}">Remove</button></td></tr>`).join('');
+  }
+  function writeFields(): void {
+    root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-f]').forEach((el) => {
+      el.value = (st as unknown as Record<string, string>)[el.dataset['f']!] ?? '';
+    });
+    root.querySelectorAll<HTMLSelectElement>('[data-u]').forEach((el) => { el.value = st.units[el.dataset['u'] as keyof UnitChoice]; });
+    root.querySelectorAll<HTMLSelectElement>('[data-x]').forEach((el) => {
+      el.value = (st as unknown as Record<string, string>)[el.dataset['x']!]!;
+    });
+    renderRows();
+  }
+  function refreshLabels(): void {
+    root.querySelectorAll<HTMLElement>('[data-ul]').forEach((el) => { el.textContent = unitLabel(st.units[el.dataset['ul'] as 'glucose' | 'insulin']); });
+    const hints: Record<string, string> = { tg: st.units.tg, hdl: st.units.hdl, ffa: st.units.ffa };
+    for (const [k, u] of Object.entries(hints)) $(`#f-${k}`).parentElement!.querySelector('.hint')!.textContent = unitLabel(u);
+  }
+
+  function refresh(): void {
+    refreshLabels();
+    const built = buildInputs(st);
+    root.querySelectorAll<HTMLElement>('.err[id^="e-"], .err[data-e]').forEach((el) => {
+      const key = el.dataset['e'] ?? el.id.slice(2);
+      const msg = built.errors[key] ?? '';
+      el.textContent = msg;
+      const inp = el.parentElement?.querySelector('input');
+      if (inp) inp.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    });
+    $('#bmi-note').textContent = built.bmiFromHeight !== undefined
+      ? `BMI from height and weight: ${Number(built.bmiFromHeight.toPrecision(4))} kg/m² (will be used because BMI is empty)` : '';
+    const results = calculateAll(built.inputs, { settings: built.settings });
+    $('#avail').innerHTML = availabilityHtml(results);
+    if (snap) $('#stale').hidden = false;
+  }
+
+  // ----- results -----
+  function renderResults(): void {
+    if (!snap) return;
+    const oriented = orient(snap.results, orientMode);
+    $('#results').hidden = false;
+    $('#stale').hidden = true;
+    $('#cards').innerHTML = cardsHtml(oriented, snap);
+    hydrateFormulas($('#cards'));
+    $('#foot').innerHTML = resultsFooterHtml(snap);
+    $('#auc').innerHTML = aucHtml(snap.built.inputs, snap.state, snap.built.settings);
+  }
+  function renderPlots(): void {
+    charts.forEach((c) => c.destroy()); charts = [];
+    const host = $('#plots');
+    host.innerHTML = '';
+    if (!snap) return;
+    (['glucose', 'insulin'] as const).forEach((q, n) => {
+      const pts = seriesPoints(snap!.state, q);
+      const wrap = document.createElement('figure');
+      wrap.className = 'plot';
+      const label = q === 'glucose' ? 'Glucose' : 'Insulin';
+      if (pts.t.length === 0) { wrap.innerHTML = `<figcaption>${label}: no values entered.</figcaption>`; host.appendChild(wrap); return; }
+      host.appendChild(wrap);
+      const chart = drawChart(wrap, pts, label, snap!.state.units[q], n === 0 ? '--series-1' : '--series-2');
+      charts.push(chart);
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = `Download PNG (${label.toLowerCase()})`;
+      b.addEventListener('click', () => downloadPng(chart, `isat-${q}.png`));
+      wrap.appendChild(b);
+    });
+  }
+
+  function calculate(): void {
+    const built = buildInputs(st);
+    const msg = $('#calc-msg');
+    if (Object.keys(built.errors).length) { msg.textContent = 'Fix the highlighted entries before calculating.'; return; }
+    msg.textContent = '';
+    const results: Result[] = calculateAll(built.inputs, { settings: built.settings });
+    snap = {
+      state: structuredClone(st), built, results, calculatedAt: new Date(), version: ISAT_VERSION,
+    };
+    renderResults();
+    renderPlots();
+    $('#results').scrollIntoView();
+  }
+
+  // ----- events -----
+  root.addEventListener('input', (e) => {
+    const el = e.target as HTMLInputElement;
+    if (el.dataset['r'] !== undefined) {
+      (st.rows[Number(el.dataset['r'])] as unknown as Record<string, string>)[el.dataset['c']!] = el.value;
+    } else if (el.dataset['f']) (st as unknown as Record<string, string>)[el.dataset['f']] = el.value;
+    else return;
+    refresh();
+  });
+  root.addEventListener('change', (e) => {
+    const el = e.target as HTMLSelectElement;
+    if (el.dataset['u']) (st.units as unknown as Record<string, string>)[el.dataset['u']] = el.value;
+    else if (el.dataset['x']) (st as unknown as Record<string, string>)[el.dataset['x']] = el.value;
+    else if (el.dataset['f']) { (st as unknown as Record<string, string>)[el.dataset['f']] = el.value; }
+    else if (el.name === 'orient') { orientMode = el.value as OrientMode; renderResults(); return; }
+    else return;
+    refresh();
+  });
+  root.addEventListener('click', (e) => {
+    const el = (e.target as HTMLElement).closest('button');
+    if (!el) return;
+    if (el.id === 'add-row') { st.rows.push({ time: '', glucose: '', insulin: '' }); renderRows(); refresh(); }
+    else if (el.dataset['rm'] !== undefined) { st.rows.splice(Number(el.dataset['rm']), 1); renderRows(); refresh(); }
+    else if (el.id === 'calc') calculate();
+    else if (el.id === 'clear') { st = { ...emptyState(st.units), insulinFactor: st.insulinFactor, glucoseFactor: st.glucoseFactor }; snap = undefined; $('#results').hidden = true; $('#calc-msg').textContent = ''; writeFields(); refresh(); }
+    else if (el.id === 'example') { st = exampleState(st.units, st); writeFields(); refresh(); }
+    else if (el.id === 'csv' && snap) {
+      saveBlob(new Blob([csvText(orient(snap.results, orientMode), snap)], { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
+    }
+  });
+
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const onScheme = () => renderPlots();
+  mq.addEventListener('change', onScheme);
+
+  void settingsOf;
+  writeFields();
+  refresh();
+  return () => { charts.forEach((c) => c.destroy()); mq.removeEventListener('change', onScheme); };
+}

@@ -4,6 +4,15 @@ category: fasting
 direction: higher_more_resistant
 formula_latex: "\\frac{\\overline{G}_{0,30,mg/dL}}{100}\\cdot \\overline{I}_{0,30,\\mu U/mL}"
 inputs: ["glucose_0,30", "insulin_0,30"]
+reference:
+  citation: "Abdul-Ghani MA, Matsuda M, Balas B, DeFronzo RA. Muscle and liver insulin resistance indexes derived from the oral glucose tolerance test. Diabetes Care. 2007;30(1):89-94."
+  doi: 10.2337/dc06-1519
+  pmid: 17192339
+secondary_references:
+  - citation: "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563."
+    doi: 10.1002/oby.23503
+    pmid: 35894085
+    pmcid: PMC9542105
 verification:
   status: supported_secondary
   detail: "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503): mean(G0,G30) mg/dL /100 × mean(I0,I30) µU/mL. Abdul-Ghani 2007 originally defined it with 0–30 min AUCs; this tabulated form differs by a constant factor only."

@@ -4,6 +4,10 @@ category: lipid
 direction: higher_more_resistant
 formula_latex: "TG_{mg/dL} / HDL_{mg/dL}"
 inputs: ["tg", "hdl"]
+reference:
+  citation: "McLaughlin T, Abbasi F, Cheal K, Chu J, Lamendola C, Reaven G. Use of metabolic markers to identify overweight individuals who are insulin resistant. Ann Intern Med. 2003;139(10):802-809."
+  doi: 10.7326/0003-4819-139-10-200311180-00007
+  pmid: 14623617
 verification:
   status: legacy_match
   detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."

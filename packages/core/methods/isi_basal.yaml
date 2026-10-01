@@ -4,11 +4,15 @@ category: fasting
 direction: higher_more_sensitive
 formula_latex: "10000 / (G_{0,mg/dL} \\times I_{0,\\mu U/mL})"
 inputs: ["glucose_0 (mg/dL)", "insulin_0 (uU/mL)"]
+reference:
+  citation: "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198."
+  doi: 10.1093/oxfordjournals.aje.a010187
+  pmid: 10645822
 verification:
   status: legacy_match
   detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
 legacy:
   insusenscalc_column: Isi_basal
   relation: equal
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: secondary_source_confirmed
+source_verification_detail: "Hanson 2000 abstract defines ISI = 10^4/(I0 × G0); units not stated in the abstract."

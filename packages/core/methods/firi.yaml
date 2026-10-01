@@ -12,7 +12,8 @@ constraints:
   - insulin_0 > 0
 reference:
   citation: "Duncan MH, Singh BM, Wise PH, Carter G, Alaghband-Zadeh J. A simple measure of insulin resistance. Lancet. 1995;346(8967):120-121."
-  pmid: 7564822
+  doi: 10.1016/s0140-6736(95)92143-5
+  pmid: 7603193
 notes:
   - Glucose in mmol/L. The constant 25 is on the mmol/L scale (cf. HOMA-IR, 22.5 in mmol/L vs 405 in mg/dL).
   - Reported upper limit of normal 2.7 corresponds to 6.1 mmol/L x 11.2 mU/L / 25.

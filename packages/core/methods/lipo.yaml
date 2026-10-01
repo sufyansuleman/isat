@@ -4,7 +4,16 @@ category: tracer_dxa
 direction: higher_more_resistant
 formula_latex: "rate_{glycerol} \\times I_{0,\\mu U/mL}"
 inputs: ["rate_glycerol (as supplied)", "insulin_0"]
-notes: ["tracer rate units as supplied by user"]
+reference:
+  citation: "Rosso C, Kazankov K, Younes R, Esmaili S, Marietti M, Sacco M, Carli F, Gaggini M, Salomone F, Møller HJ, Abate ML, Vilstrup H, Gastaldelli A, George J, Grønbæk H, Bugianesi E. Crosstalk between adipose tissue insulin resistance and liver macrophages in non-alcoholic fatty liver disease. J Hepatol. 2019;71(5):1012-1021."
+  doi: 10.1016/j.jhep.2019.06.031
+  pmid: 31301321
+secondary_references:
+  - citation: "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563."
+    doi: 10.1002/oby.23503
+    pmid: 35894085
+    pmcid: PMC9542105
+notes: ["tracer rate units as supplied by user", "Called Lipo-IR in Gastaldelli 2022 (Eq. 10)."]
 verification:
   status: legacy_match
   detail: "Formula matches InsuSensCalc."
@@ -12,5 +21,5 @@ legacy:
   insusenscalc_column: Lipo_inv
   relation: negated
   difference: "Legacy column is the negated index."
-source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification: secondary_source_confirmed
+source_verification_detail: "Lipo-IR = RaGlycerol × I0 (mU/L), Gastaldelli 2022 Eq. 10, citing Rosso 2019."

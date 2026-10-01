@@ -4,6 +4,12 @@ category: ogtt
 direction: higher_more_sensitive
 formula_latex: "10000 / (G_{120,mg/dL} \\times I_{120,\\mu U/mL})"
 inputs: ["glucose_120", "insulin_120"]
+reference:
+  citation: "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198."
+  doi: 10.1093/oxfordjournals.aje.a010187
+  pmid: 10645822
+notes:
+  - "Hanson 2000 computed indices from G0, G120, I0 and I120; the exact 120-min form is not confirmed from the abstract."
 verification:
   status: legacy_match
   detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."

@@ -10,6 +10,25 @@ export const methodSpecs = {
       "ffa_0 (mmol/L)",
       "insulin_0 (uU/mL)"
     ],
+    "reference": {
+      "citation": "Gastaldelli A, Gaggini M, DeFronzo RA. Role of Adipose Tissue Insulin Resistance in the Natural History of Type 2 Diabetes: Results From the San Antonio Metabolism Study. Diabetes. 2017;66(4):815-822.",
+      "doi": "10.2337/db16-1167",
+      "pmid": 28052966
+    },
+    "secondary_references": [
+      {
+        "citation": "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563.",
+        "doi": "10.1002/oby.23503",
+        "pmid": 35894085,
+        "pmcid": "PMC9542105"
+      },
+      {
+        "citation": "Groop LC, Bonadonna RC, DelPrato S, Ratheiser K, Zyck K, Ferrannini E, DeFronzo RA. Glucose and free fatty acid metabolism in non-insulin-dependent diabetes mellitus. Evidence for multiple sites of insulin resistance. J Clin Invest. 1989;84(1):205-213.",
+        "doi": "10.1172/jci114142",
+        "pmid": 2661589,
+        "pmcid": "PMC303971"
+      }
+    ],
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -19,8 +38,8 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy column is the negated index."
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Adipo-IR = FFA × I0 (mU/L), Gastaldelli 2022 Table 3 / Eq. 9."
   },
   "atiri": {
     "id": "atiri",
@@ -31,6 +50,20 @@ export const methodSpecs = {
     "inputs": [
       "rate_palmitate (as supplied)",
       "insulin_0"
+    ],
+    "reference": {
+      "citation": "Fabbrini E, Magkos F, Conte C, Mittendorfer B, Patterson BW, Okunade AL, Klein S. Validation of a novel index to assess insulin resistance of adipose tissue lipolytic activity in obese subjects. J Lipid Res. 2012;53(2):321-324.",
+      "doi": "10.1194/jlr.d020321",
+      "pmid": 22147838,
+      "pmcid": "PMC3269158"
+    },
+    "secondary_references": [
+      {
+        "citation": "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563.",
+        "doi": "10.1002/oby.23503",
+        "pmid": 35894085,
+        "pmcid": "PMC9542105"
+      }
     ],
     "notes": [
       "tracer rate units as supplied by user"
@@ -44,8 +77,8 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy column is the negated index."
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "AT-IRI = RaPalmitate × I0 (mU/L), Gastaldelli 2022 Eq. 11; index introduced by Fabbrini 2012."
   },
   "avignon_si0": {
     "id": "avignon_si0",
@@ -284,6 +317,11 @@ export const methodSpecs = {
       "bmi",
       "sex"
     ],
+    "reference": {
+      "citation": "Hansen T, Drivsholm T, Urhammer SA, Palacios RT, Vølund A, Borch-Johnsen K, Pedersen O. The BIGTT test: a novel test for simultaneous measurement of pancreatic beta-cell function, insulin sensitivity, and glucose tolerance. Diabetes Care. 2007;30(2):257-262.",
+      "doi": "10.2337/dc06-1240",
+      "pmid": 17259491
+    },
     "verification": {
       "status": "confirmed"
     },
@@ -332,7 +370,8 @@ export const methodSpecs = {
     ],
     "reference": {
       "citation": "Duncan MH, Singh BM, Wise PH, Carter G, Alaghband-Zadeh J. A simple measure of insulin resistance. Lancet. 1995;346(8967):120-121.",
-      "pmid": 7564822
+      "doi": "10.1016/s0140-6736(95)92143-5",
+      "pmid": 7603193
     },
     "notes": [
       "Glucose in mmol/L. The constant 25 is on the mmol/L scale (cf. HOMA-IR, 22.5 in mmol/L vs 405 in mg/dL).",
@@ -367,7 +406,9 @@ export const methodSpecs = {
       "weight (kg)"
     ],
     "reference": {
-      "citation": "Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184."
+      "citation": "Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI(0,120)): comparison with other measures. Diabetes Res Clin Pract. 2000;47(3):177-184.",
+      "doi": "10.1016/s0168-8227(99)00116-3",
+      "pmid": 10741566
     },
     "notes": [
       "Units of the result: mg·L²/(mmol·mU·min) per Gutt 2000.",
@@ -396,6 +437,19 @@ export const methodSpecs = {
     "inputs": [
       "glucose_0,30",
       "insulin_0,30"
+    ],
+    "reference": {
+      "citation": "Abdul-Ghani MA, Matsuda M, Balas B, DeFronzo RA. Muscle and liver insulin resistance indexes derived from the oral glucose tolerance test. Diabetes Care. 2007;30(1):89-94.",
+      "doi": "10.2337/dc06-1519",
+      "pmid": 17192339
+    },
+    "secondary_references": [
+      {
+        "citation": "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563.",
+        "doi": "10.1002/oby.23503",
+        "pmid": 35894085,
+        "pmcid": "PMC9542105"
+      }
     ],
     "verification": {
       "status": "supported_secondary",
@@ -434,7 +488,11 @@ export const methodSpecs = {
       "glucose_0 (mmol/L)",
       "insulin_0 (uU/mL)"
     ],
-    "source": "Matthews 1985 (full citation to be added)",
+    "reference": {
+      "citation": "Matthews DR, Hosker JP, Rudenski AS, Naylor BA, Treacher DF, Turner RC. Homeostasis model assessment: insulin resistance and beta-cell function from fasting plasma glucose and insulin concentrations in man. Diabetologia. 1985;28(7):412-419.",
+      "doi": "10.1007/bf00280883",
+      "pmid": 3899825
+    },
     "verification": {
       "status": "confirmed"
     },
@@ -492,6 +550,14 @@ export const methodSpecs = {
       "glucose_120",
       "insulin_120"
     ],
+    "reference": {
+      "citation": "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198.",
+      "doi": "10.1093/oxfordjournals.aje.a010187",
+      "pmid": 10645822
+    },
+    "notes": [
+      "Hanson 2000 computed indices from G0, G120, I0 and I120; the exact 120-min form is not confirmed from the abstract."
+    ],
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -514,6 +580,19 @@ export const methodSpecs = {
       "glucose_0 (mmol/L)",
       "insulin_0 (uU/mL)"
     ],
+    "reference": {
+      "citation": "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198.",
+      "doi": "10.1093/oxfordjournals.aje.a010187",
+      "pmid": 10645822
+    },
+    "secondary_references": [
+      {
+        "citation": "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563.",
+        "doi": "10.1002/oby.23503",
+        "pmid": 35894085,
+        "pmcid": "PMC9542105"
+      }
+    ],
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -523,8 +602,8 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy column is the negated index."
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "IGR = I0 (mU/L) / G0 (mmol/L), Gastaldelli 2022 Table 2, citing Hanson 2000."
   },
   "isi_120": {
     "id": "isi_120",
@@ -535,6 +614,14 @@ export const methodSpecs = {
     "inputs": [
       "glucose_120",
       "insulin_120"
+    ],
+    "reference": {
+      "citation": "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198.",
+      "doi": "10.1093/oxfordjournals.aje.a010187",
+      "pmid": 10645822
+    },
+    "notes": [
+      "Hanson 2000 computed indices from G0, G120, I0 and I120; the exact 120-min form is not confirmed from the abstract."
     ],
     "verification": {
       "status": "legacy_match",
@@ -557,6 +644,11 @@ export const methodSpecs = {
       "glucose_0 (mg/dL)",
       "insulin_0 (uU/mL)"
     ],
+    "reference": {
+      "citation": "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198.",
+      "doi": "10.1093/oxfordjournals.aje.a010187",
+      "pmid": 10645822
+    },
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -565,8 +657,8 @@ export const methodSpecs = {
       "insusenscalc_column": "Isi_basal",
       "relation": "equal"
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Hanson 2000 abstract defines ISI = 10^4/(I0 × G0); units not stated in the abstract."
   },
   "lap": {
     "id": "lap",
@@ -579,6 +671,12 @@ export const methodSpecs = {
       "tg (mmol/L)",
       "sex"
     ],
+    "reference": {
+      "citation": "Kahn HS. The \"lipid accumulation product\" performs better than the body mass index for recognizing cardiovascular risk: a population-based comparison. BMC Cardiovasc Disord. 2005;5:26.",
+      "doi": "10.1186/1471-2261-5-26",
+      "pmid": 16150143,
+      "pmcid": "PMC1236917"
+    },
     "verification": {
       "status": "confirmed",
       "detail": "Computed for the participant's own sex only."
@@ -591,8 +689,8 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy computes both sexes for every row and negates."
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women."
   },
   "lipo": {
     "id": "lipo",
@@ -604,8 +702,22 @@ export const methodSpecs = {
       "rate_glycerol (as supplied)",
       "insulin_0"
     ],
+    "reference": {
+      "citation": "Rosso C, Kazankov K, Younes R, Esmaili S, Marietti M, Sacco M, Carli F, Gaggini M, Salomone F, Møller HJ, Abate ML, Vilstrup H, Gastaldelli A, George J, Grønbæk H, Bugianesi E. Crosstalk between adipose tissue insulin resistance and liver macrophages in non-alcoholic fatty liver disease. J Hepatol. 2019;71(5):1012-1021.",
+      "doi": "10.1016/j.jhep.2019.06.031",
+      "pmid": 31301321
+    },
+    "secondary_references": [
+      {
+        "citation": "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563.",
+        "doi": "10.1002/oby.23503",
+        "pmid": 35894085,
+        "pmcid": "PMC9542105"
+      }
+    ],
     "notes": [
-      "tracer rate units as supplied by user"
+      "tracer rate units as supplied by user",
+      "Called Lipo-IR in Gastaldelli 2022 (Eq. 10)."
     ],
     "verification": {
       "status": "legacy_match",
@@ -616,8 +728,8 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy column is the negated index."
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Lipo-IR = RaGlycerol × I0 (mU/L), Gastaldelli 2022 Eq. 10, citing Rosso 2019."
   },
   "liri": {
     "id": "liri",
@@ -632,6 +744,19 @@ export const methodSpecs = {
       "hdl",
       "bmi"
     ],
+    "reference": {
+      "citation": "Vangipurapu J, Stančáková A, Kuulasmaa T, Paananen J, Kuusisto J; EGIR-RISC Study Group; Ferrannini E, Laakso M. A novel surrogate index for hepatic insulin resistance. Diabetologia. 2011;54(3):540-543.",
+      "doi": "10.1007/s00125-010-1966-7",
+      "pmid": 21107521
+    },
+    "secondary_references": [
+      {
+        "citation": "Gastaldelli A. Measuring and estimating insulin resistance in clinical and research settings. Obesity (Silver Spring). 2022;30(8):1549-1563.",
+        "doi": "10.1002/oby.23503",
+        "pmid": 35894085,
+        "pmcid": "PMC9542105"
+      }
+    ],
     "verification": {
       "status": "legacy_match",
       "detail": "Formula matches InsuSensCalc. Insulin mean goes through the units module so the configured insulin factor is respected."
@@ -641,8 +766,8 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy column is the negated index."
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "secondary_source_confirmed",
+    "source_verification_detail": "Formula as printed in Gastaldelli 2022 Table 3 (citing Vangipurapu 2011); coefficients not re-checked against the primary paper."
   },
   "matsuda_3pt": {
     "id": "matsuda_3pt",
@@ -654,6 +779,11 @@ export const methodSpecs = {
       "glucose_0,30,120",
       "insulin_0,30,120"
     ],
+    "reference": {
+      "citation": "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470.",
+      "doi": "10.2337/diacare.22.9.1462",
+      "pmid": 10480510
+    },
     "verification": {
       "status": "confirmed",
       "detail": "Arithmetic mean of 0/30/120 values; equal to legacy only when all three points are present."
@@ -662,8 +792,8 @@ export const methodSpecs = {
       "insusenscalc_column": "Matsuda_ISI",
       "relation": "equal"
     },
-    "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant."
   },
   "matsuda_5pt": {
     "id": "matsuda_5pt",
@@ -675,7 +805,11 @@ export const methodSpecs = {
       "glucose_0,30,60,90,120",
       "insulin_0,30,60,90,120"
     ],
-    "source": "Matsuda and DeFronzo 1999 (full citation to be added)",
+    "reference": {
+      "citation": "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470.",
+      "doi": "10.2337/diacare.22.9.1462",
+      "pmid": 10480510
+    },
     "verification": {
       "status": "confirmed",
       "detail": "Original Matsuda and DeFronzo 1999 definition; arithmetic means of all five points. No legacy column."
@@ -685,8 +819,8 @@ export const methodSpecs = {
       "relation": "none",
       "difference": "New in ISAT; no InsuSensCalc equivalent."
     },
-    "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant."
   },
   "matsuda_auc_3pt": {
     "id": "matsuda_auc_3pt",
@@ -698,6 +832,11 @@ export const methodSpecs = {
       "glucose_0,30,120",
       "insulin_0,30,120"
     ],
+    "reference": {
+      "citation": "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470.",
+      "doi": "10.2337/diacare.22.9.1462",
+      "pmid": 10480510
+    },
     "verification": {
       "status": "confirmed",
       "detail": "Means are trapezoid AUC over 0/30/120 divided by 120."
@@ -706,8 +845,8 @@ export const methodSpecs = {
       "insusenscalc_column": "Matsuda_Auc",
       "relation": "equal"
     },
-    "source_verification": "secondary_source_confirmed",
-    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
+    "source_verification": "author_verified_not_rechecked",
+    "source_verification_detail": "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT. AUC-based variant; not stated in the Matsuda 1999 abstract."
   },
   "mcauley": {
     "id": "mcauley",
@@ -719,6 +858,11 @@ export const methodSpecs = {
       "insulin_0 (uU/mL)",
       "tg (mmol/L)"
     ],
+    "reference": {
+      "citation": "McAuley KA, Williams SM, Mann JI, Walker RJ, Lewis-Barned NJ, Temple LA, Duncan AW. Diagnosing insulin resistance in the general population. Diabetes Care. 2001;24(3):460-464.",
+      "doi": "10.2337/diacare.24.3.460",
+      "pmid": 11289468
+    },
     "verification": {
       "status": "confirmed"
     },
@@ -726,8 +870,8 @@ export const methodSpecs = {
       "insusenscalc_column": "McAuley_index",
       "relation": "equal"
     },
-    "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification": "directly_verified",
+    "source_verification_detail": "McAuley 2001 abstract: Mffm/I = exp[2.63 − 0.28 ln(insulin) − 0.31 ln(TAG)]."
   },
   "quicki": {
     "id": "quicki",
@@ -783,7 +927,11 @@ export const methodSpecs = {
     "inputs": [
       "insulin_0 (uU/mL)"
     ],
-    "source": "Raynaud 1999 (full citation to be added)",
+    "reference": {
+      "citation": "Raynaud E, Perez-Martin A, Brun JF, Benhaddad AA, Mercier J. Revised concept for the estimation of insulin sensitivity from a single sample. Diabetes Care. 1999;22(6):1003-1004.",
+      "doi": "10.2337/diacare.22.6.1003",
+      "pmid": 10372260
+    },
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -806,6 +954,11 @@ export const methodSpecs = {
       "glucose_0 (mg/dL)",
       "ffa_0 (mmol/L)"
     ],
+    "reference": {
+      "citation": "Perseghin G, Caumo A, Caloni M, Testolin G, Luzi L. Incorporation of the fasting plasma FFA concentration into QUICKI improves its association with insulin sensitivity in nonobese individuals. J Clin Endocrinol Metab. 2001;86(10):4776-4781.",
+      "doi": "10.1210/jcem.86.10.7902",
+      "pmid": 11600540
+    },
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -828,6 +981,11 @@ export const methodSpecs = {
       "bmi",
       "age"
     ],
+    "reference": {
+      "citation": "Stumvoll M, Van Haeften T, Fritsche A, Gerich J. Oral glucose tolerance test indexes for insulin sensitivity and secretion based on various availabilities of sampling times. Diabetes Care. 2001;24(4):796-797.",
+      "doi": "10.2337/diacare.24.4.796",
+      "pmid": 11315860
+    },
     "verification": {
       "status": "supported_secondary",
       "detail": "Coefficients from secondary reproductions; primary not read in this project."
@@ -837,7 +995,7 @@ export const methodSpecs = {
       "relation": "equal"
     },
     "source_verification": "author_verified_not_rechecked",
-    "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+    "source_verification_detail": "Formula with age and BMI as implemented in InsuSensCalc, attributed to the Stumvoll 2001 letter (no abstract available; not checked). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here."
   },
   "stumvoll_mod": {
     "id": "stumvoll_mod",
@@ -850,6 +1008,11 @@ export const methodSpecs = {
       "insulin_120 (pmol/L)",
       "glucose_120 (mmol/L)"
     ],
+    "reference": {
+      "citation": "Stumvoll M, Mitrakou A, Pimenta W, Jenssen T, Yki-Järvinen H, Van Haeften T, Renn W, Gerich J. Use of the oral glucose tolerance test to assess insulin release and insulin sensitivity. Diabetes Care. 2000;23(3):295-301.",
+      "doi": "10.2337/diacare.23.3.295",
+      "pmid": 10868854
+    },
     "verification": {
       "status": "supported_secondary",
       "detail": "Coefficients from secondary reproductions; primary not read in this project."
@@ -871,6 +1034,11 @@ export const methodSpecs = {
       "tg",
       "hdl"
     ],
+    "reference": {
+      "citation": "McLaughlin T, Abbasi F, Cheal K, Chu J, Lamendola C, Reaven G. Use of metabolic markers to identify overweight individuals who are insulin resistant. Ann Intern Med. 2003;139(10):802-809.",
+      "doi": "10.7326/0003-4819-139-10-200311180-00007",
+      "pmid": 14623617
+    },
     "verification": {
       "status": "legacy_match",
       "detail": "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -893,6 +1061,11 @@ export const methodSpecs = {
       "tg",
       "glucose_0"
     ],
+    "reference": {
+      "citation": "Simental-Mendía LE, Rodríguez-Morán M, Guerrero-Romero F. The product of fasting glucose and triglycerides as surrogate for identifying insulin resistance in apparently healthy subjects. Metab Syndr Relat Disord. 2008;6(4):299-304.",
+      "doi": "10.1089/met.2008.0034",
+      "pmid": 19067533
+    },
     "verification": {
       "status": "confirmed"
     },
@@ -917,6 +1090,12 @@ export const methodSpecs = {
       "hdl (mmol/L)",
       "sex"
     ],
+    "reference": {
+      "citation": "Amato MC, Giordano C, Galia M, Criscimanna A, Vitabile S, Midiri M, Galluzzo A; AlkaMeSy Study Group. Visceral Adiposity Index: a reliable indicator of visceral fat function associated with cardiometabolic risk. Diabetes Care. 2010;33(4):920-922.",
+      "doi": "10.2337/dc09-1825",
+      "pmid": 20067971,
+      "pmcid": "PMC2845052"
+    },
     "verification": {
       "status": "confirmed",
       "detail": "Computed for the participant's own sex only."

@@ -4,11 +4,15 @@ category: ogtt
 direction: higher_more_sensitive
 formula_latex: "10000 / \\sqrt{G_0 I_0 \\bar G \\bar I}"
 inputs: ["glucose_0,30,120", "insulin_0,30,120"]
+reference:
+  citation: "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470."
+  doi: 10.2337/diacare.22.9.1462
+  pmid: 10480510
 verification:
   status: confirmed
   detail: "Arithmetic mean of 0/30/120 values; equal to legacy only when all three points are present."
 legacy:
   insusenscalc_column: Matsuda_ISI
   relation: equal
-source_verification: secondary_source_confirmed
-source_verification_detail: "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
+source_verification: directly_verified
+source_verification_detail: "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant."

@@ -4,6 +4,10 @@ category: lipid
 direction: higher_more_sensitive
 formula_latex: "1 / (\\log_{10} I_0 + \\log_{10} G_0 + \\log_{10} FFA)"
 inputs: ["insulin_0 (uU/mL)", "glucose_0 (mg/dL)", "ffa_0 (mmol/L)"]
+reference:
+  citation: "Perseghin G, Caumo A, Caloni M, Testolin G, Luzi L. Incorporation of the fasting plasma FFA concentration into QUICKI improves its association with insulin sensitivity in nonobese individuals. J Clin Endocrinol Metab. 2001;86(10):4776-4781."
+  doi: 10.1210/jcem.86.10.7902
+  pmid: 11600540
 verification:
   status: legacy_match
   detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."

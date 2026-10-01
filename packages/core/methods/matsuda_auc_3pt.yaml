@@ -4,11 +4,15 @@ category: ogtt
 direction: higher_more_sensitive
 formula_latex: "10000 / \\sqrt{G_0 I_0 \\bar G \\bar I},\\ \\bar v = (15v_0+60v_{30}+45v_{120})/120"
 inputs: ["glucose_0,30,120", "insulin_0,30,120"]
+reference:
+  citation: "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470."
+  doi: 10.2337/diacare.22.9.1462
+  pmid: 10480510
 verification:
   status: confirmed
   detail: "Means are trapezoid AUC over 0/30/120 divided by 120."
 legacy:
   insusenscalc_column: Matsuda_Auc
   relation: equal
-source_verification: secondary_source_confirmed
-source_verification_detail: "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT."
+source_verification: author_verified_not_rechecked
+source_verification_detail: "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT. AUC-based variant; not stated in the Matsuda 1999 abstract."

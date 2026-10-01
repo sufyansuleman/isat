@@ -4,6 +4,10 @@ category: ogtt
 direction: higher_more_sensitive
 formula_latex: "0.222 - 0.00333 BMI - 0.0000779 I_{120} - 0.000422 age"
 inputs: ["insulin_120 (pmol/L)", "bmi", "age"]
+reference:
+  citation: "Stumvoll M, Van Haeften T, Fritsche A, Gerich J. Oral glucose tolerance test indexes for insulin sensitivity and secretion based on various availabilities of sampling times. Diabetes Care. 2001;24(4):796-797."
+  doi: 10.2337/diacare.24.4.796
+  pmid: 11315860
 verification:
   status: supported_secondary
   detail: "Coefficients from secondary reproductions; primary not read in this project."
@@ -11,4 +15,4 @@ legacy:
   insusenscalc_column: Stumvoll_Demographics
   relation: equal
 source_verification: author_verified_not_rechecked
-source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+source_verification_detail: "Formula with age and BMI as implemented in InsuSensCalc, attributed to the Stumvoll 2001 letter (no abstract available; not checked). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here."

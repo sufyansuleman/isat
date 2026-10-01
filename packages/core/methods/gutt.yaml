@@ -5,7 +5,9 @@ direction: higher_more_sensitive
 formula_latex: "\\frac{(75000 + (G_{0,mg/dL} - G_{120,mg/dL})\\cdot 0.19\\cdot BW)/120}{MPG_{mmol/L}\\cdot \\log_{10} MSI_{\\mu U/mL}}"
 inputs: ["glucose_0", "glucose_120", "insulin_0", "insulin_120", "weight (kg)"]
 reference:
-  citation: "Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI0,120): comparison with other measures. Diabetes Res Clin Pract. 2000;47:177-184."
+  citation: "Gutt M, Davis CL, Spitzer SB, Llabre MM, Kumar M, Czarnecki EM, Schneiderman N, Skyler JS, Marks JB. Validation of the insulin sensitivity index (ISI(0,120)): comparison with other measures. Diabetes Res Clin Pract. 2000;47(3):177-184."
+  doi: 10.1016/s0168-8227(99)00116-3
+  pmid: 10741566
 notes:
   - "Units of the result: mg·L²/(mmol·mU·min) per Gutt 2000."
   - "Gutt's text labels the glucose difference in m as mg/L, but the paper's Table 1 subgroup means are reproduced with mg/dL (IGT 45.7 vs reported 46.0; diabetic 24.0 vs 23.0), so mg/dL is used."

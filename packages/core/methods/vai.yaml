@@ -4,6 +4,11 @@ category: lipid
 direction: higher_more_resistant
 formula_latex: "sex-specific; see docs/v1-methods-spec.md"
 inputs: ["waist", "bmi", "tg (mmol/L)", "hdl (mmol/L)", "sex"]
+reference:
+  citation: "Amato MC, Giordano C, Galia M, Criscimanna A, Vitabile S, Midiri M, Galluzzo A; AlkaMeSy Study Group. Visceral Adiposity Index: a reliable indicator of visceral fat function associated with cardiometabolic risk. Diabetes Care. 2010;33(4):920-922."
+  doi: 10.2337/dc09-1825
+  pmid: 20067971
+  pmcid: PMC2845052
 verification:
   status: confirmed
   detail: "Computed for the participant's own sex only."
