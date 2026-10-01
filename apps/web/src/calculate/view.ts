@@ -9,6 +9,7 @@ import {
 import { hydrateFormulas } from './mathml';
 import { unitsSectionHtml } from './units';
 import { drawChart, downloadPng, saveBlob, seriesPoints, type Chart } from './plots';
+import { fieldHint, seriesHint } from './hints';
 
 const opt = (v: string, cur: string, label = unitLabel(v)) => `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
 
@@ -25,6 +26,7 @@ ${unitsSectionHtml(st.units, "m")}
 
 <section aria-labelledby="h-table"><h2 id="h-table">Glucose and insulin: fasting and OGTT</h2>
 <p>Row 0 is the fasting sample, taken before the 75 g oral glucose drink. Other rows are minutes after the drink. For fasting-only data, fill row 0 and leave the others empty.</p>
+<p class="hint">Grey values (e.g. 5.0) are examples for a typical healthy adult. They are only a guide and are not used unless you type them in.</p>
 <div class="table-wrap"><table class="ogtt"><thead><tr>
 <th scope="col">Time (min)</th><th scope="col">Glucose (<span data-ul="glucose"></span>)</th><th scope="col">Insulin (<span data-ul="insulin"></span>)</th><th scope="col"><span class="sr">Remove row</span></th>
 </tr></thead><tbody id="rows"></tbody></table></div>
@@ -107,8 +109,19 @@ export function mountCalculate(root: HTMLElement): () => void {
     for (const [k, u] of Object.entries(hints)) $(`#f-${k}`).parentElement!.querySelector('.hint')!.textContent = unitLabel(u);
   }
 
+  /** Grey example values ("e.g. …") in empty fields, converted to the selected units. */
+  function refreshHints(): void {
+    root.querySelectorAll<HTMLInputElement>('input[data-f]').forEach((el) => { el.placeholder = fieldHint(el.dataset['f']!, st.units); });
+    root.querySelectorAll<HTMLInputElement>('input[data-r][data-c="glucose"], input[data-r][data-c="insulin"]').forEach((el) => {
+      const row = st.rows[Number(el.dataset['r'])];
+      const t = row && row.time.trim() !== '' ? Number(row.time) : NaN;
+      el.placeholder = seriesHint(el.dataset['c'] as 'glucose' | 'insulin', t, st.units);
+    });
+  }
+
   function refresh(): void {
     refreshLabels();
+    refreshHints();
     const built = buildInputs(st);
     root.querySelectorAll<HTMLElement>('.err[id^="e-"], .err[data-e]').forEach((el) => {
       const key = el.dataset['e'] ?? el.id.slice(2);
