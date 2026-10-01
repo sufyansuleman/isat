@@ -17,3 +17,7 @@ legacy:
   difference: "Equal to legacy only when computed in batch over the same rows with avignon_weight 'sample' (re-derives Avignon's coefficient in the analysed cohort; InsuSensCalc / Suleman 2024 variant). Default is the published w = 0.137."
 source_verification: directly_verified
 source_verification_detail: "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read. PubMed abstract describes SiM only as 'averaging Sib and Si2h'; the full text (p.514) specifies the 0.137 balancing coefficient and that it was derived as mean Si2h / mean Sib in the study cohort."
+derived_in:
+  population: "Adults: 31 normal glucose tolerance, 10 impaired glucose tolerance, 6 type 2 diabetes"
+  n: "47"
+  setting: "Montpellier, France"

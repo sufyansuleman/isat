@@ -16,3 +16,7 @@ legacy:
   relation: equal
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+derived_in:
+  population: "Young, healthy, non-obese adults, 17 of them with a first-degree relative with type 2 diabetes"
+  n: "57"
+  setting: "Milan, Italy"

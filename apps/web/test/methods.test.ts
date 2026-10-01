@@ -65,6 +65,8 @@ describe('methods page', () => {
     const clone = host.cloneNode(true) as HTMLElement;
     // Quoted YAML text is exempt: limitations, and verification details (e.g. Belfiore's "normal-mean normalisation").
     clone.querySelectorAll('.extra').forEach((e) => { if (/^(Limitations|Verification)/.test(e.textContent ?? '')) e.remove(); });
+    // "Derived in" quotes the papers' clinical categories (e.g. "normal glucose tolerance").
+    clone.querySelectorAll('.derived').forEach((e) => e.remove());
     clone.querySelectorAll('[data-search]').forEach((e) => e.removeAttribute('data-search'));
     expect(clone.textContent).not.toMatch(/\b(abnormal|normal|good|bad|cut-?off)\b/i);
   });
@@ -116,5 +118,16 @@ describe('result cards link to methods and highlight sex-specific formulas', () 
     expect(cardFormulaHtml(specFor('lap'), 'female')).toMatch(/Women \(used\)/);
     expect(cardFormulaHtml(specFor('homa_ir'), 'male')).not.toMatch(/variant/);
     if (html) expect(html).toContain('href="#/methods/vai"');
+  });
+});
+
+describe('derived-in population', () => {
+  it('every included method states its derivation population and N', () => {
+    for (const m of registry.filter((x) => x.deferredReason === undefined)) {
+      const d = specFor(m.id).derived_in;
+      expect(d?.population, m.id).toBeTruthy();
+      expect(d?.n, m.id).toBeTruthy();
+      expect(entryHtml(m), m.id).toContain('Derived in:');
+    }
   });
 });

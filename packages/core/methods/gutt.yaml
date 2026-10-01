@@ -22,3 +22,7 @@ legacy:
   difference: "InsuSensCalc 0.1.0 uses MPG in mg/dL and ln, so ISAT = legacy x 18 x ln(10) exactly (given glucose factor 18); ranks identical."
 source_verification: directly_verified
 source_verification_detail: "Primary PDF (Gutt et al., 2000) read; Table 1 subgroup means reproduced."
+derived_in:
+  population: "Adults aged 17-66 across a range of glucose tolerance and obesity: 50 men (22 Black, 28 White), 85 women (31 Black, 54 White)"
+  n: "135"
+  setting: "Miami, Florida, USA"

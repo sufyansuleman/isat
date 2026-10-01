@@ -15,3 +15,7 @@ legacy:
   relation: equal
 source_verification: directly_verified
 source_verification_detail: "McAuley 2001 abstract: Mffm/I = exp[2.63 − 0.28 ln(insulin) − 0.31 ln(TAG)]."
+derived_in:
+  population: "Adults aged 25-68 with normal glucose"
+  n: "178"
+  setting: "Dunedin, New Zealand"

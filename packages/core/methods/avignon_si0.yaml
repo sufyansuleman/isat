@@ -16,3 +16,7 @@ legacy:
   relation: equal
 source_verification: directly_verified
 source_verification_detail: "Primary PDF (Avignon et al., Int J Obes 1999;23:512-517) read."
+derived_in:
+  population: "Adults: 31 normal glucose tolerance, 10 impaired glucose tolerance, 6 type 2 diabetes"
+  n: "47"
+  setting: "Montpellier, France"

@@ -16,3 +16,6 @@ legacy:
   relation: equal
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Formula as printed in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), citing the Stumvoll 2001 letter (no abstract; not yet read). Note: Gastaldelli 2022 lists a different Stumvoll 2000 demographic ISI (0.226 − 0.0032·BMI − 0.0000645·I120 − 0.00375·G90), which is not the formula implemented here."
+derived_in:
+  population: "Adults without diabetes: 65 normal and 39 impaired glucose tolerance"
+  n: "104"

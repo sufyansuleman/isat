@@ -16,3 +16,7 @@ legacy:
   relation: equal
 source_verification: directly_verified
 source_verification_detail: "Matsuda & DeFronzo 1999 abstract gives 10,000/√(fasting G × fasting I × mean G × mean I during OGTT); the 5-point form uses all standard samples; the 3-point (0/30/120) form is a reduced-sampling variant."
+derived_in:
+  population: "Adults aged 18-71, BMI 20-65: 62 normal, 31 impaired glucose tolerance, 60 type 2 diabetes"
+  n: "153"
+  setting: "San Antonio, Texas, USA"

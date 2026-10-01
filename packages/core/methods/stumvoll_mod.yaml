@@ -20,3 +20,6 @@ legacy:
   relation: equal
 source_verification: author_verified_not_rechecked
 source_verification_detail: "0/120-min variant (uses G120); cited to the Stumvoll 2001 letter as in Suleman 2024 (JCEM 109:2754, Table 2, ref 26), where the formula is printed identically. The 2001 letter itself (no abstract) not yet read; the 2000 paper gives the original equations using G90."
+derived_in:
+  population: "Adults without diabetes: 65 normal and 39 impaired glucose tolerance"
+  n: "104"

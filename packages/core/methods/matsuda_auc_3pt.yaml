@@ -16,3 +16,7 @@ legacy:
   relation: equal
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Matsuda and DeFronzo 1999 definition confirmed in secondary sources; original not re-read for ISAT. AUC-based variant; not stated in the Matsuda 1999 abstract."
+derived_in:
+  population: "Adults aged 18-71, BMI 20-65: 62 normal, 31 impaired glucose tolerance, 60 type 2 diabetes"
+  n: "153"
+  setting: "San Antonio, Texas, USA"

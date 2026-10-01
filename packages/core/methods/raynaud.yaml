@@ -16,3 +16,6 @@ legacy:
   relation: equal
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+derived_in:
+  population: "Adults and adolescents without diabetes aged 11-73, BMI 17-43: 22 normal weight, 48 overweight; half women"
+  n: "70"

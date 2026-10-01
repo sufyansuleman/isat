@@ -22,3 +22,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "Form as tabulated in Gastaldelli 2022 (Obesity, doi:10.1002/oby.23503)."
+derived_in:
+  population: "Mexican-American adults aged 18-70, BMI 20-65: 100 normal and 55 impaired glucose tolerance"
+  n: "155"
+  setting: "San Antonio, Texas, USA"

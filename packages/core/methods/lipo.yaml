@@ -23,3 +23,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "Lipo-IR = RaGlycerol × I0 (mU/L), Gastaldelli 2022 Eq. 10, citing Rosso 2019."
+derived_in:
+  population: "Adults without diabetes with biopsy-proven fatty liver disease (NAFLD)"
+  n: "40"
+  setting: "Turin, Italy"

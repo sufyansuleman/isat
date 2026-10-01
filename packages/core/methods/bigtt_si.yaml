@@ -15,3 +15,7 @@ legacy:
   relation: equal
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+derived_in:
+  population: "Adults with normal glucose tolerance (fasting below 7.0 and 2-h glucose below 7.8 mmol/L); 28 more for external validation"
+  n: "258"
+  setting: "Denmark"

@@ -28,3 +28,6 @@ limitations:
   - Surrogate index from fasting values only; near-identical information to HOMA-IR.
 source_verification: secondary_source_confirmed
 source_verification_detail: "Duncan 1995 formula reproduced in secondary sources; primary not read."
+derived_in:
+  population: "Adults without diabetes (13 in the minimal-model comparison) and 30 with newly diagnosed type 2 diabetes"
+  n: "13 + 30"

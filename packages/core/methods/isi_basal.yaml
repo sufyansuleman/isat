@@ -8,6 +8,10 @@ reference:
   citation: "Hanson RL, Pratley RE, Bogardus C, Narayan KM, Roumain JM, Imperatore G, Fagot-Campagna A, Pettitt DJ, Bennett PH, Knowler WC. Evaluation of simple indices of insulin sensitivity and insulin secretion for use in epidemiologic studies. Am J Epidemiol. 2000;151(2):190-198."
   doi: 10.1093/oxfordjournals.aje.a010187
   pmid: 10645822
+secondary_references:
+  - citation: "Sluiter WJ, Erkelens DW, Terpstra P, Reitsma WD, Doorenbos H. Glucose tolerance and insulin release, a mathematical approach. II. Approximation of the peripheral insulin resistance after oral glucose loading. Diabetes. 1976;25(4):245-249. Origin of the 10^4/(I x G) form, there using insulin and glucose at the glucose peak after oral loading."
+    doi: 10.2337/diab.25.4.245
+    pmid: 773722
 verification:
   status: legacy_match
   detail: "Formula identical to InsuSensCalc 0.1.0 (validated to 1e-9); not yet checked against the primary publication."
@@ -16,3 +20,7 @@ legacy:
   relation: equal
 source_verification: secondary_source_confirmed
 source_verification_detail: "Hanson 2000 abstract defines ISI = 10^4/(I0 × G0); units not stated in the abstract."
+derived_in:
+  population: "Pima or Tohono O'odham Indians of the Gila River Indian Community (clamp subgroup size not stated; 1,731 for diabetes incidence)"
+  n: "not stated"
+  setting: "Arizona, USA"

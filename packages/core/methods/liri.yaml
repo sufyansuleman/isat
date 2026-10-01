@@ -22,3 +22,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "Formula as printed in Gastaldelli 2022 Table 3 (citing Vangipurapu 2011); coefficients not re-checked against the primary paper."
+derived_in:
+  population: "Adults without diabetes, mean age 43, mean BMI 26"
+  n: "368"
+  setting: "Kuopio, Finland"

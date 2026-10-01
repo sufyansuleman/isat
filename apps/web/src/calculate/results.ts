@@ -15,6 +15,14 @@ for (const spec of Object.values(methodSpecs) as unknown as Spec[]) {
 export const specFor = (id: string): Spec => flat[id] ?? {};
 export const baseId = (id: string) => id.replace(/_inv$/, '');
 
+/** "Derived in" line: population, N and study centre as reported in the original paper. */
+export function derivedHtml(spec: Spec): string {
+  const d = spec.derived_in;
+  if (!d) return '';
+  const where = d.setting ? `; ${esc(d.setting)}` : '';
+  return `<p class="derived"><strong>Derived in:</strong> ${esc(d.population)} (N = ${esc(d.n)})${where}.</p>`;
+}
+
 export interface Snapshot {
   state: FormState;
   built: Built;
@@ -189,6 +197,7 @@ ${warns ? `<div class="extra warn"><strong>Warnings:</strong><ul>${warns}</ul></
 ${lims ? `<div class="extra"><strong>Limitations:</strong><ul>${lims}</ul></div>` : ''}
 ${citationHtml(spec)}
 <details><summary>Verification note</summary><p>${esc(m?.source_verification_detail ?? '')}</p></details>
+${derivedHtml(spec)}
 <p class="method-link"><a href="#/methods/${esc(id)}">Method details</a></p>
 </article>`;
 }

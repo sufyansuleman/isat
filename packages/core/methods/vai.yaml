@@ -27,3 +27,7 @@ notes:
   - "WC in cm; TG and HDL in mmol/L"
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+derived_in:
+  population: "Healthy non-obese adults; then tested in 1,498 primary-care patients"
+  n: "315"
+  setting: "Palermo, Sicily, Italy"

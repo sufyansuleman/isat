@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS, registry, type MethodEntry } from '@isat/core';
 import { esc } from '../calculate/format';
-import { badgeText, specFor } from '../calculate/results';
+import { badgeText, derivedHtml, specFor } from '../calculate/results';
 
 // Everything here is derived from methodSpecs (via specFor) and the registry; no per-method text is hard-coded.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,6 +125,7 @@ ${referencesHtml(spec)}<p class="legacy">${legacyText(spec)}</p>`
     : `${formulasHtml(spec)}
 ${inputs.length ? `<div class="extra"><strong>Required inputs:</strong><ul>${inputs.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
 <p class="dir">${DIRECTION_PHRASE[m.direction] ?? ''}</p>
+${derivedHtml(spec)}
 ${referencesHtml(spec)}
 <div class="extra"><strong>Verification:</strong> ${esc(m.source_verification_detail)}</div>
 ${list('Limitations', spec.limitations)}${list('Notes', (Array.isArray(spec.notes) ? spec.notes : []).filter((n: string) => !JUDGEMENT.test(n)))}
@@ -158,6 +159,7 @@ export function methodsHtml(): string {
   const key = LEVELS.map(([k, meaning]) => `<li><span class="badge" data-sv="${k}">${esc(badgeText(k))}</span> ${esc(meaning)}</li>`).join('');
   const chips = CATEGORIES.map(([k, label]) => `<button type="button" class="chip" data-chip="${k}" aria-pressed="${k === 'all'}">${esc(label)}</button>`).join('');
   return `<p>All formulas below are the ones ISAT executes; this page is generated from the same method files the calculation engine uses.</p>
+<p class="hint">"Derived in" gives the population and number of people (N) each index was developed in, as reported in the original paper; the place is the study centre. Most papers do not report ancestry, and an index may behave differently in other populations.</p>
 <h2>Verification levels</h2><ul class="key">${key}</ul>
 <div class="mfilter"><p><label for="m-search">Search by name, id or reference author</label> <input id="m-search" type="search" autocomplete="off"></p>
 <div class="chips" role="group" aria-label="Category">${chips}</div></div>

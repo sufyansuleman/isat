@@ -16,3 +16,6 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "G mmol/L × I /22.5, stated in both the Avignon 1999 and Gutt 2000 PDFs."
+derived_in:
+  population: "12 adults without diabetes (aged 23-67) and 11 with type 2 diabetes; numbers differed between comparisons"
+  n: "23"

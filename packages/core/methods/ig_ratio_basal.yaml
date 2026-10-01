@@ -22,3 +22,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "IGR = I0 (mU/L) / G0 (mmol/L), Gastaldelli 2022 Table 2, citing Hanson 2000."
+derived_in:
+  population: "Pima or Tohono O'odham Indians of the Gila River Indian Community (clamp subgroup size not stated; 1,731 for diabetes incidence)"
+  n: "not stated"
+  setting: "Arizona, USA"

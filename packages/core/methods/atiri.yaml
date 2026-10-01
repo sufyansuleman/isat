@@ -24,3 +24,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "AT-IRI = RaPalmitate × I0 (mU/L), Gastaldelli 2022 Eq. 11; index introduced by Fabbrini 2012."
+derived_in:
+  population: "Obese adults without diabetes (mean BMI 40)"
+  n: "47"
+  setting: "St. Louis, Missouri, USA"

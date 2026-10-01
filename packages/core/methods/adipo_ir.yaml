@@ -26,3 +26,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: secondary_source_confirmed
 source_verification_detail: "Adipo-IR = FFA × I0 (mU/L), Gastaldelli 2022 Table 3 / Eq. 9."
+derived_in:
+  population: "Adults with normal glucose tolerance, impaired glucose tolerance or type 2 diabetes"
+  n: "302"
+  setting: "San Antonio, Texas, USA"

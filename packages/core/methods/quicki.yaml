@@ -28,3 +28,7 @@ limitations:
   - Less reliable in people with markedly impaired insulin secretion (e.g. advanced type 2 diabetes).
 source_verification: secondary_source_confirmed
 source_verification_detail: "Katz 2000 formula plus a published reference range only consistent with log10."
+derived_in:
+  population: "28 non-obese, 13 obese and 15 type 2 diabetes; checked in a further 35 at another centre"
+  n: "56"
+  setting: "National Institutes of Health, USA"

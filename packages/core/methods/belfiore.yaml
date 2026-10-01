@@ -25,6 +25,10 @@ reference_means:
     area_0_2h: { insulin: 363.04, glucose: 10.26, ffa: 0.478 }    # FFA 478.00 umol/L*h
     area_0_1_2h: { insulin: 638.00, glucose: 11.36, ffa: 0.29625 } # FFA 296.25 umol/L*h
 
+derived_in:
+  population: "No single cohort: the reference means are the average of the normal groups in six published studies. The paper advises each laboratory to use its own normal reference values"
+  n: "6 studies"
+
 methods:
   - id: belfiore_basal
     source_verification: directly_verified

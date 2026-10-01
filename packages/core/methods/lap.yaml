@@ -27,3 +27,7 @@ notes:
   - "WC in cm; TG and HDL in mmol/L"
 source_verification: directly_verified
 source_verification_detail: "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women."
+derived_in:
+  population: "US adults in NHANES III (survey-weighted, multi-ethnic)"
+  n: "9,180"
+  setting: "USA"

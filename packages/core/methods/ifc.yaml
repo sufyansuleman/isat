@@ -24,3 +24,6 @@ limitations:
   - "Reflects insulin secretion and clearance dynamics as well as insulin action."
 source_verification: directly_verified
 source_verification_detail: "PMC full text of Williamson 2023 read."
+derived_in:
+  population: "Not derived against a reference test: used as a genome-wide association trait in participants of three ancestry groups"
+  n: "over 55,000"

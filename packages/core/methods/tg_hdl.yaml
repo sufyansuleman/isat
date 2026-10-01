@@ -17,3 +17,7 @@ legacy:
   difference: "Legacy column is the negated index."
 source_verification: author_verified_not_rechecked
 source_verification_detail: "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
+derived_in:
+  population: "Overweight adults (BMI 25 or more) without diabetes"
+  n: "258"
+  setting: "Stanford, California, USA"
