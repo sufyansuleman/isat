@@ -109,3 +109,25 @@ progress { width: min(100%, 20rem); vertical-align: middle; }
 /* OGTT table: compact time input with its unit on the same line */
 input[data-c="time"] { width: 4.5rem; display: inline-block; }
 .after { white-space: nowrap; color: var(--muted, inherit); }
+.example-file { margin: 8px 0; }
+.example-file summary { font-weight: 600; }
+.example-wrap { max-height: 22rem; }
+.example th, .example td { white-space: nowrap; }
+.example tbody th { position: sticky; left: 0; background: var(--bg); text-align: left; font-weight: 600; }
+.example thead th { position: sticky; top: 0; background: var(--bg); }
+
+/* Methods page */
+.key { list-style: none; padding: 0; }
+.key li { margin: 4px 0; }
+.mfilter input[type="search"] { width: min(100%, 22rem); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+details.method { border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; margin: 6px 0; background: var(--surface); }
+details.method[hidden], #m-main[hidden], #m-excluded[hidden] { display: none; }
+details.method > summary { padding: 8px 0; cursor: pointer; }
+details.method .mname { font-weight: 600; }
+details.method .mdir { color: var(--muted); font-size: 0.875rem; margin: 0 6px; }
+details.method .ref, details.method .legacy, details.method .extra { font-size: 0.9rem; overflow-wrap: anywhere; }
+.variant { margin: 4px 0; }
+.vlabel { font-size: 0.8rem; color: var(--muted); }
+.variant-used { border-left: 3px solid var(--accent); padding-left: 8px; }

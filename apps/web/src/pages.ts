@@ -34,7 +34,7 @@ export function pageFor(route: Route): string {
   switch (route) {
     case '/': return landing();
     case '/calculate': return '<h1>Calculate</h1><div id="calculate-root"></div>';
-    case '/methods': return placeholder('Methods');
+    case '/methods': return '<h1>Methods</h1><div id="methods-root"></div>';
     case '/about': return placeholder('About');
   }
 }

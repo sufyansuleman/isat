@@ -11,6 +11,7 @@ import {
 import { checkFileSize, checkRowCount, hasAllowedExtension } from './limits';
 import { loadTable, toCanonical, type Loaded } from './parse';
 import { renderPerson } from './person';
+import { exampleDetailsHtml, exampleFile } from './example';
 
 interface Run {
   canonical: Inputs[];
@@ -34,7 +35,8 @@ const html = `
   <p class="hint">or drop it here. The file is read in this browser and is not uploaded. Limit: 100,000 rows / 25 MB.</p>
 </div>
 <p id="up-err" class="err" role="alert"></p>
-<p class="hint">One row per person. Recognised columns (any case): participant_id (or id), age, sex, weight, bmi, waist, TG, HDL_c, FFA, G0 to G120, I0 to I120, fat_mass, rate_glycerol, rate_palmitate. Use a dot as the decimal separator. Sex: 1/2, m/f or male/female (1 = male, 2 = female). Values must be in the units chosen below.</p>
+${exampleDetailsHtml()}
+<p class="hint">One row per person. Recognised columns (any case): participant_id (or id), age, sex, weight, bmi, waist, TG, HDL_c, FFA, G0 to G120 (or fasting_glucose, glucose_30 …), I0 to I120 (or fasting_insulin, insulin_30 …), fat_mass, rate_glycerol, rate_palmitate. Use a dot as the decimal separator. Sex: 1/2, m/f or male/female (1 = male, 2 = female). Values must be in the units chosen below.</p>
 </section>
 <div id="up-loaded" hidden></div>
 <section id="up-results" aria-labelledby="up-h-res" hidden></section>`;
@@ -236,6 +238,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     const b = (e.target as HTMLElement).closest('button');
     if (!b) return;
     if (b.id === 'up-calc') startRun();
+    else if (b.id === 'up-use-example') { units = { ...DEFAULT_UNITS }; void loadFile(exampleFile()); }
     else if (b.id === 'up-cancel') cancelRun();
     else if (b.dataset['p'] !== undefined) openPerson(Number(b.dataset['p']));
     else if (b.id === 'up-csv' && run) {

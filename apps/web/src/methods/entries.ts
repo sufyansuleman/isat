@@ -1,0 +1,172 @@
+import { DEFAULT_SETTINGS, registry, type MethodEntry } from '@isat/core';
+import { esc } from '../calculate/format';
+import { badgeText, specFor } from '../calculate/results';
+
+// Everything here is derived from methodSpecs (via specFor) and the registry; no per-method text is hard-coded.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Spec = Record<string, any>;
+
+export const CATEGORIES: Array<[string, string]> = [
+  ['all', 'All'], ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'],
+  ['tracer_dxa', 'Tracer & DXA'], ['deferred', 'Not included'],
+];
+
+/** Category used for filtering; excluded methods are always "deferred" whatever their YAML category. */
+export function categoryOf(m: MethodEntry): string {
+  return m.deferredReason !== undefined ? 'deferred' : m.category;
+}
+
+export const DIRECTION_PHRASE: Record<string, string> = {
+  higher_more_sensitive: 'higher = more insulin-sensitive',
+  higher_more_resistant: 'higher = more insulin-resistant',
+  unknown: 'direction not specified',
+};
+
+export const LEVELS: Array<[string, string]> = [
+  ['directly_verified', 'The formula was checked against the original publication.'],
+  ['secondary_source_confirmed', 'The formula was confirmed in secondary sources; the original was not re-read.'],
+  ['author_verified_not_rechecked', 'The formula was verified against the publication by the InsuSensCalc author; not re-checked for ISAT.'],
+  ['unresolved', 'The source could not be verified; the method is not included in this version.'],
+];
+
+const UNIT_WORDS: Record<string, string> = {
+  uU_per_mL: 'µU/mL', mg_per_dL: 'mg/dL', mmol_per_L: 'mmol/L', pmol_per_L: 'pmol/L', 'uU/mL': 'µU/mL',
+};
+const DEFAULT_UNIT: Record<string, string> = {
+  glucose: 'mmol/L', insulin: 'pmol/L', ffa: 'mmol/L', tg: 'mmol/L', hdl: 'mmol/L', weight: 'kg', fat_mass: 'kg',
+  waist: 'cm', bmi: 'kg/m²', age: 'years',
+};
+
+/** One YAML input token -> "glucose: fasting, 30, 120 min (mmol/L)". */
+export function describeInput(item: string | { var: string; unit?: string }): string {
+  const raw = typeof item === 'string' ? item : item.var;
+  const explicit = typeof item === 'string' ? /\(([^)]*)\)/.exec(raw)?.[1] : item.unit;
+  const unitText = explicit !== undefined ? (UNIT_WORDS[explicit] ?? explicit) : undefined;
+  const tok = raw.replace(/\s*\(.*\)\s*$/, '').trim();
+  const m = /^(glucose|insulin|ffa)_([\d,]+)$/.exec(tok);
+  if (m) {
+    const times = m[2]!.split(',').map((t) => (Number(t) === 0 ? 'fasting' : t)).join(', ');
+    const hasMin = m[2]!.split(',').some((t) => Number(t) !== 0);
+    return `${m[1]}: ${times}${hasMin ? ' min' : ''} (${unitText ?? DEFAULT_UNIT[m[1]!]})`;
+  }
+  const scalar = /^(tg|hdl|weight|bmi|waist|age|fat_mass)$/.exec(tok);
+  if (scalar) return `${tok} (${unitText ?? DEFAULT_UNIT[tok] ?? ""})`;
+  return unitText ? `${tok} (${unitText})` : tok;
+}
+
+function refHtml(ref: Spec): string {
+  const links: string[] = [];
+  if (ref.doi) links.push(`DOI: <a href="https://doi.org/${esc(ref.doi)}">${esc(ref.doi)}</a>`);
+  if (ref.pmid) links.push(`PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/${esc(ref.pmid)}/">${esc(ref.pmid)}</a>`);
+  return `${esc(ref.citation ?? '')}${links.length ? ' ' + links.join('; ') : ''}`;
+}
+
+function referencesHtml(spec: Spec): string {
+  const primary = spec.reference ?? (typeof spec.source === 'object' ? spec.source : undefined);
+  const out: string[] = [];
+  if (primary?.citation) out.push(`<p class="ref">${refHtml(primary)}</p>`);
+  else if (typeof spec.source === 'string') out.push(`<p class="ref">${esc(spec.source)}</p>`);
+  else out.push('<p class="ref">Primary reference: not recorded in the method file.</p>');
+  const sec = (spec.secondary_references ?? []) as Spec[];
+  if (sec.length) out.push(`<p class="ref"><strong>Also see:</strong></p><ul>${sec.map((r) => `<li>${refHtml(r)}</li>`).join('')}</ul>`);
+  return out.join('');
+}
+
+function colText(c: unknown): string {
+  if (c && typeof c === 'object') {
+    const o = c as Record<string, string>;
+    return `${o['male']} (men), ${o['female']} (women)`;
+  }
+  return String(c);
+}
+
+export function legacyText(spec: Spec): string {
+  const lg = spec.legacy ?? {};
+  const col = lg.insusenscalc_column;
+  const scale = lg.scale_factor ? ` Scale factor: ${esc(lg.scale_factor)}.` : '';
+  switch (lg.relation) {
+    case 'equal': return `Identical to InsuSensCalc column ${esc(colText(col))}.${scale}`;
+    case 'negated': return `InsuSensCalc reports this negated as ${esc(colText(col))} (higher = more sensitive).${scale}`;
+    case 'different': return `Deliberately different from InsuSensCalc ${esc(colText(col))}: ${esc(lg.difference ?? 'see method file')}.${scale}`;
+    default: return 'Not in InsuSensCalc.';
+  }
+}
+
+/** Formula block(s): variants with labels when the method has them, otherwise the single formula. */
+export function formulasHtml(spec: Spec, usedLabel?: string): string {
+  const variants = (spec.formula_variants ?? []) as Array<{ label: string; latex: string }>;
+  if (variants.length) {
+    return variants.map((v) =>
+      `<div class="variant${v.label === usedLabel ? ' variant-used' : ''}"><span class="vlabel">${esc(v.label)}</span><div class="formula" data-latex="${esc(v.latex)}"><code>${esc(v.latex)}</code></div></div>`).join('');
+  }
+  if (spec.formula_latex) return `<div class="formula" data-latex="${esc(spec.formula_latex)}"><code>${esc(spec.formula_latex)}</code></div>`;
+  return '';
+}
+
+function list(title: string, items: unknown): string {
+  const a = (Array.isArray(items) ? items : []) as string[];
+  return a.length ? `<div class="extra"><strong>${title}:</strong><ul>${a.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '';
+}
+
+export function searchText(m: MethodEntry, spec: Spec): string {
+  const refs = [spec.reference, typeof spec.source === 'object' ? spec.source : undefined, ...(spec.secondary_references ?? [])]
+    .map((r) => (r && typeof r === 'object' ? r.citation : '') ?? '').join(' ');
+  return `${m.name} ${m.id} ${typeof spec.source === 'string' ? spec.source : ''} ${refs}`.toLowerCase();
+}
+
+export function entryHtml(m: MethodEntry): string {
+  const spec = specFor(m.id);
+  const excluded = m.deferredReason !== undefined;
+  const inputs = ((spec.inputs ?? []) as Array<string | { var: string; unit?: string }>).map(describeInput);
+  const body = excluded
+    ? `<p><strong>Not included in this version:</strong> ${esc(m.deferredReason ?? '')}</p>
+<div class="extra"><strong>Verification:</strong> ${esc(m.source_verification_detail)}</div>
+${referencesHtml(spec)}<p class="legacy">${legacyText(spec)}</p>`
+    : `${formulasHtml(spec)}
+${inputs.length ? `<div class="extra"><strong>Required inputs:</strong><ul>${inputs.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
+<p class="dir">${DIRECTION_PHRASE[m.direction] ?? ''}</p>
+${referencesHtml(spec)}
+<div class="extra"><strong>Verification:</strong> ${esc(m.source_verification_detail)}</div>
+${list('Limitations', spec.limitations)}${list('Notes', (Array.isArray(spec.notes) ? spec.notes : []).filter((n: string) => !JUDGEMENT.test(n)))}
+<p class="legacy">${legacyText(spec)}</p>`;
+  return `<details class="method" id="m-${esc(m.id)}" data-id="${esc(m.id)}" data-cat="${categoryOf(m)}" data-search="${esc(searchText(m, spec))}">
+<summary><span class="mname">${esc(m.name)}</span> <span class="mdir">${excluded ? 'not included' : DIRECTION_PHRASE[m.direction] ?? ''}</span> <span class="badge" data-sv="${esc(m.source_verification)}">${esc(badgeText(m.source_verification))}</span></summary>
+${body}
+</details>`;
+}
+
+export function conversionsHtml(): string {
+  const d = DEFAULT_SETTINGS;
+  return `<table class="auc"><caption class="sr">Unit conversion factors</caption>
+<thead><tr><th scope="col">Quantity</th><th scope="col">Factor</th><th scope="col">Alternative</th></tr></thead><tbody>
+<tr><th scope="row">Glucose</th><td>${d.glucose_mg_per_dL_per_mmol} mg/dL per mmol/L</td><td>18.016</td></tr>
+<tr><th scope="row">Insulin</th><td>${d.insulin_pmol_per_uU.toFixed(1)} pmol/L per µU/mL</td><td>6.945</td></tr>
+<tr><th scope="row">Triglycerides</th><td>${d.tg_mg_per_dL_per_mmol} mg/dL per mmol/L</td><td></td></tr>
+<tr><th scope="row">HDL cholesterol</th><td>${d.hdl_mg_per_dL_per_mmol} mg/dL per mmol/L</td><td></td></tr>
+<tr><th scope="row">Free fatty acids</th><td>1000 µmol/L per mmol/L</td><td></td></tr>
+</tbody></table>
+<p>Every result records the factors used.</p>`;
+}
+
+/** Notes that state reference ranges or cut-offs are not displayed. */
+const JUDGEMENT = /\b(abnormal|normal|good|bad|cut-?off)\b/i;
+
+const GH = 'https://github.com/sufyansuleman/isat/blob/main/';
+
+export function methodsHtml(): string {
+  const included = registry.filter((m) => m.deferredReason === undefined);
+  const excluded = registry.filter((m) => m.deferredReason !== undefined);
+  const key = LEVELS.map(([k, meaning]) => `<li><span class="badge" data-sv="${k}">${esc(badgeText(k))}</span> ${esc(meaning)}</li>`).join('');
+  const chips = CATEGORIES.map(([k, label]) => `<button type="button" class="chip" data-chip="${k}" aria-pressed="${k === 'all'}">${esc(label)}</button>`).join('');
+  return `<p>All formulas below are the ones ISAT executes; this page is generated from the same method files the calculation engine uses.</p>
+<h2>Verification levels</h2><ul class="key">${key}</ul>
+<div class="mfilter"><p><label for="m-search">Search by name, id or reference author</label> <input id="m-search" type="search" autocomplete="off"></p>
+<div class="chips" role="group" aria-label="Category">${chips}</div></div>
+<p id="m-count" class="hint" aria-live="polite"></p>
+<section id="m-main"><h2>Methods</h2>${included.map(entryHtml).join('\n')}</section>
+<section id="m-excluded"><h2>Not included in this version</h2>${excluded.map(entryHtml).join('\n')}</section>
+<h2>Unit conversions</h2>${conversionsHtml()}
+<h2>Validation</h2>
+<p>Where ISAT's formula is identical to InsuSensCalc 0.1.0, results agree to a relative tolerance of 1e-9 on the validation participants. Every method was also re-implemented independently in R from the published definitions; both implementations agree to 1e-9. Intentional differences are listed per method above.</p>
+<ul><li><a href="${GH}validation/run_insusenscalc.R">validation/run_insusenscalc.R</a></li><li><a href="${GH}validation/independent_check.R">validation/independent_check.R</a></li><li><a href="${GH}validation/legacy-differences.md">validation/legacy-differences.md</a></li></ul>`;
+}

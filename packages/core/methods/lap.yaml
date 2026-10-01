@@ -18,5 +18,12 @@ legacy:
     female: LAP_Women_inv
   relation: negated
   difference: "Legacy computes both sexes for every row and negates."
+formula_variants:
+  - label: Men
+    latex: '\mathrm{LAP} = (WC - 65) \times TG'
+  - label: Women
+    latex: '\mathrm{LAP} = (WC - 58) \times TG'
+notes:
+  - "WC in cm; TG and HDL in mmol/L"
 source_verification: directly_verified
 source_verification_detail: "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women."

@@ -689,6 +689,19 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy computes both sexes for every row and negates."
     },
+    "formula_variants": [
+      {
+        "label": "Men",
+        "latex": "\\mathrm{LAP} = (WC - 65) \\times TG"
+      },
+      {
+        "label": "Women",
+        "latex": "\\mathrm{LAP} = (WC - 58) \\times TG"
+      }
+    ],
+    "notes": [
+      "WC in cm; TG and HDL in mmol/L"
+    ],
     "source_verification": "directly_verified",
     "source_verification_detail": "Kahn 2005 abstract: LAP = (WC−65)×TG men, (WC−58)×TG women."
   },
@@ -1115,6 +1128,19 @@ export const methodSpecs = {
       "relation": "negated",
       "difference": "Legacy computes both sexes for every row and negates."
     },
+    "formula_variants": [
+      {
+        "label": "Men",
+        "latex": "\\mathrm{VAI} = \\frac{WC}{39.68 + 1.88 \\times BMI} \\times \\frac{TG}{1.03} \\times \\frac{1.31}{HDL}"
+      },
+      {
+        "label": "Women",
+        "latex": "\\mathrm{VAI} = \\frac{WC}{36.58 + 1.89 \\times BMI} \\times \\frac{TG}{0.81} \\times \\frac{1.52}{HDL}"
+      }
+    ],
+    "notes": [
+      "WC in cm; TG and HDL in mmol/L"
+    ],
     "source_verification": "author_verified_not_rechecked",
     "source_verification_detail": "Formula verified against the original publication by the InsuSensCalc author (NEWS 0.1.0 / Suleman 2024); not re-read for ISAT."
   }
