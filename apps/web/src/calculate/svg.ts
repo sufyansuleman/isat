@@ -113,6 +113,182 @@ export function histogramSvg(o: HistogramOpts): string {
   return svgDoc(W, H, g, `${label}. N = ${h.n}, missing = ${missing}, median ${String(Number(h.median.toPrecision(4)))}`);
 }
 
+// ---------- density and sex-split plots ----------
+const sig = (v: number, d: number) => String(Number(v.toPrecision(d)));
+
+/** Line style per group: Okabe-Ito colour AND a dash pattern, so groups also differ in greyscale. */
+export const GROUP_STYLE = {
+  male: { label: 'Men', colour: OKABE_ITO.blue, dash: '', width: 2 },
+  female: { label: 'Women', colour: OKABE_ITO.vermillion, dash: '7 4', width: 2 },
+  all: { label: 'All', colour: '#666666', dash: '1.5 3.5', width: 1.8 },
+} as const;
+export type GroupKey = keyof typeof GROUP_STYLE;
+
+export interface Curve {
+  label: string; n: number; colour: string; dash: string; width: number;
+  /** Grid and density (empty when the group has fewer than 2 values). */
+  x: number[]; y: number[];
+  bw: number; median: number;
+}
+interface LegendItem { label: string; colour: string; dash: string; box?: boolean }
+
+function legendSvg(items: LegendItem[], x: number, y: number, fs: number): string {
+  let g = '', cx = x;
+  const sw = fs > 10 ? 24 : 16;
+  for (const it of items) {
+    g += it.box
+      ? `<rect x="${cx}" y="${y - 8}" width="${sw / 2}" height="9" fill="${it.colour}" fill-opacity="0.5" stroke="${it.colour}" stroke-width="1"${it.dash ? ` stroke-dasharray="${it.dash}"` : ''}/>`
+      : `<line x1="${cx}" x2="${cx + sw}" y1="${y - 3}" y2="${y - 3}" stroke="${it.colour}" stroke-width="2"${it.dash ? ` stroke-dasharray="${it.dash}" stroke-linecap="round"` : ''}/>`;
+    const tx = cx + (it.box ? sw / 2 : sw) + 5;
+    g += `<text x="${tx}" y="${y}" font-size="${fs}" fill="${INK}">${esc(it.label)}</text>`;
+    cx = tx + it.label.length * fs * 0.56 + 14;
+  }
+  return g;
+}
+
+const capLines = (lines: string[], x: number, y0: number) =>
+  lines.map((s, i) => `<text x="${x}" y="${y0 + i * 15}" font-size="11.5" fill="${MUTED}">${esc(s)}</text>`).join('');
+
+const withN = (c: { label: string; n: number }) => `${c.label} (n = ${num(c.n)})`;
+
+export interface DensityOpts {
+  curves: Curve[];
+  xLabel: string;
+  title: string;
+  /** Rows in the file; missing = total - n. */
+  total: number;
+  /** Non-missing values of the plotted column. */
+  n: number;
+  /** Rows with a value but no recognised sex (reported when sex curves are drawn). */
+  sexMissing?: number;
+  note?: string;
+  small?: boolean;
+}
+
+export function densitySvg(o: DensityOpts): string {
+  const small = !!o.small;
+  const cs = o.curves.filter((c) => c.x.length > 1);
+  const multi = o.curves.length > 1;
+  const W = small ? 240 : 520;
+  const m = small ? { l: 38, r: 8, t: multi ? 38 : 26 } : { l: 58, r: 16, t: multi ? 56 : 34 };
+  const label = `${o.title}: ${o.xLabel}`;
+  const head = `<text x="${m.l}" y="${small ? 14 : 20}" font-size="${small ? 11 : 13.5}" font-weight="600" fill="${INK}">${esc(small ? o.xLabel : o.title)}</text>`;
+  const caps: string[] = [`N = ${num(o.n)}; missing = ${num(o.total - o.n)} (of ${num(o.total)})`];
+  if (cs.length) {
+    caps.push(!multi ? `bandwidth (bw.nrd0) = ${sig(cs[0]!.bw, 3)}` : `bandwidth (bw.nrd0): ${cs.map((c) => `${c.label} ${sig(c.bw, 3)}`).join('; ')}`);
+    caps.push(!multi ? `median = ${sig(cs[0]!.median, 4)}` : `median: ${cs.map((c) => `${c.label} ${sig(c.median, 4)}`).join('; ')}`);
+  }
+  if (o.sexMissing) caps.push(`${num(o.sexMissing)} rows with missing sex excluded from the sex curves`);
+  if (o.note) caps.push(o.note);
+  const ph = small ? 104 : 220;
+  const H = small ? 176 : m.t + ph + 62 + caps.length * 15;
+  if (!cs.length) return svgDoc(W, H, `${head}<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="12" fill="${MUTED}">No values to plot</text>`, label);
+  const pw = W - m.l - m.r;
+  const x0 = Math.min(...cs.map((c) => c.x[0]!)), x1 = Math.max(...cs.map((c) => c.x[c.x.length - 1]!));
+  const maxY = Math.max(...cs.map((c) => Math.max(...c.y)));
+  const yTicks = niceTicks(0, maxY, small ? 3 : 5);
+  const yMax = Math.max(maxY, yTicks[yTicks.length - 1]!);
+  const sx = lin(x0, x1, m.l, m.l + pw), sy = lin(0, yMax, m.t + ph, m.t);
+  const fs = small ? 9 : 11, base = m.t + ph;
+  let g = head;
+  if (multi) g += legendSvg(cs.map((c) => ({ label: small ? c.label : withN(c), colour: c.colour, dash: c.dash })), m.l, small ? 28 : 44, small ? 9 : 11.5);
+  for (const t of yTicks) {
+    g += `<line x1="${m.l}" x2="${m.l + pw}" y1="${r2(sy(t))}" y2="${r2(sy(t))}" stroke="${GRID}" stroke-width="1"/>`
+      + `<text x="${m.l - 5}" y="${r2(sy(t)) + 3.5}" text-anchor="end" font-size="${fs}" fill="${MUTED}">${fmtTick(Number(t.toPrecision(4)))}</text>`;
+  }
+  g += `<line x1="${m.l}" x2="${m.l + pw}" y1="${base}" y2="${base}" stroke="${MUTED}" stroke-width="1"/>`;
+  for (const t of niceTicks(x0, x1, small ? 3 : 6)) {
+    if (t < x0 - 1e-12 || t > x1 + 1e-12) continue;
+    g += `<line x1="${r2(sx(t))}" x2="${r2(sx(t))}" y1="${base}" y2="${base + 4}" stroke="${MUTED}" stroke-width="1"/>`
+      + `<text x="${r2(sx(t))}" y="${base + (small ? 14 : 17)}" text-anchor="middle" font-size="${fs}" fill="${MUTED}">${fmtTick(t)}</text>`;
+  }
+  for (const c of cs) {
+    const d = c.x.map((x, i) => `${i ? 'L' : 'M'}${r2(sx(x))} ${r2(sy(c.y[i]!))}`).join('');
+    g += `<path class="dens" data-group="${esc(c.label)}" d="${d}" fill="none" stroke="${c.colour}" stroke-width="${c.width}" stroke-linejoin="round"${c.dash ? ` stroke-dasharray="${c.dash}" stroke-linecap="round"` : ''}/>`;
+  }
+  for (const c of cs) {
+    const mx = r2(sx(c.median));
+    g += `<line class="med" x1="${mx}" x2="${mx}" y1="${base}" y2="${base - (small ? 8 : 14)}" stroke="${c.colour}" stroke-width="3"><title>${esc(`${c.label} median ${sig(c.median, 4)}`)}</title></line>`;
+  }
+  if (!small) {
+    g += `<text x="${m.l + pw / 2}" y="${base + 40}" text-anchor="middle" font-size="12.5" fill="${INK}">${esc(o.xLabel)}</text>`
+      + `<text transform="translate(14 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12.5" fill="${INK}">Density</text>`
+      + capLines(caps, m.l, base + 62);
+  }
+  return svgDoc(W, H, g, `${label}. Density, N = ${o.n}${multi ? `; ${cs.map(withN).join('; ')}` : ''}`);
+}
+
+export interface HistGroup { label: string; colour: string; dash: string; values: ArrayLike<number> }
+export interface HistGroupsOpts {
+  groups: HistGroup[];
+  xLabel: string; title: string;
+  total: number; n: number; sexMissing?: number; note?: string; small?: boolean;
+}
+
+/** Overlaid semi-transparent histograms per group on shared bins (Freedman-Diaconis on the pooled values). */
+export function histogramGroupsSvg(o: HistGroupsOpts): string {
+  const small = !!o.small;
+  const pooled: number[] = [];
+  const meds: number[] = [], ns: number[] = [];
+  for (const gr of o.groups) {
+    const s = Array.from(gr.values).filter(Number.isFinite).sort((a, b) => a - b);
+    ns.push(s.length); meds.push(s.length ? quantile7(s, 0.5) : NaN);
+    for (const v of s) pooled.push(v);
+  }
+  const h = histogram(pooled);
+  const W = small ? 240 : 520;
+  const m = small ? { l: 38, r: 8, t: 38 } : { l: 58, r: 16, t: 56 };
+  const label = `${o.title}: ${o.xLabel}`;
+  const head = `<text x="${m.l}" y="${small ? 14 : 20}" font-size="${small ? 11 : 13.5}" font-weight="600" fill="${INK}">${esc(small ? o.xLabel : o.title)}</text>`;
+  const caps = [`N = ${num(o.n)}; missing = ${num(o.total - o.n)} (of ${num(o.total)})`];
+  caps.push(`median: ${o.groups.map((gr, i) => `${gr.label} ${Number.isNaN(meds[i]!) ? '—' : sig(meds[i]!, 4)}`).join('; ')}`);
+  if (o.sexMissing) caps.push(`${num(o.sexMissing)} rows with missing sex excluded from the sex histograms`);
+  if (o.note) caps.push(o.note);
+  const ph = small ? 104 : 220;
+  const H = small ? 176 : m.t + ph + 62 + caps.length * 15;
+  if (!h) return svgDoc(W, H, `${head}<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="12" fill="${MUTED}">No values to plot</text>`, label);
+  const pw = W - m.l - m.r, base = m.t + ph, fs = small ? 9 : 11;
+  const bw = (h.hi - h.lo) / h.bins;
+  const counts = o.groups.map((gr) => {
+    const c = new Array<number>(h.bins).fill(0);
+    for (const v of Array.from(gr.values)) if (Number.isFinite(v)) c[Math.min(h.bins - 1, Math.floor((v - h.lo) / bw))]!++;
+    return c;
+  });
+  const maxC = Math.max(...counts.map((c) => Math.max(...c)));
+  const yTicks = niceTicks(0, maxC, small ? 3 : 5);
+  const yMax = Math.max(maxC, yTicks[yTicks.length - 1]!);
+  const sx = lin(h.lo, h.hi, m.l, m.l + pw), sy = lin(0, yMax, base, m.t);
+  let g = head + legendSvg(o.groups.map((gr, i) => ({ label: small ? gr.label : `${gr.label} (n = ${num(ns[i]!)})`, colour: gr.colour, dash: gr.dash, box: true })), m.l, small ? 28 : 44, small ? 9 : 11.5);
+  for (const t of yTicks) {
+    g += `<line x1="${m.l}" x2="${m.l + pw}" y1="${r2(sy(t))}" y2="${r2(sy(t))}" stroke="${GRID}" stroke-width="1"/>`
+      + `<text x="${m.l - 5}" y="${r2(sy(t)) + 3.5}" text-anchor="end" font-size="${fs}" fill="${MUTED}">${fmtTick(t)}</text>`;
+  }
+  const px = pw / h.bins;
+  o.groups.forEach((gr, gi) => {
+    counts[gi]!.forEach((c, i) => {
+      if (!c) return;
+      g += `<rect class="hbar" data-group="${esc(gr.label)}" x="${r2(m.l + i * px)}" y="${r2(sy(c))}" width="${r2(Math.max(0.5, px - 1))}" height="${r2(base - sy(c))}" fill="${gr.colour}" fill-opacity="0.5" stroke="${gr.colour}" stroke-width="1"${gr.dash ? ` stroke-dasharray="${gr.dash}"` : ''}/>`;
+    });
+  });
+  g += `<line x1="${m.l}" x2="${m.l + pw}" y1="${base}" y2="${base}" stroke="${MUTED}" stroke-width="1"/>`;
+  for (const t of niceTicks(h.lo, h.hi, small ? 3 : 6)) {
+    if (t < h.lo - 1e-12 || t > h.hi + 1e-12) continue;
+    g += `<line x1="${r2(sx(t))}" x2="${r2(sx(t))}" y1="${base}" y2="${base + 4}" stroke="${MUTED}" stroke-width="1"/>`
+      + `<text x="${r2(sx(t))}" y="${base + (small ? 14 : 17)}" text-anchor="middle" font-size="${fs}" fill="${MUTED}">${fmtTick(t)}</text>`;
+  }
+  o.groups.forEach((gr, i) => {
+    if (Number.isNaN(meds[i]!)) return;
+    const mx = r2(sx(meds[i]!));
+    g += `<line class="med" x1="${mx}" x2="${mx}" y1="${base}" y2="${base - (small ? 8 : 14)}" stroke="${gr.colour}" stroke-width="3"><title>${esc(`${gr.label} median ${sig(meds[i]!, 4)}`)}</title></line>`;
+  });
+  if (!small) {
+    g += `<text x="${m.l + pw / 2}" y="${base + 40}" text-anchor="middle" font-size="12.5" fill="${INK}">${esc(o.xLabel)}</text>`
+      + `<text transform="translate(14 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12.5" fill="${INK}">Count</text>`
+      + capLines(caps, m.l, base + 62);
+  }
+  return svgDoc(W, H, g, `${label}. Histogram by group, N = ${o.n}; ${o.groups.map((gr, i) => `${gr.label} (n = ${ns[i]})`).join('; ')}`);
+}
+
 // ---------- heatmap ----------
 /** Diverging blue (-1) - white (0) - red (+1) scale (RdBu-like, colour-blind-friendly). */
 const STOPS: Array<[number, [number, number, number]]> = [

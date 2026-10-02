@@ -1,10 +1,14 @@
 // Analysis model for uploaded-file results: oriented index columns, lazy transforms / statistics and a cached
 // Spearman matrix. No DOM. Values are the oriented values the user selected (the ones that are downloaded).
 import {
-  describe, spearmanMatrix, transform,
-  type Described, type SpearmanMatrix, type TransformKind, type TransformResult,
+  describe, kde, spearmanMatrix, transform,
+  type Described, type Kde, type SpearmanMatrix, type TransformKind, type TransformResult,
 } from '@isat/core';
 import { INCLUDED, NEGATED, SEP, columnName, type ChunkPayload } from './batch';
+
+/** One density curve (or one sex group) of an index under a transform. */
+export interface GroupDensity { key: 'male' | 'female' | 'all'; n: number; median: number; kde: Kde }
+export interface SexSplit { male: Float64Array; female: Float64Array; /** Non-missing values on rows without a recognised sex. */ noSex: number }
 
 export interface TransformSetting { kind: TransformKind; bySex: boolean }
 export const NO_TRANSFORM: TransformSetting = { kind: 'none', bySex: false };
@@ -59,6 +63,8 @@ export class Analysis {
   private stats = new Map<number, Described>();
   private tf = new Map<string, TransformResult>();
   private matrices = new Map<string, Matrix>();
+  private splits = new Map<string, SexSplit>();
+  private dens = new Map<string, GroupDensity>();
 
   constructor(
     private chunks: ChunkPayload[],
@@ -86,6 +92,47 @@ export class Analysis {
     return col;
   }
 
+  /** True when at least one row has a recognised sex (male / female). */
+  get hasSex(): boolean { return this.sexes.some((s) => s === 'male' || s === 'female'); }
+
+  private static tfKey(c: number, t: TransformSetting): string { return `${c}|${t.kind}|${t.bySex && t.kind !== 'none'}`; }
+
+  /** Values of index `c` under `t` restricted to men / women (NaN elsewhere removed). */
+  sexSplit(c: number, t: TransformSetting): SexSplit {
+    const key = Analysis.tfKey(c, t);
+    let r = this.splits.get(key);
+    if (r) return r;
+    const v = this.transformed(c, t).values;
+    const m: number[] = [], f: number[] = [];
+    let noSex = 0;
+    for (let i = 0; i < v.length; i++) {
+      const x = v[i]!;
+      if (Number.isNaN(x)) continue;
+      const s = this.sexes[i];
+      if (s === 'male') m.push(x); else if (s === 'female') f.push(x); else noSex++;
+    }
+    this.splits.set(key, r = { male: Float64Array.from(m), female: Float64Array.from(f), noSex });
+    return r;
+  }
+
+  /** Kernel density (bw.nrd0), n and median of one group of index `c` under `t`; cached. */
+  density(c: number, t: TransformSetting, group: 'male' | 'female' | 'all'): GroupDensity {
+    const key = `${Analysis.tfKey(c, t)}|${group}`;
+    let r = this.dens.get(key);
+    if (r) return r;
+    const vals = group === 'all' ? this.transformed(c, t).values : this.sexSplit(c, t)[group];
+    const d = describe(vals);
+    this.dens.set(key, r = { key: group, n: d.n, median: d.median ?? NaN, kde: kde(vals) });
+    return r;
+  }
+
+  /** Median and n of the raw values in men and women (null when the sex has no values). */
+  sexMedians(c: number): { male: { median: number | null; n: number }; female: { median: number | null; n: number } } {
+    const s = this.sexSplit(c, NO_TRANSFORM);
+    const one = (a: Float64Array) => { const d = describe(a); return { median: d.median, n: d.n }; };
+    return { male: one(s.male), female: one(s.female) };
+  }
+
   /** Statistics of the raw (untransformed) oriented values. */
   rawStats(c: number): Described {
     let d = this.stats.get(c);
@@ -101,7 +148,7 @@ export class Analysis {
   }
 
   transformed(c: number, t: TransformSetting): TransformResult {
-    const key = `${c}|${t.kind}|${t.bySex && t.kind !== 'none'}`;
+    const key = Analysis.tfKey(c, t);
     let r = this.tf.get(key);
     if (!r) {
       r = t.kind === 'none'
@@ -157,3 +204,15 @@ export function matrixCsv(m: Matrix, mode: 'published' | 'sensitivity', what: 'r
   return lines.join('\r\n') + '\r\n';
 }
 
+
+/** Long-format density CSV: one row per grid point and group. */
+export function densityCsv(rows: Array<{ index: string; scale: string; curves: Array<{ group: string; n: number; kde: Kde }> }>): string {
+  const lines = ['index,scale,group,n,bandwidth,x,density'];
+  const q = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+  for (const r of rows) {
+    for (const c of r.curves) {
+      c.kde.x.forEach((x, i) => lines.push([q(r.index), q(r.scale), c.group, c.n, c.kde.bw, x, c.kde.y[i]!].join(',')));
+    }
+  }
+  return lines.join('\r\n') + '\r\n';
+}

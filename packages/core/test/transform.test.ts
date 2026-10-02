@@ -135,3 +135,43 @@ suite('spearman', () => {
     }
   });
 });
+
+import { bwNrd0, kde } from '../src/index';
+
+suite('bwNrd0 and kde', () => {
+  const exact = (x: number[], g: number[], bw: number) => g.map((t) => x.reduce((s, v) => s + Math.exp(-0.5 * ((t - v) / bw) ** 2), 0) / (Math.sqrt(2 * Math.PI) * bw * x.length));
+  it('bwNrd0 follows R, including fallbacks and missing values', () => {
+    const x = [1, 2, 4, 7, 11, 16, 22];
+    // R: bw.nrd0(c(1,2,4,7,11,16,22)) = 0.9 * min(sd, IQR/1.34) * 7^-0.2
+    const sd = Math.sqrt(x.reduce((s, v) => s + (v - 9) ** 2, 0) / 6);
+    expect(Math.abs(bwNrd0(x) - 0.9 * Math.min(sd, 10.5 / 1.34) * Math.pow(7, -0.2))).toBeLessThan(1e-12);
+    expect(bwNrd0([...x, null, NaN])).toBeCloseTo(bwNrd0(x), 12);
+    expect(bwNrd0([5, 5, 5, 5, 9])).toBeGreaterThan(0); // IQR = 0 -> sd
+    expect(bwNrd0([3, 3, 3])).toBeCloseTo(0.9 * 3 * Math.pow(3, -0.2), 12); // sd = 0 -> |x[1]|
+    expect(bwNrd0([0, 0, 0])).toBeCloseTo(0.9 * Math.pow(3, -0.2), 12); // -> 1
+    expect(bwNrd0([1])).toBeNaN();
+  });
+  it('kde exact path equals the dnorm sum on its grid and integrates to ~1', () => {
+    let s = 7; const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+    const x = Array.from({ length: 300 }, () => Math.exp(rnd() * 2));
+    const d = kde([...x, null], {});
+    expect(d.x.length).toBe(256); expect(d.n).toBe(300);
+    const e = exact(x, d.x, d.bw);
+    for (let k = 0; k < 256; k++) expect(Math.abs(d.y[k]! - e[k]!)).toBeLessThan(1e-12);
+    const step = d.x[1]! - d.x[0]!;
+    expect(Math.abs(d.y.reduce((a, b) => a + b, 0) * step - 1)).toBeLessThan(0.01);
+    expect(d.x[0]).toBeCloseTo(Math.min(...x) - 3 * d.bw, 12);
+  });
+  it('kde returns an empty curve for fewer than 2 values', () => { expect(kde([1, null]).x).toEqual([]); });
+  it('binned path (n > 20000) is within 1e-3 relative error of the exact sum', () => {
+    let s = 11; const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+    const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+    const x = Array.from({ length: 30000 }, () => Math.exp(0.6 * gauss() + 2));
+    const d = kde(x);
+    const e = exact(x, d.x, d.bw);
+    const peak = Math.max(...e);
+    let worst = 0;
+    for (let k = 0; k < 256; k++) if (e[k]! > 1e-3 * peak) worst = Math.max(worst, Math.abs(d.y[k]! - e[k]!) / e[k]!);
+    expect(worst).toBeLessThan(1e-3);
+  });
+});

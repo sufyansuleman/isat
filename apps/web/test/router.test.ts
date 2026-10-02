@@ -21,6 +21,9 @@ describe('parseHash', () => {
     expect(parseLocation('#/calculate/upload')).toEqual({ route: '/', mode: 'upload' });
     expect(parseLocation('#/batch')).toEqual({ route: '/', mode: 'upload' });
     expect(parseLocation('#/calculate')).toEqual({ route: '/', mode: 'manual' });
-    expect(parseLocation('#/methods?mode=upload').mode).toBe('manual');
+    expect(parseLocation('#/methods?mode=upload').route).toBe('/methods');
+    expect(parseLocation('#/')).toEqual({ route: '/', mode: 'upload' });
+    expect(parseLocation('')).toEqual({ route: '/', mode: 'upload' });
+    expect(parseLocation('#/?mode=manual')).toEqual({ route: '/', mode: 'manual' });
   });
 });

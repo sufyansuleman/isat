@@ -1,7 +1,7 @@
 // Export deterministic test vectors and ISAT transform / describe / Spearman outputs for independent checking in R.
 // Usage (repo root): npx vite-node validation/export_transform.ts
 import { writeFileSync } from 'node:fs';
-import { describe, qnorm, spearman, transform, type TransformKind } from '../packages/core/src/index';
+import { bwNrd0, describe, kde, qnorm, spearman, transform, type TransformKind } from '../packages/core/src/index';
 
 let seed = 20240917;
 const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
@@ -32,7 +32,12 @@ const spear: Record<string, unknown> = {};
 for (const a of names) for (const b of names) spear[`${a}__${b}`] = spearman(vars[a as keyof typeof vars], vars[b as keyof typeof vars]);
 const probs = [0.0001, 0.001, 0.01, 0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975, 0.99, 0.999, 0.9999];
 
+// Density: bandwidth for each variable, and the exact-path kde (default grid) for x1 and x3.
+const bw = Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, bwNrd0(v)]));
+const dens: Record<string, unknown> = {};
+for (const k of ['x1', 'x3'] as const) { const d = kde(vars[k]); dens[k] = { x: d.x, y: d.y, bw: d.bw, n: d.n }; }
+
 writeFileSync('validation/fixtures/transform_results.json', JSON.stringify({
-  inputs: { x1, x2, x3, sex }, transforms, describe: stats, spearman: spear, qnorm: probs.map((p) => ({ p, q: qnorm(p) })),
+  inputs: { x1, x2, x3, sex }, transforms, describe: stats, spearman: spear, qnorm: probs.map((p) => ({ p, q: qnorm(p) })), bw, kde: dens,
 }, null, 2));
-console.log(`wrote ${Object.keys(transforms).length} transforms, ${names.length} describe, ${Object.keys(spear).length} spearman, ${probs.length} qnorm`);
+console.log(`wrote ${Object.keys(transforms).length} transforms, ${names.length} describe, ${Object.keys(spear).length} spearman, ${probs.length} qnorm, ${Object.keys(bw).length} bandwidths, ${Object.keys(dens).length} densities`);

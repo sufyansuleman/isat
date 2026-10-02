@@ -13,7 +13,7 @@ vi.mock('../src/calculate/plots', async (orig) => ({
 import { mountUpload } from '../src/upload/view';
 import { runBatch, composeCsv, settingsFile, INCLUDED } from '../src/upload/batch';
 import { Analysis, matrixCsv, transformSuffix } from '../src/upload/analysis';
-import { histogram, histogramSvg, heatmapSvg, scatterSvg, samplePairs, divergingColour } from '../src/calculate/svg';
+import { densitySvg, histogram, histogramSvg, heatmapSvg, scatterSvg, samplePairs, divergingColour } from '../src/calculate/svg';
 import { loadTable, parseDelimited, toCanonical } from '../src/upload/parse';
 import { DEFAULT_UNITS } from '../src/calculate/state';
 
@@ -128,11 +128,11 @@ describe('results tabs', () => {
     expect(lab.firstElementChild!.id).toBe('up-status');
   });
 
-  it('downloads a standalone histogram SVG', async () => {
+  it('downloads a standalone density SVG (default plot type)', async () => {
     const root = await mountWith(template);
     (root.querySelector('#up-tabbtn-dist') as HTMLButtonElement).click();
     (root.querySelector('#up-tab-dist button[data-dl="raw"]') as HTMLButtonElement).click();
-    expect(saved.at(-1)!.name).toMatch(/^isat-hist-.*-raw\.svg$/);
+    expect(saved.at(-1)!.name).toMatch(/^isat-density-.*-raw\.svg$/);
     const svg = await saved.at(-1)!.blob.text();
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
     expect(svg).toContain('font-family=');
@@ -237,5 +237,95 @@ describe('analysis model', () => {
       rows: { total: 1, withProblems: 0, calculated: 1 },
     });
     expect(doc['transform']).toEqual({ kind: 'none' });
+  });
+});
+
+describe('density and sex split', () => {
+  const noSex = template.split(/\r?\n/).map((l) => { const c = l.split(','); c.splice(2, 1); return c.join(','); }).join('\n');
+  const openDist = (root: HTMLElement) => (root.querySelector('#up-tabbtn-dist') as HTMLButtonElement).click();
+  const tick1 = (root: HTMLElement, id: string, on: boolean) => {
+    const el = root.querySelector<HTMLInputElement>(id)!;
+    el.checked = on; el.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  it('density SVG has one path per sex plus a legend with n, and an optional combined curve', async () => {
+    const root = await mountWith(template);
+    openDist(root);
+    const svg = root.querySelector('#up-tab-dist svg')!;
+    expect(svg.querySelectorAll('path.dens').length).toBe(2);
+    expect(svg.textContent).toMatch(/Men \(n = \d+\)/);
+    expect(svg.textContent).toMatch(/Women \(n = \d+\)/);
+    expect(svg.textContent).toContain('bandwidth (bw.nrd0):');
+    expect(svg.querySelectorAll('line.med').length).toBe(2);
+    expect(svg.querySelector('path.dens[stroke-dasharray]')).not.toBeNull(); // line style differs, not only colour
+    tick1(root, '#up-dist-comb', true);
+    expect(root.querySelectorAll('#up-tab-dist svg')[0]!.querySelectorAll('path.dens').length).toBe(3);
+    tick1(root, '#up-dist-split', false);
+    expect(root.querySelectorAll('#up-tab-dist svg')[0]!.querySelectorAll('path.dens').length).toBe(1);
+  });
+  it('shows raw and RINT-within-sex density side by side', async () => {
+    const root = await mountWith(template);
+    pick(root, '#up-tf', 'rint');
+    openDist(root);
+    const svgs = root.querySelectorAll('#up-tab-dist svg');
+    expect(svgs.length).toBe(2);
+    expect(svgs[1]!.querySelectorAll('path.dens').length).toBe(2);
+  });
+  it('hides Split by sex and draws one curve when the file has no sex column', async () => {
+    const root = await mountWith(noSex);
+    openDist(root);
+    expect(root.querySelector('#up-dist-split')).toBeNull();
+    expect(root.querySelectorAll('#up-tab-dist svg')[0]!.querySelectorAll('path.dens').length).toBe(1);
+  });
+  it('summary has per-sex median columns only when sex is available', async () => {
+    const withSex = await mountWith(template);
+    const heads = [...withSex.querySelectorAll('#up-tab-summary thead th')].map((t) => t.textContent);
+    expect(heads).toContain('Median (men)');
+    expect(heads).toContain('Median (women)');
+    expect(withSex.querySelector('#up-tab-summary td[title^="n = "]')).not.toBeNull();
+    const without = await mountWith(noSex);
+    const h2 = [...without.querySelectorAll('#up-tab-summary thead th')].map((t) => t.textContent);
+    expect(h2).not.toContain('Median (men)');
+    expect(without.querySelectorAll('#up-tab-summary thead th').length).toBe(6);
+  });
+  it('histogram mode overlays one set of bars per sex', async () => {
+    const root = await mountWith(template);
+    openDist(root);
+    const r = root.querySelector<HTMLInputElement>('input[name="up-dist-kind"][value="hist"]')!;
+    r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true }));
+    const svg = root.querySelector('#up-tab-dist svg')!;
+    expect(svg.querySelectorAll('rect.hbar[data-group="Men"]').length).toBeGreaterThan(0);
+    expect(svg.querySelectorAll('rect.hbar[data-group="Women"]').length).toBeGreaterThan(0);
+    expect(svg.textContent).toMatch(/Women \(n = \d+\)/);
+  });
+  it('downloads density data as a long-format CSV', async () => {
+    const root = await mountWith(template);
+    openDist(root);
+    (root.querySelector('#up-dist-csv') as HTMLButtonElement).click();
+    expect(saved.at(-1)!.name).toMatch(/^isat-density-.*-raw\.csv$/);
+    const lines = (await saved.at(-1)!.blob.text()).trim().split('\r\n');
+    expect(lines[0]).toBe('index,scale,group,n,bandwidth,x,density');
+    expect(lines.length).toBe(1 + 2 * 256);
+    const groups = new Set(lines.slice(1).map((l) => l.split(',').at(-5)));
+    expect([...groups].sort()).toEqual(['men', 'women']);
+    const f = lines[1]!.split(',');
+    expect(Number(f.at(-1))).toBeGreaterThan(0);
+    expect(Number(f.at(-3))).toBeGreaterThan(0); // bandwidth
+  });
+  it('Show all draws a density small multiple per calculated index', async () => {
+    const root = await mountWith(template);
+    openDist(root);
+    tick1(root, '#up-dist-all', true);
+    await wait(() => root.querySelector('#up-dist-status') === null);
+    const n = root.querySelectorAll('#up-dist-grid figure').length;
+    expect(n).toBeGreaterThan(5);
+    expect(root.querySelectorAll('#up-dist-grid svg')[0]!.querySelectorAll('path.dens').length).toBe(2);
+  });
+  it('densitySvg labels use 3 / 4 significant digits', () => {
+    const x = Array.from({ length: 20 }, (_, i) => i / 3), y = x.map(() => 0.123456789);
+    const svg = densitySvg({ curves: [{ label: 'All', colour: '#000', dash: '', width: 2, n: 20, x, y, bw: 0.123456789, median: 3.14159265 }], xLabel: 'v', title: 'T', total: 22, n: 20 });
+    expect(svg).toContain('bandwidth (bw.nrd0) = 0.123');
+    expect(svg).toContain('median = 3.142');
+    expect(svg).toContain('missing = 2 (of 22)');
   });
 });

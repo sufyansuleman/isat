@@ -49,6 +49,15 @@ for (key in names(res$spearman)) {
 
 check("qnorm", vapply(res$qnorm, function(e) e$q, numeric(1)), qnorm(vapply(res$qnorm, function(e) e$p, numeric(1))))
 
+# Bandwidth (bw.nrd0) and exact Gaussian kernel density on the ISAT grid, recomputed as mean(dnorm((g - x)/bw))/bw.
+for (nm in names(res$bw)) check(paste("bw.nrd0", nm), res$bw[[nm]], bw.nrd0(v[[nm]][!is.na(v[[nm]])]))
+for (nm in names(res$kde)) {
+  d <- res$kde[[nm]]; x <- v[[nm]][!is.na(v[[nm]])]; g <- num(d$x); b <- as.numeric(d$bw)
+  check(paste("kde bandwidth", nm), b, bw.nrd0(x))
+  check(paste("kde n", nm), d$n, length(x))
+  check(paste("kde", nm), num(d$y), sapply(g, function(gg) mean(dnorm((gg - x) / b)) / b))
+}
+
 cat(sprintf("Independent R vs ISAT transforms: %d values agree (tolerance %g)\n", n_ok, TOL))
 cat(sprintf("Mismatches: %d\n", length(problems))); if (length(problems)) cat(paste0("  ", problems, "\n"), sep = "")
 quit(status = if (length(problems)) 1 else 0)

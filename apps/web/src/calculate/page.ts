@@ -4,14 +4,14 @@ import guideHtml from './guide.html?raw';
 
 export type Mode = 'manual' | 'upload';
 
-const TABS: Array<[Mode, string]> = [['manual', 'Enter values (one person)'], ['upload', 'Upload file (many people)']];
+const TABS: Array<[Mode, string]> = [['upload', 'Upload file (many people)'], ['manual', 'Enter values (one person)']];
 
 /** Calculate page: accessible tabs (roving tabindex, arrow keys, Home/End) over the two modes. */
 export function mountCalculatePage(root: HTMLElement, initial: Mode): () => void {
   root.innerHTML = `${guideHtml}<div role="tablist" aria-label="Input method" class="tabs">${TABS.map(([m, label]) =>
     `<button type="button" role="tab" id="tab-${m}" aria-controls="panel-${m}" data-mode="${m}">${label}</button>`).join('')}</div>
-<div role="tabpanel" id="panel-manual" aria-labelledby="tab-manual"></div>
-<div role="tabpanel" id="panel-upload" aria-labelledby="tab-upload" hidden></div>`;
+<div role="tabpanel" id="panel-upload" aria-labelledby="tab-upload"></div>
+<div role="tabpanel" id="panel-manual" aria-labelledby="tab-manual" hidden></div>`;
   const tab = (m: Mode) => root.querySelector<HTMLButtonElement>(`#tab-${m}`)!;
   const panel = (m: Mode) => root.querySelector<HTMLElement>(`#panel-${m}`)!;
   const disposers = [mountCalculate(panel('manual')), mountUpload(panel('upload'))];
@@ -24,7 +24,7 @@ export function mountCalculatePage(root: HTMLElement, initial: Mode): () => void
       panel(k).hidden = !on;
     }
     if (focus) tab(m).focus();
-    try { history.replaceState(null, '', m === 'upload' ? '#/?mode=upload' : '#/'); } catch { /* ignore */ }
+    try { history.replaceState(null, '', m === 'manual' ? '#/?mode=manual' : '#/'); } catch { /* ignore */ }
   }
   root.querySelector('[role="tablist"]')!.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-mode]');

@@ -283,3 +283,84 @@ export function spearmanMatrix(cols: Float64Array[]): SpearmanMatrix {
   }
   return { k, rho, n: nn };
 }
+
+// ---------- kernel density ----------
+/** R's bw.nrd0: 0.9 * min(sd, IQR / 1.34) * n^(-1/5), with R's fallbacks (sd, then |x[1]|, then 1) when that minimum is 0. */
+export function bwNrd0(values: ArrayLike<Num>): number {
+  const x = present(values);
+  const n = x.length;
+  if (n < 2) return NaN;
+  const s = Float64Array.from(x).sort();
+  let sum = 0;
+  for (let i = 0; i < n; i++) sum += s[i]!;
+  const mean = sum / n;
+  let ss = 0;
+  for (let i = 0; i < n; i++) ss += (s[i]! - mean) ** 2;
+  const sd = Math.sqrt(ss / (n - 1));
+  let lo = Math.min(sd, (quantile7(s, 0.75) - quantile7(s, 0.25)) / 1.34);
+  if (!lo) { lo = sd; if (!lo) { lo = Math.abs(x[0]!); if (!lo) lo = 1; } }
+  return 0.9 * lo * Math.pow(n, -0.2);
+}
+
+export interface KdeOptions {
+  /** Bandwidth (default bwNrd0). */
+  bw?: number;
+  /** Grid points (default 256). */
+  n?: number;
+  from?: number; to?: number;
+  /** Grid extends cut * bw beyond the data range (default 3, as R's density()). */
+  cut?: number;
+}
+export interface Kde { x: number[]; y: number[]; bw: number; n: number }
+
+/** Above this many observations the density is computed from linearly binned data (see kde). */
+export const KDE_EXACT_MAX = 20000;
+
+/**
+ * Gaussian kernel density on an even grid from min - cut*bw to max + cut*bw (R density() defaults).
+ * Exact (sum of dnorm over observations) for up to 20,000 non-missing values. Above that, observations are
+ * linearly binned (each value split between its two neighbouring bin centres) onto an even grid of
+ * max(2048, 32 * range / bw) points (capped at 65536) and the kernel sum is taken over the bin weights
+ * within 9 bandwidths of each grid point (the rest is below 1e-17 of the peak); this approximation stays within 1e-3 relative error of the exact sum on the grid (tested).
+ * `n` in the result is the number of non-missing observations.
+ */
+export function kde(values: ArrayLike<Num>, opts: KdeOptions = {}): Kde {
+  const x = present(values);
+  const nObs = x.length;
+  const bw = opts.bw ?? bwNrd0(x);
+  if (nObs < 2 || !(bw > 0)) return { x: [], y: [], bw, n: nObs };
+  let mn = Infinity, mx = -Infinity;
+  for (let i = 0; i < nObs; i++) { const v = x[i]!; if (v < mn) mn = v; if (v > mx) mx = v; }
+  const cut = opts.cut ?? 3, G = Math.max(2, opts.n ?? 256);
+  const from = opts.from ?? mn - cut * bw, to = opts.to ?? mx + cut * bw;
+  const gx: number[] = new Array(G), gy: number[] = new Array(G).fill(0);
+  const step = (to - from) / (G - 1);
+  const norm = 1 / (Math.sqrt(2 * Math.PI) * bw * nObs);
+  for (let k = 0; k < G; k++) gx[k] = from + k * step;
+  if (nObs <= KDE_EXACT_MAX) {
+    for (let k = 0; k < G; k++) {
+      let s = 0;
+      for (let i = 0; i < nObs; i++) { const u = (gx[k]! - x[i]!) / bw; s += Math.exp(-0.5 * u * u); }
+      gy[k] = s * norm;
+    }
+  } else {
+    const B = Math.min(65536, Math.max(2048, Math.ceil(32 * (mx - mn) / bw)));
+    const bs = (mx - mn) / (B - 1), w = new Float64Array(B);
+    for (let i = 0; i < nObs; i++) {
+      const p = (x[i]! - mn) / bs, j = Math.min(B - 2, Math.floor(p)), f = p - j;
+      w[j]! += 1 - f; w[j + 1]! += f;
+    }
+    for (let k = 0; k < G; k++) {
+      let s = 0;
+      const j0 = Math.max(0, Math.ceil((gx[k]! - 9 * bw - mn) / bs)), j1 = Math.min(B - 1, Math.floor((gx[k]! + 9 * bw - mn) / bs));
+      for (let j = j0; j <= j1; j++) {
+        const wj = w[j]!;
+        if (wj === 0) continue;
+        const u = (gx[k]! - (mn + j * bs)) / bw;
+        s += wj * Math.exp(-0.5 * u * u);
+      }
+      gy[k] = s * norm;
+    }
+  }
+  return { x: gx, y: gy, bw, n: nObs };
+}
