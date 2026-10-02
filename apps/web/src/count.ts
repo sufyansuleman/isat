@@ -40,7 +40,7 @@ export function rowBand(n: number): string {
   return '10001-100000';
 }
 
-/** Named event, e.g. "calc-single" or "upload-101-1000". */
+/** Named event: "single-calculation", "file-uploaded-<rows band>" or "file-analysed-<rows band>". */
 export function countEvent(name: string): void {
   send(countUrl(name, { event: true }));
 }

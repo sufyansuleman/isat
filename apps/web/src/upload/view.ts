@@ -96,6 +96,7 @@ export function mountUpload(root: HTMLElement): () => void {
     stopWorker(); resetResults();
     loaded = l; fileName = file.name;
     renderLoaded();
+    countEvent(`file-uploaded-${rowBand(l.total)}`);
   }
 
   function renderLoaded(): void {
@@ -190,7 +191,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
       } else if (m.type === 'done') {
         stopWorker(); box.hidden = true; $<HTMLButtonElement>('#up-calc').disabled = false;
         cur.finishedAt = new Date().toISOString(); run = cur; renderResults();
-        countEvent(`upload-${rowBand(loaded!.total)}`);
+        countEvent(`file-analysed-${rowBand(loaded!.total)}`);
       } else if (m.type === 'error') {
         stopWorker(); box.hidden = true; $<HTMLButtonElement>('#up-calc').disabled = false;
         $('#up-err').textContent = `Calculation failed: ${m.message}`;
