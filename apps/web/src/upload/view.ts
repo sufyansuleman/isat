@@ -5,13 +5,18 @@ import { DEFAULT_UNITS, type UnitChoice } from '../calculate/state';
 import { unitsSectionHtml } from '../calculate/units';
 import { ISAT_VERSION } from '../version';
 import {
-  composeCsv, emptyCounts, INCLUDED, mergeCounts, settingsFile, topReasons,
+  composeCsv, emptyCounts, INCLUDED, mergeCounts, settingsFile,
   type AvignonChoice, type AvignonUse, type ChunkPayload, type Counts, type RunRequest, type WorkerMessage,
 } from './batch';
 import { checkFileSize, checkRowCount, hasAllowedExtension } from './limits';
+import { Analysis, NO_TRANSFORM, transformExplanation, transformSuffix, type TransformSetting } from './analysis';
+import { mountCorrelations, mountDistributions, summaryHtml, type CorUi, type DistUi } from './panels';
 import { loadTable, toCanonical, type Loaded } from './parse';
 import { renderPerson } from './person';
 import { exampleDetailsHtml, exampleFile } from './example';
+
+type TabId = 'summary' | 'dist' | 'cor' | 'people';
+const TABS: Array<[TabId, string]> = [['summary', 'Summary'], ['dist', 'Distributions'], ['cor', 'Correlations'], ['people', 'Participants']];
 
 interface Run {
   canonical: Inputs[];
@@ -64,6 +69,12 @@ export function mountUpload(root: HTMLElement): () => void {
   let includeStatus = false;
   let disposePerson: (() => void) | undefined;
   let openIndex: number | undefined;
+  const tf: TransformSetting = { ...NO_TRANSFORM };
+  let addTransformed = true;
+  let tab: TabId = 'summary';
+  let analysis: Analysis | undefined;
+  let distUi: DistUi = { sel: undefined, all: false };
+  let corUi: CorUi = { pair: undefined };
 
   const stopWorker = () => { worker?.terminate(); worker = undefined; };
 
@@ -135,7 +146,8 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
   }
 
   function resetResults(): void {
-    disposePerson?.(); disposePerson = undefined; openIndex = undefined; run = undefined;
+    disposePerson?.(); disposePerson = undefined; openIndex = undefined; run = undefined; analysis = undefined;
+    distUi = { sel: undefined, all: false }; corUi = { pair: undefined }; tab = 'summary';
     $('#up-results').hidden = true; $('#up-results').innerHTML = '';
   }
 
@@ -184,35 +196,84 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
   }
 
   // ---------- results ----------
+  const effTf = (): TransformSetting => ({ kind: tf.kind, bySex: tf.kind !== 'none' && tf.bySex });
+  const sexes = (): Array<string | null> => loaded!.inputs.map((i) => i.sex ?? null);
+  const hasSexColumn = () => loaded!.columns.some((c) => c.kind === 'variable' && c.variable === 'sex');
+
+  function getAnalysis(): Analysis {
+    if (!analysis || analysis.mode !== orientMode) analysis = new Analysis(run!.chunks, orientMode, sexes());
+    return analysis;
+  }
+
   function renderResults(): void {
     const r = run!, l = loaded!;
     const n = l.total;
-    const rowsHtml = INCLUDED.map((m) => {
-      const c = r.counts[m.id]!;
-      const reasons = (map: Record<string, number>) => topReasons(map).map(([k, v]) => `${esc(k)} (${v})`).join('<br>');
-      return `<tr><th scope="row">${esc(m.name)}</th><td>${c.ok.toLocaleString('en-GB')} of ${n.toLocaleString('en-GB')}</td>
-<td>${c.unavailable.toLocaleString('en-GB')}${c.unavailable ? `<details class="why"><summary>why</summary><span class="hint">${reasons(c.unavailableReasons)}</span></details>` : ''}</td>
-<td>${c.error.toLocaleString('en-GB')}${c.error ? `<details class="why"><summary>why</summary><span class="hint">${reasons(c.errorReasons)}</span></details>` : ''}</td></tr>`;
-    }).join('');
     const avText = `Avignon SiM weight ${r.av.w} (${r.av.source === 'sample' ? 'derived from this cohort' : 'Avignon 1999'}).`;
     const res = $('#up-results');
+    const sexOk = hasSexColumn() && sexes().some((s) => s !== null);
+    if (!sexOk) tf.bySex = false;
+    const sexNote = !hasSexColumn() ? 'No sex column in this file.' : !sexOk ? 'No recognised sex values in this file.' : '';
+    const kindLabel = { none: 'None', log: 'Natural log', z: 'z-score', rint: 'Rank-based inverse normal (RINT, Blom)' };
     res.hidden = false;
     res.innerHTML = `<h2 id="up-h-res">Results</h2>
 <p>${n.toLocaleString('en-GB')} participants calculated. ${esc(avText)} Belfiore indices use the belfiore_1998 reference set. Surrogate indices; not direct measurements of insulin sensitivity and not a diagnosis.</p>
-<div class="table-wrap"><table class="ogtt"><caption class="sr">Calculated counts per method</caption>
-<thead><tr><th scope="col">Method</th><th scope="col">Calculated</th><th scope="col">Not calculated</th><th scope="col">Errors</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
-<fieldset class="orient"><legend>Orientation (applies to the download and the participant view)</legend>
+<fieldset class="orient"><legend>Orientation (applies to the analysis tabs, the download and the participant view)</legend>
 <label><input type="radio" name="up-orient" value="published"${orientMode === 'published' ? ' checked' : ''}> Published direction</label>
 <label><input type="radio" name="up-orient" value="sensitivity"${orientMode === 'sensitivity' ? ' checked' : ''}> InsuSensCalc convention (resistance indices negated, _inv)</label>
 </fieldset>
-<p><label><input type="checkbox" id="up-status"${includeStatus ? ' checked' : ''}> include per-method status columns</label></p>
+<fieldset class="orient"><legend>Transform (applies to Distributions, Correlations and the results CSV)</legend>
+<p class="check"><label for="up-tf">Transform</label> <select id="up-tf">${(['none', 'log', 'z', 'rint'] as const).map((k) => `<option value="${k}"${tf.kind === k ? ' selected' : ''}>${esc(kindLabel[k])}</option>`).join('')}</select>
+<label class="inline"><input type="checkbox" id="up-bysex"${tf.bySex ? ' checked' : ''}${sexOk ? '' : ' disabled'}> within sex</label>
+<span class="hint" id="up-sex-note">${esc(sexNote)}</span></p>
+<p class="hint" id="up-tf-explain"></p>
+<div id="up-tf-excl"></div>
+</fieldset>
+<p class="check"><label><input type="checkbox" id="up-status"${includeStatus ? ' checked' : ''}> include per-method status columns</label></p>
+<p class="check" id="up-addtf-wrap"><label><input type="checkbox" id="up-addtf"${addTransformed ? ' checked' : ''}> Add transformed columns</label></p>
 <p class="actions"><button type="button" id="up-csv">Download results CSV</button> <button type="button" id="up-json">Download settings file (JSON)</button></p>
-<h3>Participants</h3>
-<p><label for="up-search">Search by ID</label> <input id="up-search" type="search" autocomplete="off"></p>
+<div class="tabs" role="tablist" aria-label="Results">${TABS.map(([id, label]) => `<button type="button" role="tab" id="up-tabbtn-${id}" data-tab="${id}" aria-controls="up-tab-${id}" aria-selected="${id === tab}" tabindex="${id === tab ? 0 : -1}">${label}</button>`).join('')}</div>
+${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up-tabbtn-${id}"${id === tab ? '' : ' hidden'} class="tabpanel"></div>`).join('')}`;
+    $('#up-tab-people').innerHTML = `<p><label for="up-search">Search by ID</label> <input id="up-search" type="search" autocomplete="off"></p>
 <p class="hint" id="up-list-note"></p>
 <ul id="up-list" class="plist"></ul>
 <div id="up-person" tabindex="-1"></div>`;
     renderList();
+    updateTfUi();
+    showTab(tab);
+  }
+
+  function updateTfUi(): void {
+    const t = effTf();
+    let text = transformExplanation(t);
+    if (t.bySex) {
+      const s = sexes();
+      const k = (v: string) => s.filter((x) => x === v).length;
+      text += ` Male n = ${k('male').toLocaleString('en-GB')}; female n = ${k('female').toLocaleString('en-GB')}; ${s.filter((x) => x === null).length.toLocaleString('en-GB')} rows without a recognised sex are set to missing.`;
+    }
+    $('#up-tf-explain').textContent = text;
+    $('#up-addtf-wrap').hidden = tf.kind === 'none';
+    let excl = '';
+    if (tf.kind === 'log') {
+      const an = getAnalysis();
+      const items = INCLUDED.map((m, c) => [m, an.nonPositive(c)] as const).filter(([m, k]) => k > 0 && run!.counts[m.id]!.ok > 0);
+      if (items.length) {
+        excl = `<details class="why"><summary>Values ≤ 0 in ${items.length} index${items.length === 1 ? '' : 'es'}</summary><ul class="av-list">${items.map(([m, k]) => `<li>${esc(m.name)}: ${k.toLocaleString('en-GB')} values ≤ 0 set to missing for log</li>`).join('')}</ul></details>`;
+      }
+    }
+    $('#up-tf-excl').innerHTML = excl;
+  }
+
+  function showTab(id: TabId): void {
+    tab = id;
+    root.querySelectorAll<HTMLElement>('[role="tab"][data-tab]').forEach((b) => {
+      const on = b.dataset['tab'] === id;
+      b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+    });
+    root.querySelectorAll<HTMLElement>('.tabpanel').forEach((p) => { p.hidden = p.id !== `up-tab-${id}`; });
+    const host = $(`#up-tab-${id}`);
+    if (id === 'summary') host.innerHTML = summaryHtml(getAnalysis(), run!.counts, loaded!.total);
+    else if (id === 'dist') mountDistributions(host, getAnalysis(), run!.counts, effTf, distUi);
+    else if (id === 'cor') mountCorrelations(host, getAnalysis(), effTf, corUi);
   }
 
   function renderList(): void {
@@ -241,25 +302,37 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     if (el.dataset['u']) { (units as unknown as Record<string, string>)[el.dataset['u']] = el.value; return; }
     if (el.dataset['x']) { factors[el.dataset['x'] === 'insulinFactor' ? 'insulin' : 'glucose'] = el.value; return; }
     if (el.name === 'up-av') { avChoice = el.value as AvignonChoice; return; }
-    if (el.name === 'up-orient') { orientMode = el.value as OrientMode; if (openIndex !== undefined) openPerson(openIndex); return; }
+    if (el.name === 'up-orient') {
+      orientMode = el.value as OrientMode; analysis = undefined;
+      if (openIndex !== undefined) openPerson(openIndex);
+      if (run) { updateTfUi(); showTab(tab); }
+      return;
+    }
     if (el.id === 'up-status') includeStatus = (el as HTMLInputElement).checked;
+    else if (el.id === 'up-addtf') addTransformed = (el as HTMLInputElement).checked;
+    else if (el.id === 'up-tf') { tf.kind = el.value as TransformSetting['kind']; updateTfUi(); showTab(tab); }
+    else if (el.id === 'up-bysex') { tf.bySex = (el as HTMLInputElement).checked; updateTfUi(); showTab(tab); }
   });
   root.addEventListener('input', (e) => { if ((e.target as HTMLElement).id === 'up-search') renderList(); });
   root.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button');
     if (!b) return;
-    if (b.id === 'up-calc') startRun();
+    if (b.dataset['tab'] !== undefined) showTab(b.dataset['tab'] as TabId);
+    else if (b.id === 'up-calc') startRun();
     else if (b.id === 'up-use-example') { units = { ...DEFAULT_UNITS }; void loadFile(exampleFile()); }
     else if (b.id === 'up-cancel') cancelRun();
     else if (b.dataset['p'] !== undefined) openPerson(Number(b.dataset['p']));
     else if (b.id === 'up-csv' && run) {
-      saveBlob(new Blob(composeCsv(run.chunks, orientMode, includeStatus), { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
+      const t = effTf();
+      const extra = t.kind !== 'none' && addTransformed ? { suffix: transformSuffix(t), cols: getAnalysis().transformedColumns(t) } : undefined;
+      saveBlob(new Blob(composeCsv(run.chunks, orientMode, includeStatus, extra), { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
     } else if (b.id === 'up-json' && run) {
       const doc = settingsFile({
         version: ISAT_VERSION, timestamp: run.finishedAt, fileName: run.fileName, delimiter: run.delimiter,
         units: { ...run.units, insulin_factor_pmol_per_uU: run.factors.insulin, glucose_factor_mg_per_dL_per_mmol: run.factors.glucose },
         settings: run.settings, avignon: run.av, orientation: orientMode, includeStatus,
         rows: { total: loaded!.total, withProblems: run.withProblems, calculated: loaded!.total },
+        transform: { kind: effTf().kind, withinSex: effTf().bySex, addedColumns: tf.kind !== 'none' && addTransformed, suffix: transformSuffix(effTf()) },
       });
       saveBlob(new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }), 'isat-settings.json');
     }

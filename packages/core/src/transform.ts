@@ -1,0 +1,285 @@
+// Descriptive statistics and distribution transforms for batch analysis.
+// Missing values are null / undefined / NaN / non-finite on input and NaN on output.
+
+export type TransformKind = 'none' | 'log' | 'z' | 'rint';
+export type Num = number | null | undefined;
+/** Blom plotting-position offset used by the rank-based inverse normal transform. */
+export const BLOM_OFFSET = 0.375;
+
+const ok = (v: Num): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** Finite values of `values`, compacted. */
+function present(values: ArrayLike<Num>): Float64Array {
+  const out = new Float64Array(values.length);
+  let n = 0;
+  for (let i = 0; i < values.length; i++) { const v = values[i]; if (ok(v)) out[n++] = v; }
+  return out.subarray(0, n);
+}
+
+/** Average ranks (ties share the mean rank, 1-based). Missing stays NaN. */
+export function rankAvg(values: ArrayLike<Num>): Float64Array {
+  const out = new Float64Array(values.length).fill(NaN);
+  const sorted = Float64Array.from(present(values)).sort();
+  const n = sorted.length;
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (!ok(v)) continue;
+    let lo = 0, hi = n;
+    while (lo < hi) { const m = (lo + hi) >>> 1; if (sorted[m]! < v) lo = m + 1; else hi = m; }
+    const first = lo;
+    hi = n;
+    while (lo < hi) { const m = (lo + hi) >>> 1; if (sorted[m]! <= v) lo = m + 1; else hi = m; }
+    out[i] = (first + 1 + lo) / 2; // ranks first+1 .. lo
+  }
+  return out;
+}
+
+// ---------- inverse normal CDF ----------
+const A = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+const B = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+const C = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+const D = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+const P_LOW = 0.02425;
+const SQRT_2PI = Math.sqrt(2 * Math.PI);
+
+/** Upper tail Q(t) = 1 - Phi(t) for t >= 0: power series for t < 3, continued fraction beyond. */
+function upperTail(t: number): number {
+  const phi = Math.exp(-0.5 * t * t) / SQRT_2PI;
+  if (t < 3) {
+    let term = t, sum = t;
+    for (let k = 1; k < 1000 && Math.abs(term) > 1e-18 * Math.abs(sum); k++) { term *= (t * t) / (2 * k + 1); sum += term; }
+    return 0.5 - phi * sum;
+  }
+  let f = t;
+  for (let k = 300; k >= 1; k--) f = t + k / f;
+  return phi / f;
+}
+
+/** Inverse standard normal CDF: Acklam's rational approximation plus one Halley refinement step (error < 1e-9). */
+export function qnorm(p: number): number {
+  if (Number.isNaN(p) || p < 0 || p > 1) return NaN;
+  if (p === 0) return -Infinity;
+  if (p === 1) return Infinity;
+  let x: number;
+  if (p < P_LOW) {
+    const q = Math.sqrt(-2 * Math.log(p));
+    x = (((((C[0]! * q + C[1]!) * q + C[2]!) * q + C[3]!) * q + C[4]!) * q + C[5]!) / ((((D[0]! * q + D[1]!) * q + D[2]!) * q + D[3]!) * q + 1);
+  } else if (p <= 1 - P_LOW) {
+    const q = p - 0.5, r = q * q;
+    x = (((((A[0]! * r + A[1]!) * r + A[2]!) * r + A[3]!) * r + A[4]!) * r + A[5]!) * q / (((((B[0]! * r + B[1]!) * r + B[2]!) * r + B[3]!) * r + B[4]!) * r + 1);
+  } else {
+    const q = Math.sqrt(-2 * Math.log(1 - p));
+    x = -(((((C[0]! * q + C[1]!) * q + C[2]!) * q + C[3]!) * q + C[4]!) * q + C[5]!) / ((((D[0]! * q + D[1]!) * q + D[2]!) * q + D[3]!) * q + 1);
+  }
+  // Halley step on e = Phi(x) - p, evaluated from the tail nearest to p for accuracy.
+  const e = x <= 0 ? upperTail(-x) - p : (1 - p) - upperTail(x);
+  const u = e * SQRT_2PI * Math.exp(0.5 * x * x);
+  return x - u / (1 + x * u / 2);
+}
+
+// ---------- transforms ----------
+export interface TransformOptions {
+  /** Group label per row (e.g. sex). Transform within each group; a missing label makes the row missing. */
+  groups?: ArrayLike<string | null | undefined>;
+}
+export interface TransformResult {
+  values: Float64Array;
+  /** Values <= 0 set to missing (log only). */
+  nonPositive: number;
+  /** Why values were set to missing wholesale (z with n < 2 or SD = 0). */
+  reasons: string[];
+  /** Per group: number of non-missing input values (empty when no groups). */
+  groupN: Record<string, number>;
+  /** Rows with a missing group label that were set to missing (when groups given). */
+  noGroup: number;
+}
+
+/** Transform of one block of finite-or-NaN values (no grouping). */
+function applyKind(v: Float64Array, kind: TransformKind, label: string, res: TransformResult): Float64Array {
+  const out = new Float64Array(v.length).fill(NaN);
+  if (kind === 'none') { out.set(v); return out; }
+  if (kind === 'log') {
+    for (let i = 0; i < v.length; i++) {
+      const x = v[i]!;
+      if (Number.isNaN(x)) continue;
+      if (x > 0) out[i] = Math.log(x); else res.nonPositive++;
+    }
+    return out;
+  }
+  const n = present(v).length;
+  const tag = label ? `${label}: ` : '';
+  if (kind === 'z') {
+    if (n < 2) { res.reasons.push(`${tag}fewer than 2 non-missing values`); return out; }
+    let s = 0;
+    for (let i = 0; i < v.length; i++) if (!Number.isNaN(v[i]!)) s += v[i]!;
+    const mean = s / n;
+    let ss = 0;
+    for (let i = 0; i < v.length; i++) if (!Number.isNaN(v[i]!)) ss += (v[i]! - mean) ** 2;
+    const sd = Math.sqrt(ss / (n - 1));
+    if (!(sd > 0)) { res.reasons.push(`${tag}SD is 0`); return out; }
+    for (let i = 0; i < v.length; i++) if (!Number.isNaN(v[i]!)) out[i] = (v[i]! - mean) / sd;
+    return out;
+  }
+  const r = rankAvg(v);
+  for (let i = 0; i < v.length; i++) if (!Number.isNaN(r[i]!)) out[i] = qnorm((r[i]! - BLOM_OFFSET) / (n + 1 - 2 * BLOM_OFFSET));
+  return out;
+}
+
+/** none | natural log | z-score (sample SD) | rank-based inverse normal (Blom), optionally within groups. */
+export function transform(values: ArrayLike<Num>, kind: TransformKind, opts: TransformOptions = {}): TransformResult {
+  const res: TransformResult = { values: new Float64Array(0), nonPositive: 0, reasons: [], groupN: {}, noGroup: 0 };
+  const base = new Float64Array(values.length);
+  for (let i = 0; i < values.length; i++) { const x = values[i]; base[i] = ok(x) ? x : NaN; }
+  const g = opts.groups;
+  if (!g) { res.values = applyKind(base, kind, '', res); return res; }
+  const out = new Float64Array(values.length).fill(NaN);
+  const byGroup = new Map<string, number[]>();
+  for (let i = 0; i < values.length; i++) {
+    const lab = g[i];
+    if (lab === null || lab === undefined || lab === '') { if (!Number.isNaN(base[i]!)) res.noGroup++; continue; }
+    let a = byGroup.get(lab);
+    if (!a) byGroup.set(lab, a = []);
+    a.push(i);
+  }
+  for (const [lab, idx] of byGroup) {
+    const sub = new Float64Array(idx.length);
+    idx.forEach((r, k) => { sub[k] = base[r]!; });
+    res.groupN[lab] = present(sub).length;
+    const t = applyKind(sub, kind, lab, res);
+    idx.forEach((r, k) => { out[r] = t[k]!; });
+  }
+  res.values = out;
+  return res;
+}
+
+// ---------- descriptive statistics ----------
+export interface Described {
+  n: number; missing: number;
+  mean: number | null; sd: number | null; median: number | null; q1: number | null; q3: number | null;
+  min: number | null; max: number | null; skewness: number | null;
+}
+
+/** Type-7 quantile (R default) of an ascending-sorted array. */
+export function quantile7(sorted: ArrayLike<number>, p: number): number {
+  const n = sorted.length;
+  const h = (n - 1) * p, lo = Math.floor(h);
+  const a = sorted[lo]!;
+  return lo + 1 < n ? a + (h - lo) * (sorted[lo + 1]! - a) : a;
+}
+
+/** Summary statistics; skewness is the adjusted Fisher-Pearson G1 (e1071 type 2 / SAS). Undefined statistics are null. */
+export function describe(values: ArrayLike<Num>): Described {
+  const v = Float64Array.from(present(values)).sort();
+  const n = v.length;
+  const out: Described = { n, missing: values.length - n, mean: null, sd: null, median: null, q1: null, q3: null, min: null, max: null, skewness: null };
+  if (n === 0) return out;
+  let s = 0;
+  for (let i = 0; i < n; i++) s += v[i]!;
+  const mean = s / n;
+  let m2 = 0, m3 = 0;
+  for (let i = 0; i < n; i++) { const d = v[i]! - mean; m2 += d * d; m3 += d * d * d; }
+  out.mean = mean; out.min = v[0]!; out.max = v[n - 1]!;
+  out.median = quantile7(v, 0.5); out.q1 = quantile7(v, 0.25); out.q3 = quantile7(v, 0.75);
+  if (n >= 2) out.sd = Math.sqrt(m2 / (n - 1));
+  if (n >= 3 && m2 > 0) {
+    const g1 = (m3 / n) / Math.pow(m2 / n, 1.5);
+    out.skewness = g1 * Math.sqrt(n * (n - 1)) / (n - 2);
+  }
+  return out;
+}
+
+// ---------- Spearman ----------
+function pearson(a: Float64Array, b: Float64Array): number {
+  const n = a.length;
+  let ma = 0, mb = 0;
+  for (let i = 0; i < n; i++) { ma += a[i]!; mb += b[i]!; }
+  ma /= n; mb /= n;
+  let sab = 0, saa = 0, sbb = 0;
+  for (let i = 0; i < n; i++) { const da = a[i]! - ma, db = b[i]! - mb; sab += da * db; saa += da * da; sbb += db * db; }
+  if (!(saa > 0) || !(sbb > 0)) return NaN;
+  return Math.max(-1, Math.min(1, sab / Math.sqrt(saa * sbb)));
+}
+
+/** Pairwise-complete Spearman rho (Pearson on average ranks). Null if n < 3 or either variable is constant. */
+export function spearman(x: ArrayLike<Num>, y: ArrayLike<Num>): { rho: number; n: number } | null {
+  const len = Math.min(x.length, y.length);
+  const xs: number[] = [], ys: number[] = [];
+  for (let i = 0; i < len; i++) if (ok(x[i]) && ok(y[i])) { xs.push(x[i] as number); ys.push(y[i] as number); }
+  if (xs.length < 3) return null;
+  const rho = pearson(rankAvg(xs), rankAvg(ys));
+  return Number.isNaN(rho) ? null : { rho, n: xs.length };
+}
+
+export interface SpearmanMatrix { k: number; rho: Float64Array; n: Int32Array }
+
+/**
+ * All pairwise Spearman correlations (k x k, row-major; NaN = not available). Equal to spearman() on every pair,
+ * but columns with the same missingness pattern are ranked once.
+ */
+export function spearmanMatrix(cols: Float64Array[]): SpearmanMatrix {
+  const k = cols.length;
+  const rho = new Float64Array(k * k).fill(NaN), nn = new Int32Array(k * k);
+  if (k === 0) return { k, rho, n: nn };
+  const len = cols[0]!.length;
+  // Group columns by exact missingness pattern.
+  const masks: Uint8Array[] = [], counts: number[] = [], colGroup: number[] = [];
+  const byHash = new Map<string, number[]>();
+  for (const c of cols) {
+    const m = new Uint8Array(len);
+    let cnt = 0, h = 2166136261;
+    for (let r = 0; r < len; r++) { if (!Number.isNaN(c[r]!)) { m[r] = 1; cnt++; h = Math.imul(h ^ r, 16777619); } }
+    const key = `${cnt}:${h >>> 0}`;
+    let found = -1;
+    for (const g of byHash.get(key) ?? []) {
+      const o = masks[g]!;
+      let same = true;
+      for (let r = 0; r < len; r++) if (o[r] !== m[r]) { same = false; break; }
+      if (same) { found = g; break; }
+    }
+    if (found < 0) { found = masks.length; masks.push(m); counts.push(cnt); byHash.set(key, [...(byHash.get(key) ?? []), found]); }
+    colGroup.push(found);
+  }
+  const compact = (c: Float64Array, m: Uint8Array, cnt: number) => {
+    const o = new Float64Array(cnt);
+    for (let r = 0, j = 0; r < len; r++) if (m[r]) o[j++] = c[r]!;
+    return o;
+  };
+  const ownRanks = new Map<number, Float64Array>(); // column -> ranks over its own pattern
+  const own = (i: number) => {
+    let r = ownRanks.get(i);
+    if (!r) ownRanks.set(i, r = rankAvg(compact(cols[i]!, masks[colGroup[i]!]!, counts[colGroup[i]!]!)));
+    return r;
+  };
+  const G = masks.length;
+  for (let ga = 0; ga < G; ga++) {
+    for (let gb = ga; gb < G; gb++) {
+      const ma = masks[ga]!, mb = masks[gb]!;
+      let inter = ma, cnt = counts[ga]!;
+      if (ga !== gb) {
+        inter = new Uint8Array(len); cnt = 0;
+        for (let r = 0; r < len; r++) if (ma[r] && mb[r]) { inter[r] = 1; cnt++; }
+      }
+      const useA = cnt === counts[ga]!, useB = cnt === counts[gb]!;
+      const rk = new Map<number, Float64Array>();
+      const get = (i: number, useOwn: boolean) => {
+        if (useOwn) return own(i);
+        let r = rk.get(i);
+        if (!r) rk.set(i, r = rankAvg(compact(cols[i]!, inter, cnt)));
+        return r;
+      };
+      for (let i = 0; i < k; i++) {
+        if (colGroup[i] !== ga) continue;
+        for (let j = 0; j < k; j++) {
+          if (colGroup[j] !== gb || (ga === gb && j < i)) continue;
+          let v = NaN;
+          if (cnt >= 3) {
+            if (i === j) { const r = get(i, useA); v = Number.isNaN(pearson(r, r)) ? NaN : 1; }
+            else v = pearson(get(i, useA), get(j, useB));
+          }
+          rho[i * k + j] = v; rho[j * k + i] = v; nn[i * k + j] = cnt; nn[j * k + i] = cnt;
+        }
+      }
+    }
+  }
+  return { k, rho, n: nn };
+}

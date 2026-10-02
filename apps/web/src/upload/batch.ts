@@ -1,6 +1,6 @@
 import {
   AVIGNON_1999_WEIGHT, avignonSi0, avignonSi120, registry, resolveSettings,
-  type AvignonWeightSource, type ConversionSettings, type Inputs, type MethodEntry, type Result,
+  type AvignonWeightSource, type ConversionSettings, type Inputs, type MethodEntry, type Result, type TransformKind,
 } from '@isat/core';
 import { CHUNK_ROWS } from './limits';
 
@@ -148,11 +148,18 @@ export function columnName(id: string, orientation: 'published' | 'sensitivity')
   return orientation === 'sensitivity' && NEGATED.has(id) ? `${id}_inv` : id;
 }
 
+/** Transformed values to add after each index column: suffix (e.g. "_rint_bysex") and one full-length column per INCLUDED method (NaN = missing). */
+export interface TransformedColumns { suffix: string; cols: ArrayLike<number>[] }
+
 /** CSV text parts (join to get the file). Empty = not calculated; never 0. */
-export function composeCsv(chunks: ChunkPayload[], orientation: 'published' | 'sensitivity', includeStatus: boolean): string[] {
+export function composeCsv(
+  chunks: ChunkPayload[], orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns,
+): string[] {
   const names = INCLUDED.map((m) => columnName(m.id, orientation));
-  const head = ['participant_id', 'input_problems', ...names, ...(includeStatus ? names.map((n) => `${n}_status`) : [])].join(',');
+  const idxHead = tf ? names.flatMap((n) => [n, n + tf.suffix]) : names;
+  const head = ['participant_id', 'input_problems', ...idxHead, ...(includeStatus ? names.map((n) => `${n}_status`) : [])].join(',');
   const parts: string[] = [head + '\r\n'];
+  let offset = 0;
   for (const ch of chunks) {
     const ids = ch.ids.split(SEP);
     const probs = ch.problems.split(SEP);
@@ -163,8 +170,12 @@ export function composeCsv(chunks: ChunkPayload[], orientation: 'published' | 's
     const stat = includeStatus ? ch.status.map((s) => s.split(SEP)) : [];
     const lines: string[] = [];
     for (let r = 0; r < ids.length; r++) {
-      lines.push([ids[r]!, probs[r]!, ...cols.map((c) => c[r]!), ...stat.map((c) => c[r]!)].join(','));
+      const idx = tf
+        ? cols.flatMap((c, k) => { const t = tf.cols[k]![offset + r]!; return [c[r]!, Number.isNaN(t) ? '' : String(t)]; })
+        : cols.map((c) => c[r]!);
+      lines.push([ids[r]!, probs[r]!, ...idx, ...stat.map((c) => c[r]!)].join(','));
     }
+    offset += ids.length;
     parts.push(lines.join('\r\n') + '\r\n');
   }
   return parts;
@@ -175,6 +186,8 @@ export interface SettingsFileInput {
   units: Record<string, string>; settings: Partial<ConversionSettings>;
   avignon: AvignonUse; orientation: 'published' | 'sensitivity'; includeStatus: boolean;
   rows: { total: number; withProblems: number; calculated: number };
+  /** Transform applied to the oriented values (Distributions, Correlations and the optional CSV columns). */
+  transform?: { kind: TransformKind; withinSex: boolean; addedColumns: boolean; suffix: string };
 }
 
 export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
@@ -193,6 +206,15 @@ export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
     orientation: i.orientation,
     belfiore_reference_set: 'belfiore_1998',
     include_status_columns: i.includeStatus,
+    transform: (() => {
+      const t = i.transform;
+      if (!t || t.kind === 'none') return { kind: 'none' };
+      return {
+        kind: t.kind, within_sex: t.withinSex, applied_to: 'oriented values (as in the results CSV)',
+        transformed_columns_added: t.addedColumns, column_suffix: t.suffix,
+        blom_offset: 0.375, log_base: 'e', z_sd: 'sample (n - 1)',
+      };
+    })(),
     row_counts: { total: i.rows.total, with_problems: i.rows.withProblems, rows_with_input_problems: i.rows.withProblems, calculated: i.rows.calculated },
     methods: INCLUDED.map((m) => ({
       id: m.id, name: m.name, csv_column: columnName(m.id, i.orientation),
