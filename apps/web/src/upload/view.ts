@@ -1,3 +1,4 @@
+import { countEvent, rowBand } from '../count';
 import type { Inputs, OrientMode } from '@isat/core';
 import { esc } from '../calculate/format';
 import { saveBlob } from '../calculate/plots';
@@ -189,6 +190,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
       } else if (m.type === 'done') {
         stopWorker(); box.hidden = true; $<HTMLButtonElement>('#up-calc').disabled = false;
         cur.finishedAt = new Date().toISOString(); run = cur; renderResults();
+        countEvent(`upload-${rowBand(loaded!.total)}`);
       } else if (m.type === 'error') {
         stopWorker(); box.hidden = true; $<HTMLButtonElement>('#up-calc').disabled = false;
         $('#up-err').textContent = `Calculation failed: ${m.message}`;

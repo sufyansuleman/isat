@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 const rootPkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { version: string };
 
 const CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://isatweb.goatcounter.com; " +
   "connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'";
 
 /** Production builds only: strict CSP so the shipped page cannot contact any server. */

@@ -1,3 +1,4 @@
+import { countEvent } from '../count';
 import { calculateAll, orient, type OrientMode, type Result } from '@isat/core';
 import { ISAT_VERSION } from '../version';
 import { esc } from './format';
@@ -181,6 +182,7 @@ export function mountCalculate(root: HTMLElement): () => void {
     if (Object.keys(built.errors).length) { msg.textContent = 'Fix the highlighted entries before calculating.'; return; }
     msg.textContent = '';
     const results: Result[] = calculateAll(built.inputs, { settings: built.settings });
+    if (manual) countEvent('calc-single');
     snap = {
       state: structuredClone(st), built, results, calculatedAt: new Date(), version: ISAT_VERSION,
     };

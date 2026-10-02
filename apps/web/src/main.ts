@@ -4,6 +4,7 @@ import { shell } from './pages';
 
 import { mountCalculatePage } from './calculate/page';
 import { mountMethods } from './methods/view';
+import { countPage } from './count';
 
 const app = document.getElementById('app')!;
 let dispose: (() => void) | undefined;
@@ -16,4 +17,5 @@ startRouter((route, mode, methodId) => {
   if (meth) dispose = mountMethods(meth, methodId);
   document.title = route === '/' ? 'ISAT - Insulin Sensitivity Analysis Tool' : `ISAT - ${route.slice(1)}`;
   window.scrollTo(0, 0);
+  countPage(route);
 });
