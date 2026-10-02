@@ -186,6 +186,8 @@ export interface SettingsFileInput {
   units: Record<string, string>; settings: Partial<ConversionSettings>;
   avignon: AvignonUse; orientation: 'published' | 'sensitivity'; includeStatus: boolean;
   rows: { total: number; withProblems: number; calculated: number };
+  /** Unit plausibility check (transparency only; never changes the data). */
+  unitCheck?: Array<{ quantity: string; column: string; median: number; n: number; selected: string; suggested: string | null }>;
   /** Transform applied to the oriented values (Distributions, Correlations and the optional CSV columns). */
   transform?: { kind: TransformKind; withinSex: boolean; addedColumns: boolean; suffix: string };
 }
@@ -198,6 +200,7 @@ export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
     input_file: i.fileName,
     delimiter: i.delimiter,
     units: i.units,
+    unit_check: (i.unitCheck ?? []).map((c) => ({ quantity: c.quantity, column: c.column, median: c.median, n: c.n, selected: c.selected, suggested: c.suggested })),
     conversion_factors: {
       glucose_mg_per_dL_per_mmol: s.glucose_mg_per_dL_per_mmol, insulin_pmol_per_uU: s.insulin_pmol_per_uU,
       tg_mg_per_dL_per_mmol: s.tg_mg_per_dL_per_mmol, hdl_mg_per_dL_per_mmol: s.hdl_mg_per_dL_per_mmol,

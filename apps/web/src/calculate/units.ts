@@ -6,10 +6,11 @@ const opt = (v: string, cur: string, label = unitLabel(v)) =>
   `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
 
 /** Units selectors and conversion factors; shared by manual entry and file upload. `prefix` keeps element ids unique. */
-export function unitsSectionHtml(u: UnitChoice, prefix: string): string {
+export function unitsSectionHtml(u: UnitChoice, prefix: string, head?: { title: string; intro: string }): string {
   const sel = (key: string, o: string) => `<select id="${prefix}-u-${key}" data-u="${key}">${o}</select>`;
-  return `<section aria-labelledby="${prefix}-h-units"><h2 id="${prefix}-h-units">Units</h2>
-<div class="units">
+  return `<section aria-labelledby="${prefix}-h-units"><h2 id="${prefix}-h-units">${head ? esc(head.title) : 'Units'}</h2>
+${head ? `<p class="hint">${esc(head.intro)}</p>
+` : ''}<div class="units">
   <span class="upair"><label for="${prefix}-u-glucose">Glucose</label>${sel('glucose', opt('mmol/L', u.glucose) + opt('mg/dL', u.glucose))}</span>
   <span class="upair"><label for="${prefix}-u-insulin">Insulin</label>${sel('insulin', opt('pmol/L', u.insulin) + opt('uU/mL', u.insulin, 'µU/mL (= mU/L)'))}</span>
   <span class="upair"><label for="${prefix}-u-tg">TG</label>${sel('tg', opt('mmol/L', u.tg) + opt('mg/dL', u.tg))}</span>

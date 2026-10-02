@@ -12,6 +12,8 @@ import { checkFileSize, checkRowCount, hasAllowedExtension } from './limits';
 import { Analysis, NO_TRANSFORM, transformExplanation, transformSuffix, type TransformSetting } from './analysis';
 import { mountCorrelations, mountDistributions, summaryHtml, type CorUi, type DistUi } from './panels';
 import { loadTable, toCanonical, type Loaded } from './parse';
+import { checkUnits, warningText, type UnitCheckItem } from './unitcheck';
+import { unitLabel } from '../calculate/results';
 import { renderPerson } from './person';
 import { exampleDetailsHtml, exampleFile } from './example';
 
@@ -29,6 +31,7 @@ interface Run {
   fileName: string;
   delimiter: string;
   withProblems: number;
+  unitCheck: UnitCheckItem[];
   finishedAt: string;
 }
 
@@ -117,10 +120,12 @@ ${l.duplicateIds.length ? `<li class="warn">Warning: ${l.duplicateIds.length} du
 ${recognised === 0 ? '<li class="err">No recognised data columns. Check the column names.</li>' : ''}
 ${l.fileErrors.map((e) => `<li class="err">${esc(e)}.</li>`).join("")}
 </ul>
+</section>
+<div id="up-units">${unitsSectionHtml(units, 'u', { title: 'Units used in your file', intro: 'Choose the units used in your file. All rows must use the same units.' })}<div id="up-unitcheck" role="status"></div></div>
+<section aria-label="Column mapping">
 <details class="map-details"${mapOpen ? ' open' : ''}><summary>${mapSummary}</summary>
 <div class="table-wrap"><table class="ogtt"><thead><tr><th scope="col">Column</th><th scope="col">Recognised as</th></tr></thead><tbody>${map}</tbody></table></div></details>
 </section>
-<div id="up-units">${unitsSectionHtml(units, 'u')}</div>
 <section aria-labelledby="up-h-av"><h2 id="up-h-av">Avignon SiM weight</h2>
 <fieldset class="orient"><legend>Coefficient</legend>
 <label><input type="radio" name="up-av" value="default"${avChoice === 'default' ? ' checked' : ''}> Published coefficient 0.137 (default)</label>
@@ -143,6 +148,12 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     $<HTMLSelectElement>('#u-u-ffa').value = units.ffa;
     $<HTMLSelectElement>('#u-x-insulin').value = factors.insulin;
     $<HTMLSelectElement>('#u-x-glucose').value = factors.glucose;
+    renderUnitCheck();
+  }
+
+  function renderUnitCheck(): void {
+    const warn = checkUnits(loaded!.inputs, units).filter((i) => i.suggested !== null);
+    $('#up-unitcheck').innerHTML = warn.map((i) => `<p class="warn unitwarn">${esc(warningText(i))} <button type="button" data-uc="${i.quantity}" data-to="${esc(i.suggested!)}">Switch to ${esc(unitLabel(i.suggested!))}</button></p>`).join('');
   }
 
   function resetResults(): void {
@@ -161,7 +172,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     const cur: Run = {
       canonical, units: { ...units }, factors: { ...factors }, settings,
       av: { w: 0.137, source: 'avignon_1999', warnings: [] }, counts: emptyCounts(), chunks: [], fileName,
-      delimiter: l.delimiter, withProblems: l.rowsWithProblems, finishedAt: '',
+      delimiter: l.delimiter, withProblems: l.rowsWithProblems, unitCheck: checkUnits(l.inputs, units), finishedAt: '',
     };
     const box = $('#up-progress-box'), bar = $<HTMLProgressElement>('#up-progress'), txt = $('#up-progress-text');
     box.hidden = false; bar.max = canonical.length; bar.value = 0; txt.textContent = `0 / ${canonical.length.toLocaleString('en-GB')}`;
@@ -299,7 +310,7 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
   root.addEventListener('change', (e) => {
     const el = e.target as HTMLInputElement | HTMLSelectElement;
     if (el.id === 'up-file') { const f = (el as HTMLInputElement).files?.[0]; if (f) void loadFile(f); return; }
-    if (el.dataset['u']) { (units as unknown as Record<string, string>)[el.dataset['u']] = el.value; return; }
+    if (el.dataset['u']) { (units as unknown as Record<string, string>)[el.dataset['u']] = el.value; if (loaded) renderUnitCheck(); return; }
     if (el.dataset['x']) { factors[el.dataset['x'] === 'insulinFactor' ? 'insulin' : 'glucose'] = el.value; return; }
     if (el.name === 'up-av') { avChoice = el.value as AvignonChoice; return; }
     if (el.name === 'up-orient') {
@@ -318,6 +329,12 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
     const b = (e.target as HTMLElement).closest('button');
     if (!b) return;
     if (b.dataset['tab'] !== undefined) showTab(b.dataset['tab'] as TabId);
+    else if (b.dataset['uc'] !== undefined) {
+      const sel = $<HTMLSelectElement>(`#u-u-${b.dataset['uc']}`);
+      sel.value = b.dataset['to']!;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      sel.focus();
+    }
     else if (b.id === 'up-calc') startRun();
     else if (b.id === 'up-use-example') { units = { ...DEFAULT_UNITS }; void loadFile(exampleFile()); }
     else if (b.id === 'up-cancel') cancelRun();
@@ -331,6 +348,7 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
         version: ISAT_VERSION, timestamp: run.finishedAt, fileName: run.fileName, delimiter: run.delimiter,
         units: { ...run.units, insulin_factor_pmol_per_uU: run.factors.insulin, glucose_factor_mg_per_dL_per_mmol: run.factors.glucose },
         settings: run.settings, avignon: run.av, orientation: orientMode, includeStatus,
+        unitCheck: run.unitCheck,
         rows: { total: loaded!.total, withProblems: run.withProblems, calculated: loaded!.total },
         transform: { kind: effTf().kind, withinSex: effTf().bySex, addedColumns: tf.kind !== 'none' && addTransformed, suffix: transformSuffix(effTf()) },
       });
