@@ -2,14 +2,14 @@
  * Anonymous usage counting with GoatCounter (no cookies, no personal data).
  * Only page paths and named events are sent; never any value entered or uploaded.
  * Uses GoatCounter's image endpoint so no third-party script runs on the page.
- * Counts only on the published site, and not when the browser asks not to be tracked.
+ * Counts only on the published site (not local copies or development builds).
  */
 export const COUNT_ENDPOINT = 'https://isatweb.goatcounter.com/count';
 const SITE_HOST = 'sufyansuleman.github.io';
 
 function enabled(): boolean {
   try {
-    return location.hostname === SITE_HOST && navigator.doNotTrack !== '1';
+    return location.hostname === SITE_HOST;
   } catch { return false; }
 }
 
