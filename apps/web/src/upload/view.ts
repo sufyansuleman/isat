@@ -41,7 +41,7 @@ const html = `
 <div id="up-drop" class="drop">
   <p><label for="up-file">Choose a .csv or .tsv file</label> (<a href="isat-template.csv" download>Download an example file</a>)
   <input id="up-file" type="file" accept=".csv,.tsv"></p>
-  <p class="hint">or drop it here. The file is read in this browser and is not uploaded. Limit: 100,000 rows / 25 MB.</p>
+  <p class="hint">or drop it here. The file is read in this browser and is not uploaded. Limit: 100,000 rows / 25 MB; for larger cohorts use the Linux command-line tool (in preparation).</p>
 </div>
 <p id="up-err" class="err" role="alert"></p>
 ${exampleDetailsHtml()}
