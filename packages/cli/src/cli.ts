@@ -1,14 +1,19 @@
 // ISAT command-line tool. Node built-ins only (so `deno compile` can build it). run() is exported for in-process tests.
-import { closeSync, existsSync, openSync, readSync, renameSync, statSync, unlinkSync, writeSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, openSync, renameSync, statSync, unlinkSync, writeSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { basename, resolve } from 'node:path';
 import process from 'node:process';
 import {
-  AVIGNON_1999_WEIGHT, AvignonAccumulator, DEFAULT_SETTINGS, DEFAULT_UNIT_CHOICE, INCLUDED, ResultsStream, RowStream, UnitCheckCollector,
+  AVIGNON_1999_WEIGHT, AvignonAccumulator, RowSplitter, countRecords, DEFAULT_SETTINGS, DEFAULT_UNIT_CHOICE, INCLUDED, ResultsStream, RowStream, UnitCheckCollector,
   methodSpecs, settingsFile, toCanonical, warningText,
   type AvignonUse, type ConversionSettings, type DelimiterName, type StreamRow, type UnitChoice,
 } from '@isat/core';
 import { UsageError, parseArgs } from './args';
+import { DataError, PROGRESS_ROWS, WRITE_BYTES, checkInput, fmtN, readPieces, settingsPathFor } from './files';
+export { settingsPathFor } from './files';
 import { ISAT_VERSION } from './version';
+import { cmdMerge } from './merge';
+import { cmdTransform } from './transform';
 
 export interface Io { out(s: string): void; err(s: string): void }
 
@@ -16,13 +21,7 @@ export function nodeIo(): Io {
   return { out: (s) => { process.stdout.write(s); }, err: (s) => { process.stderr.write(s); } };
 }
 
-/** File or data error (exit code 2). */
-class DataError extends Error {}
-
-const READ_BYTES = 1024 * 1024;
-const WRITE_BYTES = 1024 * 1024;
 const SLICE_ROWS = 5000;
-const PROGRESS_ROWS = 100_000;
 const MAX_LISTED_PROBLEMS = 20;
 
 // ---------- help ----------
@@ -32,6 +31,9 @@ Usage: isat <command> [options]
 
 Commands:
   calculate <file> -o <out.csv>   Calculate all included indices for a CSV/TSV file
+  merge <chunks...> -o <out.csv>  Join the outputs of calculate --chunk into one results file
+  transform <results.csv> -o <out.csv> --method log|z|rint
+                                  Add log / z-score / RINT columns to a results file
   check <file>                    Check a file (columns, problems, units) without calculating
   methods [--json]                List the included methods
   version                         Show the ISAT version and default conversion factors
@@ -41,6 +43,11 @@ Run "isat <command> --help" for details.
 Examples:
   isat check cohort.csv --glucose-unit mg/dL
   isat calculate cohort.csv -o results.csv
+
+On a SLURM cluster (split the rows into 20 chunks, then join them):
+  #SBATCH --array=1-20
+  isat calculate data.csv -o res_\${SLURM_ARRAY_TASK_ID}.csv --chunk \${SLURM_ARRAY_TASK_ID}/20 --avignon-weight 0.137
+  then: isat merge res_*.csv -o results.csv
 `;
 
 const UNIT_HELP = `Unit options (default: the units of the web app's template):
@@ -68,6 +75,9 @@ Other options:
                                      published = 0.137 (Avignon 1999, default); sample = derived from
                                      this file (reads it twice); or a number
   --status-columns                   add a <index>_status column per index
+  --chunk <i>/<n>                    process only block i of n (1-based) of the data rows, for job arrays;
+                                     join the outputs with "isat merge". With --chunk, --avignon-weight
+                                     sample is not available (run "isat check <file>", pass the number)
   --quiet                            no progress or summary output
   --force                            overwrite existing output files
   -h, --help                         this text
@@ -76,6 +86,59 @@ Examples:
   isat calculate cohort.csv -o results.csv
   isat calculate cohort.csv -o results.csv --glucose-unit mg/dL --insulin-unit uU/mL --status-columns
   isat calculate cohort.csv -o results.csv --avignon-weight sample --orientation inv
+
+SLURM job array (20 chunks, then merge):
+  #SBATCH --array=1-20
+  isat calculate data.csv -o res_\${SLURM_ARRAY_TASK_ID}.csv --chunk \${SLURM_ARRAY_TASK_ID}/20 --avignon-weight 0.137
+  then: isat merge res_*.csv -o results.csv
+`,
+  merge: `Usage: isat merge <chunk files...> -o <out.csv> [options]
+
+Joins the outputs of "isat calculate --chunk i/n" (i = 1..n) into one results file, byte for byte what an
+unchunked run gives. Each chunk's settings file (res_3.csv -> res_3.settings.json) is read and checked:
+same ISAT version, units, factors, orientation, Avignon weight, status-columns setting, input file
+(size, rows, header) and n; exactly chunks 1..n once each; same CSV header; row counts as recorded.
+The order of the arguments does not matter. Any inconsistency stops the merge (exit code 2).
+Writes <out>.settings.json (chunk information removed, row counts summed, merged_from listed).
+
+Options:
+  -o, --output <out.csv>             merged file (required)
+  --quiet                            no summary output
+  --force                            overwrite existing output files
+  -h, --help                         this text
+
+SLURM example:
+  #SBATCH --array=1-20
+  isat calculate data.csv -o res_\${SLURM_ARRAY_TASK_ID}.csv --chunk \${SLURM_ARRAY_TASK_ID}/20 --avignon-weight 0.137
+  then: isat merge res_*.csv -o results.csv
+`,
+  transform: `Usage: isat transform <results.csv> -o <out.csv> --method log|z|rint [options]
+
+Adds transformed columns to a results file made by calculate or merge. Each index column <col> gets
+<col>_<log|z|rint>[_bysex] directly after it (same layout and numbers as the web app's "Add transformed
+columns"). Missing values stay missing. Settings are carried forward from <results>.settings.json and
+the transform is recorded in <out>.settings.json.
+
+  log    natural log; values <= 0 are set to missing and counted
+  z      (x - mean) / SD with the sample SD (n - 1)
+  rint   rank-based inverse normal, Blom offset 3/8
+
+Options:
+  -o, --output <out.csv>             output file (required)
+  --method log|z|rint                transform (required)
+  --within-sex                       transform separately in men and women; needs --input
+  --input <original data file>       the file the results came from (for sex; IDs must be unique and match)
+  --columns all|a,b,c                index columns to transform (default all; names as in the results header)
+  --keep-only                        write participant_id and the transformed columns only
+  --quiet                            no progress or summary output
+  --force                            overwrite existing output files
+  -h, --help                         this text
+
+Rows with a missing or unrecognised sex get a missing value in the transformed columns.
+The whole file must be given (not a single chunk): merge chunks first.
+
+Example:
+  isat transform results.csv -o results_rint.csv --method rint --within-sex --input cohort.csv
 `,
   check: `Usage: isat check <file> [options]
 
@@ -139,36 +202,43 @@ function commonOptions(v: Record<string, string>): Common {
   };
 }
 
-// ---------- file access (sync, fixed-size reads) ----------
-function* readPieces(path: string): Generator<string> {
-  let fd: number;
-  try { fd = openSync(path, 'r'); } catch (e) { throw new DataError(`cannot read ${path}: ${(e as NodeJS.ErrnoException).code ?? String(e)}`); }
-  try {
-    const buf = new Uint8Array(READ_BYTES);
-    const dec = new TextDecoder('utf-8');
-    for (;;) {
-      const n = readSync(fd, buf, 0, buf.length, null);
-      if (n === 0) break;
-      const s = dec.decode(buf.subarray(0, n), { stream: true });
-      if (s !== '') yield s;
-    }
-    const tail = dec.decode();
-    if (tail !== '') yield tail;
-  } finally { closeSync(fd); }
-}
-
-function checkInput(path: string): void {
-  if (!existsSync(path)) throw new DataError(`file not found: ${path}`);
-  if (!statSync(path).isFile()) throw new DataError(`not a file: ${path}`);
-}
-
 /** Feeds a file through a RowStream, calling onRows for each batch of parsed rows. */
-function streamFile(path: string, rs: RowStream, onRows: (rows: StreamRow[]) => void): void {
-  for (const piece of readPieces(path)) { const rows = rs.push(piece); if (rows.length || rs.header) onRows(rows); }
+function streamFile(path: string, rs: RowStream, onRows: (rows: StreamRow[]) => void, stop?: () => boolean): void {
+  for (const piece of readPieces(path)) {
+    const rows = rs.push(piece);
+    if (rows.length || rs.header) onRows(rows);
+    if (stop?.()) return;
+  }
   onRows(rs.end());
 }
 
-const fmtN = (n: number) => n.toLocaleString('en-GB');
+/** Data rows in a file (non-blank records after the header; quoted newlines handled by RowSplitter). */
+function countDataRows(path: string): number {
+  const sp = new RowSplitter();
+  let records = 0, first = true;
+  for (let piece of readPieces(path)) {
+    if (first) { first = false; if (piece.charCodeAt(0) === 0xfeff) piece = piece.slice(1); }
+    const block = sp.push(piece);
+    if (block !== '') records += countRecords(block);
+  }
+  records += countRecords(sp.end());
+  return Math.max(0, records - 1);
+}
+
+/** 1-based "i/n" -> {index, of}. */
+function parseChunk(v: string): { index: number; of: number } {
+  const m = /^(\d+)\/(\d+)$/.exec(v.trim());
+  const bad = () => new UsageError(`--chunk: "${v}" is not valid (use i/n with 1 <= i <= n, e.g. 3/20)`);
+  if (!m) throw bad();
+  const index = Number(m[1]), of = Number(m[2]);
+  if (!Number.isSafeInteger(index) || !Number.isSafeInteger(of) || of < 1 || index < 1 || index > of) throw bad();
+  return { index, of };
+}
+
+/** Contiguous block of data rows for chunk i of n: 0-based [floor((i-1)N/n), floor(iN/n)); returned first/last are 1-based inclusive (last < first = empty). */
+export function chunkRange(index: number, of: number, total: number): { first: number; last: number } {
+  return { first: Math.floor(((index - 1) * total) / of) + 1, last: Math.floor((index * total) / of) };
+}
 
 function requireHeader(rs: RowStream, path: string): void {
   if (!rs.header) throw new DataError(`${path}: the file is empty (no header row)`);
@@ -279,7 +349,7 @@ function cmdCheck(rest: string[], io: Io): number {
 
 function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
   const p = parseArgs(rest, {
-    value: [...UNIT_VALUES, 'output', 'orientation', 'avignon-weight'],
+    value: [...UNIT_VALUES, 'output', 'orientation', 'avignon-weight', 'chunk'],
     bool: ['status-columns', 'quiet', 'force', 'help'], short: { o: 'output', h: 'help' },
   });
   if (p.positional.length !== 1) throw new UsageError('calculate needs exactly one input file');
@@ -291,6 +361,8 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
   const includeStatus = p.flags.has('status-columns');
   const quiet = p.flags.has('quiet');
   const aw = p.values['avignon-weight'] ?? 'published';
+  const chunk = p.values['chunk'] === undefined ? undefined : parseChunk(p.values['chunk']);
+  if (chunk && aw === 'sample') throw new UsageError('Cohort Avignon weight needs the whole file: run `isat check <file>` to get it, then pass --avignon-weight <number>.');
   let fixedAv: AvignonUse | undefined;
   if (aw === 'published') fixedAv = { w: AVIGNON_1999_WEIGHT, source: 'avignon_1999', warnings: [] };
   else if (aw !== 'sample') {
@@ -306,6 +378,15 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
     if (existsSync(f) && !p.flags.has('force')) throw new DataError(`${f} already exists (use --force to overwrite)`);
   }
   const say = (s: string) => { if (!quiet) io.err(s); };
+
+  // Chunk mode: count the data rows first (cheap pass), then keep only this block.
+  let range: { first: number; last: number } | undefined;
+  let totalRows = 0;
+  if (chunk) {
+    totalRows = countDataRows(input);
+    range = chunkRange(chunk.index, chunk.of, totalRows);
+    say(`chunk ${chunk.index}/${chunk.of}: rows ${fmtN(range.first)}-${fmtN(range.last)} of ${fmtN(totalRows)}\n`);
+  }
 
   // Pass 1 (only for the sample-derived Avignon weight).
   let av = fixedAv;
@@ -337,6 +418,7 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
   };
   try {
     streamFile(input, rs, (rows) => {
+      if (range) rows = rows.filter((r) => r.n >= range!.first && r.n <= range!.last);
       if (fd === undefined) {
         if (!rs.header) return;
         requireHeader(rs, input);
@@ -350,8 +432,9 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
         flush();
         while (results.written >= next) { say(`${fmtN(next)} rows\n`); next += PROGRESS_ROWS; }
       }
-    });
+    }, range ? () => !!rs.header && rs.rows >= range!.last : undefined);
     requireHeader(rs, input);
+    if (range && rs.rows < range.last) throw new DataError(`${input}: row count changed while reading (counted ${fmtN(totalRows)}, parsed ${fmtN(rs.rows)})`);
     flush(true);
     if (fd !== undefined) { closeSync(fd); fd = undefined; }
     renameSync(tmp, output);
@@ -367,10 +450,19 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
       version: ISAT_VERSION, timestamp: new Date().toISOString(), fileName: basename(input), delimiter: rs.delimiter ?? 'comma',
       units: { ...c.units, insulin_factor_pmol_per_uU: c.factors.insulin, glucose_factor_mg_per_dL_per_mmol: c.factors.glucose },
       settings: c.settings, avignon: av, orientation, includeStatus, unitCheck,
-      rows: { total: rs.rows, withProblems: results.withProblems, calculated: rs.rows },
+      rows: chunk
+        ? { total: results.written, withProblems: results.withProblems, calculated: results.written }
+        : { total: rs.rows, withProblems: results.withProblems, calculated: rs.rows },
     }),
     interface: 'cli',
     command: commandLine,
+    ...(chunk && range ? {
+      chunk: { index: chunk.index, of: chunk.of, first_row: range.first, last_row: range.last, total_rows: totalRows },
+      input_fingerprint: {
+        size_bytes: statSync(input).size, total_rows: totalRows,
+        header_sha256: createHash('sha256').update((rs.header ?? []).join('\u001f')).digest('hex'),
+      },
+    } : {}),
   };
   writeFileSync(settingsPath, JSON.stringify(doc, null, 2));
 
@@ -394,6 +486,8 @@ export async function run(argv: string[], io: Io): Promise<number> {
     if (cmd === 'version') return cmdVersion(io);
     if (cmd === 'methods') return cmdMethods(rest, io);
     if (cmd === 'check') return cmdCheck(rest, io);
+    if (cmd === 'merge') return cmdMerge(rest, io, ['isat', ...argv].join(' '));
+    if (cmd === 'transform') return cmdTransform(rest, io, ['isat', ...argv].join(' '));
     return cmdCalculate(rest, io, ['isat', ...argv].join(' '));
   } catch (e) {
     if (e instanceof UsageError) { io.err(`error: ${e.message}\n`); return 1; }
@@ -403,8 +497,3 @@ export async function run(argv: string[], io: Io): Promise<number> {
   }
 }
 
-
-/** results.csv -> results.settings.json (extension replaced, other names get the suffix appended). */
-export function settingsPathFor(output: string): string {
-  return output.replace(/\.(csv|tsv|txt)$/i, '') + '.settings.json';
-}

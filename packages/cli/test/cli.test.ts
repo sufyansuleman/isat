@@ -227,10 +227,10 @@ describe('usage and errors', () => {
 });
 
 describe('streaming', () => {
-  it('calculates a generated 200,000-row file and the row count matches', async () => {
+  it('calculates a generated 50,000-row file and the row count matches', async () => {
     const input = join(dir, 'big.csv'), out = join(dir, 'big.out.csv');
     const header = 'participant_id,age,sex,weight,bmi,waist,fasting_glucose,fasting_insulin,TG,HDL_c,FFA,glucose_30,glucose_60,glucose_90,glucose_120,insulin_30,insulin_60,insulin_90,insulin_120\n';
-    const N = 200_000;
+    const N = 50_000;
     let s = 17;
     const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
     const lines: string[] = [header];

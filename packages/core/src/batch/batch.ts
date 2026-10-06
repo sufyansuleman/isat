@@ -4,6 +4,7 @@ import { AVIGNON_1999_WEIGHT, avignonSi0, avignonSi120, type AvignonWeightSource
 import { registry, type MethodEntry } from '../registry';
 import type { TransformKind } from '../transform';
 import { CHUNK_ROWS } from './limits';
+import { insertAfter, transformBlock, transformedRowFields } from './transformcsv';
 
 /** Methods that get an output column (deferred/excluded methods never calculate). */
 export const INCLUDED: MethodEntry[] = registry.filter((m) => m.deferredReason === undefined);
@@ -163,11 +164,14 @@ export function columnName(id: string, orientation: 'published' | 'sensitivity')
 /** Transformed values to add after each index column: suffix (e.g. "_rint_bysex") and one full-length column per INCLUDED method (NaN = missing). */
 export interface TransformedColumns { suffix: string; cols: ArrayLike<number>[] }
 
+/** Positions of the index columns in the results CSV (after participant_id and input_problems). */
+const tfPositions = (): number[] => INCLUDED.map((_, k) => k + 2);
+
 /** CSV header line (with line ending). */
 export function csvHead(orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns): string {
   const names = INCLUDED.map((m) => columnName(m.id, orientation));
-  const idxHead = tf ? names.flatMap((n) => [n, n + tf.suffix]) : names;
-  return ['participant_id', 'input_problems', ...idxHead, ...(includeStatus ? names.map((n) => `${n}_status`) : [])].join(',') + '\r\n';
+  const fields = ['participant_id', 'input_problems', ...names, ...(includeStatus ? names.map((n) => `${n}_status`) : [])];
+  return (tf ? insertAfter(fields, tfPositions(), names.map((n) => n + tf.suffix)) : fields).join(',') + '\r\n';
 }
 
 /** CSV data lines (each with line ending) for one chunk; offset = rows before this chunk (for transformed columns). */
@@ -181,12 +185,11 @@ export function csvChunkText(
     return orientation === 'sensitivity' && NEGATED.has(INCLUDED[c]!.id) ? cells.map(negate) : cells;
   });
   const stat = includeStatus ? ch.status.map((s) => s.split(SEP)) : [];
+  const pos = tfPositions();
   const lines: string[] = [];
   for (let r = 0; r < ids.length; r++) {
-    const idx = tf
-      ? cols.flatMap((c, k) => { const t = tf.cols[k]![offset + r]!; return [c[r]!, Number.isNaN(t) ? '' : String(t)]; })
-      : cols.map((c) => c[r]!);
-    lines.push([ids[r]!, probs[r]!, ...idx, ...stat.map((c) => c[r]!)].join(','));
+    const fields = [ids[r]!, probs[r]!, ...cols.map((c) => c[r]!), ...stat.map((c) => c[r]!)];
+    lines.push((tf ? transformedRowFields(fields, pos, tf.cols.map((c) => c[offset + r]!)) : fields).join(','));
   }
   return lines.join('\r\n') + '\r\n';
 }
@@ -232,15 +235,7 @@ export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
     orientation: i.orientation,
     belfiore_reference_set: 'belfiore_1998',
     include_status_columns: i.includeStatus,
-    transform: (() => {
-      const t = i.transform;
-      if (!t || t.kind === 'none') return { kind: 'none' };
-      return {
-        kind: t.kind, within_sex: t.withinSex, applied_to: 'oriented values (as in the results CSV)',
-        transformed_columns_added: t.addedColumns, column_suffix: t.suffix,
-        blom_offset: 0.375, log_base: 'e', z_sd: 'sample (n - 1)',
-      };
-    })(),
+    transform: transformBlock(i.transform),
     row_counts: { total: i.rows.total, with_problems: i.rows.withProblems, rows_with_input_problems: i.rows.withProblems, calculated: i.rows.calculated },
     methods: INCLUDED.map((m) => ({
       id: m.id, name: m.name, csv_column: columnName(m.id, i.orientation),
