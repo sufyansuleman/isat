@@ -176,3 +176,10 @@ table.stats { min-width: 40rem; }
 .smalls { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 12px; }
 .smalls .plot { flex: none; }
 figure.plot figcaption { margin-top: 4px; }
+
+/* Methods page: overview of derivation populations */
+.populations { border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; margin: 12px 0 20px; background: var(--surface); }
+.populations summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; padding: 10px 0; color: var(--accent); }
+.populations[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.table-scroll { overflow-x: auto; }
+.populations td.num { white-space: nowrap; }

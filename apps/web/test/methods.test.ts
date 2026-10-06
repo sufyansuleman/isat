@@ -127,3 +127,18 @@ describe('derived-in population', () => {
     }
   });
 });
+
+describe('derivation populations overview', () => {
+  it('lists every included index once with population, N and place', () => {
+    const t = host.querySelector('#m-populations table')!;
+    const incl = registry.filter((m) => m.deferredReason === undefined);
+    const links = [...t.querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    expect(links.sort()).toEqual(incl.map((m) => `#/methods/${m.id}`).sort());
+    const gutt = [...t.querySelectorAll('tr')].find((r) => r.textContent!.includes('Gutt'))!;
+    expect(gutt.textContent).toContain('135');
+    expect(gutt.textContent).toContain('Miami');
+    expect(gutt.textContent).toContain('Gutt 2000');
+    const homa = [...t.querySelectorAll('tr')].find((r) => r.textContent!.includes('HOMA-IR'))!;
+    expect(homa.textContent).toContain('Matthews 1985');
+  });
+});

@@ -152,12 +152,45 @@ export function conversionsHtml(): string {
 const JUDGEMENT = /\b(abnormal|normal|good|bad|cut-?off)\b/i;
 
 
+/** "Smith 1999" from a citation string (first author surname + first 4-digit year). */
+function shortCite(spec: Spec): string {
+  const c: string = spec.reference?.citation ?? (typeof spec.source === 'object' ? spec.source?.citation : '') ?? '';
+  const author = /^([^,\s]+)/.exec(c)?.[1] ?? '';
+  const year = /\b(19|20)\d{2}\b/.exec(c)?.[0] ?? '';
+  return `${author} ${year}`.trim();
+}
+
+/** Overview table of the populations every included index was derived in, grouped by category. */
+export function populationsHtml(included: MethodEntry[]): string {
+  const groups = CATEGORIES.filter(([k]) => k !== 'all');
+  const rows = groups.map(([cat, label]) => {
+    const ms = included.filter((m) => categoryOf(m) === cat);
+    if (!ms.length) return '';
+    return `<tr class="guide-group"><th colspan="5">${esc(label)}</th></tr>` + ms.map((m) => {
+      const spec = specFor(m.id); const d = spec.derived_in ?? {};
+      return `<tr><td><a href="#/methods/${esc(m.id)}">${esc(m.name)}</a></td><td>${esc(d.population ?? 'not recorded')}</td><td class="num">${esc(d.n ?? '')}</td><td>${esc(d.setting ?? '')}</td><td>${esc(shortCite(spec))}</td></tr>`;
+    }).join('');
+  }).join('');
+  return `<details class="populations" id="m-populations"><summary>Derivation populations of all indices</summary>
+<p>Where each index was developed, as reported in its original paper. The place is the study centre. Most papers do not report ancestry.</p>
+<ul>
+<li>Most indices come from single cohorts, mostly in Europe or the USA, with a few hundred people or fewer. Their behaviour in other populations has often not been studied.</li>
+<li>Compare values within your own study rather than with values or thresholds from other populations.</li>
+<li>In genetic or epidemiological work, account for ancestry in the analysis (for example genetic principal components or stratification), not by changing the index.</li>
+<li>Insulin assays differ between laboratories, so values from different studies are only approximately comparable.</li>
+</ul>
+<div class="table-scroll"><table class="auc derived"><caption class="sr">Derivation population of each index</caption>
+<thead><tr><th scope="col">Index</th><th scope="col">Population</th><th scope="col">N</th><th scope="col">Place</th><th scope="col">Original paper</th></tr></thead>
+<tbody>${rows}</tbody></table></div></details>`;
+}
+
 export function methodsHtml(): string {
   const included = registry.filter((m) => m.deferredReason === undefined);
   const key = LEVELS.map(([k, meaning]) => `<li><span class="badge" data-sv="${k}">${esc(badgeText(k))}</span> ${esc(meaning)}</li>`).join('');
   const chips = CATEGORIES.map(([k, label]) => `<button type="button" class="chip" data-chip="${k}" aria-pressed="${k === 'all'}">${esc(label)}</button>`).join('');
   return `<p>All formulas below are the ones ISAT executes; this page is generated from the same method files the calculation engine uses.</p>
 <p class="hint">"Derived in" gives the population and number of people (N) each index was developed in, as reported in the original paper; the place is the study centre. Most papers do not report ancestry, and an index may behave differently in other populations.</p>
+${populationsHtml(included)}
 <h2>Verification levels</h2><ul class="key">${key}</ul>
 <div class="mfilter"><p><label for="m-search">Search by name, id or reference author</label> <input id="m-search" type="search" autocomplete="off"></p>
 <div class="chips" role="group" aria-label="Category">${chips}</div></div>
