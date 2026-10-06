@@ -2,4 +2,6 @@
 import process from 'node:process';
 import { nodeIo, run } from './cli';
 
-process.exitCode = await run(process.argv.slice(2), nodeIo());
+// In a Deno-compiled binary the arguments come from Deno.args (process.argv layout differs); otherwise from node.
+const denoArgs = (globalThis as { Deno?: { args?: string[] } }).Deno?.args;
+process.exitCode = await run(denoArgs ?? process.argv.slice(2), nodeIo());

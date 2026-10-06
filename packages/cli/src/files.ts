@@ -1,4 +1,5 @@
 // File helpers shared by the commands. Node built-ins only.
+import { Buffer } from 'node:buffer';
 import { closeSync, existsSync, openSync, readSync, renameSync, statSync, unlinkSync, writeSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -46,22 +47,30 @@ export function guardOutputs(inputs: string[], outputs: string[], force: boolean
   }
 }
 
-/** Buffered writer to <path>.partial, renamed to <path> on commit (removed on abort). */
+/**
+ * Buffered writer to <path>.partial, renamed to <path> on commit (removed on abort). Text is encoded straight into a
+ * byte buffer (no growing string ropes), written in blocks of about WRITE_BYTES.
+ */
 export class OutFile {
   private fd: number;
-  private pending = '';
+  private readonly buf = Buffer.allocUnsafe(2 * WRITE_BYTES);
+  private used = 0;
   private readonly tmp: string;
   constructor(readonly path: string) {
     this.tmp = path + '.partial';
     try { this.fd = openSync(this.tmp, 'w'); } catch (e) { throw new DataError(`cannot write ${this.tmp}: ${(e as NodeJS.ErrnoException).code ?? String(e)}`); }
   }
   write(s: string): void {
-    this.pending += s;
-    if (this.pending.length >= WRITE_BYTES) this.flush();
+    if (s.length * 3 > this.buf.length - this.used) {
+      this.flush();
+      if (s.length * 3 > this.buf.length) { writeSync(this.fd, s); return; }
+    }
+    this.used += this.buf.write(s, this.used, 'utf8');
+    if (this.used >= WRITE_BYTES) this.flush();
   }
   /** Raw bytes (used by merge to copy chunk files unchanged). */
   writeBytes(b: Uint8Array): void { this.flush(); writeSync(this.fd, b); }
-  private flush(): void { if (this.pending !== '') { writeSync(this.fd, this.pending); this.pending = ''; } }
+  private flush(): void { if (this.used > 0) { writeSync(this.fd, this.buf, 0, this.used); this.used = 0; } }
   commit(): void { this.flush(); closeSync(this.fd); this.fd = -1; renameSync(this.tmp, this.path); }
   abort(): void {
     if (this.fd >= 0) { try { closeSync(this.fd); } catch { /* already closed */ } this.fd = -1; }

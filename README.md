@@ -17,7 +17,26 @@ No installation and no account. Everything runs in your browser; your data are n
 
 Start from the [example file](apps/web/public/isat-template.csv) to see the expected columns.
 
-For more than 100,000 individuals, a command-line tool for Linux is in preparation.
+## Command-line tool (Linux)
+
+Use it for files with more than 100,000 individuals, or on an HPC cluster. It is a single file with nothing to install, and its results are identical to the website's.
+
+Download it from the GitHub Releases page (available from the first release):
+
+```bash
+curl -L -o isat https://github.com/sufyansuleman/isat/releases/latest/download/isat-linux-x64
+chmod +x isat    # on ARM machines use isat-linux-arm64
+```
+
+```bash
+./isat check cohort.csv                                   # columns, units, problems
+./isat calculate cohort.csv -o results.csv                # all indices
+./isat calculate cohort.csv -o res_${SLURM_ARRAY_TASK_ID}.csv --chunk ${SLURM_ARRAY_TASK_ID}/20   # in a SLURM array (--array=1-20)
+./isat merge res_*.csv -o results.csv                     # join the chunks
+./isat transform results.csv -o rint.csv --method rint --within-sex --input cohort.csv
+```
+
+Run `./isat <command> --help` for all options. Memory: the tool caps its heap at 1 GB; for very large files set a different cap with `DENO_V8_FLAGS=--max-old-space-size=4096 ./isat transform ...` (value in MB).
 
 ## Accuracy
 

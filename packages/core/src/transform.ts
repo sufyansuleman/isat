@@ -16,10 +16,59 @@ function present(values: ArrayLike<Num>): Float64Array {
   return out.subarray(0, n);
 }
 
+/** Smallest input size for which the radix sort beats the comparison sort (its digit tables cost 4 x 65,536 counters). */
+const RADIX_MIN = 20000;
+
+/**
+ * Average ranks for large inputs: LSD radix sort of the IEEE bit patterns (4 x 16 bits), carrying the row index.
+ * Equal doubles (and -0 / +0) get equal keys, so ties share the mean rank exactly as in the comparison version.
+ */
+function rankAvgRadix(values: ArrayLike<Num>, out: Float64Array): void {
+  const total = values.length;
+  let m = 0;
+  for (let i = 0; i < total; i++) if (ok(values[i])) m++;
+  const f64 = new Float64Array(1);
+  const u32 = new Uint32Array(f64.buffer);
+  let lo = new Uint32Array(m), hi = new Uint32Array(m), idx = new Uint32Array(m);
+  let lo2 = new Uint32Array(m), hi2 = new Uint32Array(m), idx2 = new Uint32Array(m);
+  let k = 0;
+  for (let i = 0; i < total; i++) {
+    const v = values[i];
+    if (!ok(v)) continue;
+    f64[0] = v === 0 ? 0 : v; // -0 and +0 are equal
+    let l = u32[0]!, h = u32[1]!;
+    if (h >>> 31) { l = ~l >>> 0; h = ~h >>> 0; } else h = (h | 0x80000000) >>> 0;
+    lo[k] = l; hi[k] = h; idx[k] = i; k++;
+  }
+  const count = new Uint32Array(65536);
+  for (let pass = 0; pass < 4; pass++) {
+    const src = pass < 2 ? lo : hi;
+    const shift = (pass & 1) * 16;
+    count.fill(0);
+    for (let i = 0; i < m; i++) count[(src[i]! >>> shift) & 0xffff]!++;
+    if (count[(src[0]! >>> shift) & 0xffff] === m) continue; // every key has this digit: nothing to move
+    let sum = 0;
+    for (let d = 0; d < 65536; d++) { const c = count[d]!; count[d] = sum; sum += c; }
+    for (let i = 0; i < m; i++) {
+      const p = count[(src[i]! >>> shift) & 0xffff]!++;
+      lo2[p] = lo[i]!; hi2[p] = hi[i]!; idx2[p] = idx[i]!;
+    }
+    [lo, lo2] = [lo2, lo]; [hi, hi2] = [hi2, hi]; [idx, idx2] = [idx2, idx];
+  }
+  for (let i = 0; i < m;) {
+    let j = i + 1;
+    while (j < m && lo[j] === lo[i] && hi[j] === hi[i]) j++;
+    const r = (i + 1 + j) / 2; // ranks i+1 .. j
+    for (let q = i; q < j; q++) out[idx[q]!] = r;
+    i = j;
+  }
+}
+
 /** Average ranks (ties share the mean rank, 1-based). Missing stays NaN. */
 export function rankAvg(values: ArrayLike<Num>): Float64Array {
   const out = new Float64Array(values.length).fill(NaN);
-  const sorted = Float64Array.from(present(values)).sort();
+  if (values.length >= RADIX_MIN) { rankAvgRadix(values, out); return out; }
+  const sorted = present(values).sort(); // fresh array: sorted in place
   const n = sorted.length;
   for (let i = 0; i < values.length; i++) {
     const v = values[i];
@@ -106,7 +155,8 @@ function applyKind(v: Float64Array, kind: TransformKind, label: string, res: Tra
     }
     return out;
   }
-  const n = present(v).length;
+  let n = 0;
+  for (let i = 0; i < v.length; i++) if (ok(v[i])) n++;
   const tag = label ? `${label}: ` : '';
   if (kind === 'z') {
     if (n < 2) { res.reasons.push(`${tag}fewer than 2 non-missing values`); return out; }
@@ -121,8 +171,35 @@ function applyKind(v: Float64Array, kind: TransformKind, label: string, res: Tra
     return out;
   }
   const r = rankAvg(v);
-  for (let i = 0; i < v.length; i++) if (!Number.isNaN(r[i]!)) out[i] = qnorm((r[i]! - BLOM_OFFSET) / (n + 1 - 2 * BLOM_OFFSET));
+  const memo = rintMemo(n);
+  const den = n + 1 - 2 * BLOM_OFFSET;
+  for (let i = 0; i < v.length; i++) {
+    const ri = r[i]!;
+    if (Number.isNaN(ri)) continue;
+    if (memo) {
+      // The Blom value depends only on (rank, n); ranks are whole or half numbers, so 2 * rank is the table index.
+      const k = ri * 2;
+      let q = memo[k]!;
+      if (Number.isNaN(q)) memo[k] = q = qnorm((ri - BLOM_OFFSET) / den);
+      out[i] = q;
+    } else out[i] = qnorm((ri - BLOM_OFFSET) / den);
+  }
   return out;
+}
+
+/** Per-n tables of Blom values (NaN = not computed yet), kept for the last few group sizes: columns with the same n reuse them. */
+const MEMO_ENTRIES = 4;
+const MEMO_MAX_N = 4_000_000;
+const rintTables = new Map<number, Float64Array>();
+function rintMemo(n: number): Float64Array | undefined {
+  if (n < 1000 || n > MEMO_MAX_N) return undefined;
+  let t = rintTables.get(n);
+  if (!t) {
+    if (rintTables.size >= MEMO_ENTRIES) rintTables.delete(rintTables.keys().next().value as number);
+    t = new Float64Array(2 * n + 2).fill(NaN);
+    rintTables.set(n, t);
+  }
+  return t;
 }
 
 /** none | natural log | z-score (sample SD) | rank-based inverse normal (Blom), optionally within groups. */
@@ -133,20 +210,29 @@ export function transform(values: ArrayLike<Num>, kind: TransformKind, opts: Tra
   const g = opts.groups;
   if (!g) { res.values = applyKind(base, kind, '', res); return res; }
   const out = new Float64Array(values.length).fill(NaN);
-  const byGroup = new Map<string, number[]>();
+  // Groups in order of first appearance (this order shows in groupN and reasons); row indices per group in typed arrays.
+  const labIndex = new Map<string, number>();
+  const labels: string[] = [];
+  const counts: number[] = [];
+  const gid = new Int32Array(values.length).fill(-1);
   for (let i = 0; i < values.length; i++) {
     const lab = g[i];
     if (lab === null || lab === undefined || lab === '') { if (!Number.isNaN(base[i]!)) res.noGroup++; continue; }
-    let a = byGroup.get(lab);
-    if (!a) byGroup.set(lab, a = []);
-    a.push(i);
+    let k = labIndex.get(lab);
+    if (k === undefined) { k = labels.length; labIndex.set(lab, k); labels.push(lab); counts.push(0); }
+    gid[i] = k; counts[k]!++;
   }
-  for (const [lab, idx] of byGroup) {
+  const idxs = counts.map((c) => new Int32Array(c));
+  const fill = new Int32Array(labels.length);
+  for (let i = 0; i < values.length; i++) { const k = gid[i]!; if (k >= 0) idxs[k]![fill[k]!++] = i; }
+  for (let k = 0; k < labels.length; k++) {
+    const lab = labels[k]!, idx = idxs[k]!;
     const sub = new Float64Array(idx.length);
-    idx.forEach((r, k) => { sub[k] = base[r]!; });
-    res.groupN[lab] = present(sub).length;
+    let np = 0;
+    for (let j = 0; j < idx.length; j++) { const x = base[idx[j]!]!; sub[j] = x; if (ok(x)) np++; }
+    res.groupN[lab] = np;
     const t = applyKind(sub, kind, lab, res);
-    idx.forEach((r, k) => { out[r] = t[k]!; });
+    for (let j = 0; j < idx.length; j++) out[idx[j]!] = t[j]!;
   }
   res.values = out;
   return res;
@@ -364,3 +450,6 @@ export function kde(values: ArrayLike<Num>, opts: KdeOptions = {}): Kde {
   }
   return { x: gx, y: gy, bw, n: nObs };
 }
+
+/** Frees the cached RINT tables (long-running callers such as the command-line tool call this when done). */
+export function resetTransformCache(): void { rintTables.clear(); }

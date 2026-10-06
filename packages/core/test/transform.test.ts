@@ -175,3 +175,24 @@ suite('bwNrd0 and kde', () => {
     expect(worst).toBeLessThan(1e-3);
   });
 });
+
+suite('rankAvg (large inputs, radix path)', () => {
+  it('equals the comparison-sort ranks, with ties, +/-0, negatives, missing and extreme values', () => {
+    const n = 40000;
+    let seed = 12345;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const x: Array<number | null> = [];
+    for (let i = 0; i < n; i++) {
+      const u = rnd();
+      x.push(u < 0.05 ? null : u < 0.1 ? Math.round(rnd() * 20) - 10 : u < 0.12 ? (rnd() < 0.5 ? 0 : -0) : u < 0.13 ? NaN : u < 0.14 ? (rnd() < 0.5 ? 1e-300 : -1e300) : (rnd() - 0.5) * 1e3);
+    }
+    const got = rankAvg(x);
+    const sorted = Float64Array.from(x.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))).sort();
+    const bound = (v: number, le: boolean) => { let lo = 0, hi = sorted.length; while (lo < hi) { const m = (lo + hi) >>> 1; if (le ? sorted[m]! <= v : sorted[m]! < v) lo = m + 1; else hi = m; } return lo; };
+    for (let i = 0; i < n; i++) {
+      const v = x[i];
+      if (typeof v !== 'number' || !Number.isFinite(v)) { expect(got[i]).toBeNaN(); continue; }
+      if (got[i] !== (bound(v, false) + 1 + bound(v, true)) / 2) throw new Error(`rank mismatch at ${i}`);
+    }
+  });
+});

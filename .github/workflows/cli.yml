@@ -1,0 +1,82 @@
+name: Command-line tool
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - '.github/workflows/cli.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DENO_FLAGS: --no-check --allow-read --allow-write --allow-env --v8-flags=--max-old-space-size=1024,--max-semi-space-size=4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test --workspaces
+      - run: npm run bundle -w @isat/cli
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.5.6
+      - name: Compile binaries
+        run: |
+          deno compile $DENO_FLAGS --target x86_64-unknown-linux-gnu -o dist/isat-linux-x64 packages/cli/dist/isat.mjs
+          deno compile $DENO_FLAGS --target aarch64-unknown-linux-gnu -o dist/isat-linux-arm64 packages/cli/dist/isat.mjs
+          ls -l dist
+      - name: Smoke test (linux-x64 binary against the node bundle)
+        run: |
+          set -euo pipefail
+          X="$PWD/dist/isat-linux-x64"
+          N="node packages/cli/dist/isat.mjs"
+          T=apps/web/public/isat-template.csv
+          F=validation/fixtures/inputs.csv
+          mkdir -p smoke
+          $X version
+          $X methods > /dev/null
+          for f in "$T" "$F"; do
+            b=$(basename "$f" .csv)
+            $X calculate "$f" -o "smoke/$b.bin.csv" --quiet
+            $N calculate "$f" -o "smoke/$b.node.csv" --quiet
+            cmp "smoke/$b.bin.csv" "smoke/$b.node.csv"
+            echo "calculate $b: identical"
+          done
+          for i in 1 2 3; do $X calculate "$F" -o "smoke/chunk_$i.csv" --chunk "$i/3" --quiet; done
+          $X merge smoke/chunk_1.csv smoke/chunk_2.csv smoke/chunk_3.csv -o smoke/merged.csv --quiet
+          cmp smoke/merged.csv smoke/inputs.bin.csv
+          echo "chunk 3 + merge: identical"
+          $X transform smoke/inputs.bin.csv -o smoke/rint.bin.csv --method rint --within-sex --input "$F" --quiet
+          $N transform smoke/inputs.node.csv -o smoke/rint.node.csv --method rint --within-sex --input "$F" --quiet
+          cmp smoke/rint.bin.csv smoke/rint.node.csv
+          echo "transform rint within sex: identical"
+          printf 'a,b\n1,2\n' > smoke/bad.csv
+          set +e
+          $X calculate smoke/bad.csv -o smoke/bad_out.csv --quiet
+          code=$?
+          set -e
+          echo "exit code on a bad file: $code"
+          test "$code" -ne 0
+          DENO_V8_FLAGS=--max-old-space-size=256 $X version
+      - name: Speed and memory on 200,000 rows
+        run: |
+          set -euo pipefail
+          command -v /usr/bin/time > /dev/null || sudo apt-get install -y time
+          awk -F, 'NR==1{h=$0; next} {n++; r[n]=$0; sub(/^[^,]*/, "", r[n])} END{print h; for (i=1;i<=200000;i++) print "P" i r[(i%n)+1]}' validation/fixtures/inputs.csv > smoke/big.csv
+          wc -l smoke/big.csv
+          /usr/bin/time -v dist/isat-linux-x64 calculate smoke/big.csv -o smoke/big_out.csv --quiet 2> smoke/time.txt || { cat smoke/time.txt; exit 1; }
+          grep -E "Elapsed|Maximum resident" smoke/time.txt
+      - run: cd dist && sha256sum isat-linux-x64 isat-linux-arm64 > sha256sums.txt && cat sha256sums.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isat-cli-binaries
+          path: |
+            dist/isat-linux-x64
+            dist/isat-linux-arm64
+            dist/sha256sums.txt
+          retention-days: 30
