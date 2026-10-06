@@ -54,7 +54,7 @@ ${exampleDetailsHtml()}
 export function columnMappingSummary(columns: Array<{ kind: string }>): { text: string; notRecognised: number } {
   const notRecognised = columns.filter((c) => c.kind === 'ignored').length;
   return {
-    text: `${columns.length - notRecognised} of ${columns.length} columns recognised${notRecognised ? ` — ${notRecognised} not recognised` : ''}`,
+    text: `${columns.length - notRecognised} of ${columns.length} columns recognised${notRecognised ? `, ${notRecognised} not recognised` : ''}`,
     notRecognised,
   };
 }

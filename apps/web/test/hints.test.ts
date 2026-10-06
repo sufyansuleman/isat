@@ -16,8 +16,8 @@ describe('example placeholders', () => {
     expect(fieldHint('ffa', mgdl)).toBe('e.g. 450');
   });
   it('rows at non-standard times and tracer rates get no example', () => {
-    expect(seriesHint('glucose', 45, mmol)).toBe('—');
-    expect(fieldHint('rate_glycerol', mmol)).toBe('—');
+    expect(seriesHint('glucose', 45, mmol)).toBe('-');
+    expect(fieldHint('rate_glycerol', mmol)).toBe('-');
   });
   it('are never used in a calculation: an empty form calculates nothing', () => {
     const rs = calculateAll(buildInputs(emptyState()).inputs);

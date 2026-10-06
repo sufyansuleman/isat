@@ -8,7 +8,7 @@ import {
 import { INCLUDED, topReasons, type Counts } from '@isat/core';
 
 const nf = (v: number) => v.toLocaleString('en-GB');
-const DASH = '—';
+const DASH = '-';
 const stat = (v: number | null) => (v === null ? DASH : fmt4(v));
 
 /** INCLUDED positions grouped by category (registry order inside each group). */

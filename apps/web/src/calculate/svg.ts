@@ -241,7 +241,7 @@ export function histogramGroupsSvg(o: HistGroupsOpts): string {
   const label = `${o.title}: ${o.xLabel}`;
   const head = `<text x="${m.l}" y="${small ? 14 : 20}" font-size="${small ? 11 : 13.5}" font-weight="600" fill="${INK}">${esc(small ? o.xLabel : o.title)}</text>`;
   const caps = [`N = ${num(o.n)}; missing = ${num(o.total - o.n)} (of ${num(o.total)})`];
-  caps.push(`median: ${o.groups.map((gr, i) => `${gr.label} ${Number.isNaN(meds[i]!) ? '—' : sig(meds[i]!, 4)}`).join('; ')}`);
+  caps.push(`median: ${o.groups.map((gr, i) => `${gr.label} ${Number.isNaN(meds[i]!) ? '-' : sig(meds[i]!, 4)}`).join('; ')}`);
   if (o.sexMissing) caps.push(`${num(o.sexMissing)} rows with missing sex excluded from the sex histograms`);
   if (o.note) caps.push(o.note);
   const ph = small ? 104 : 220;

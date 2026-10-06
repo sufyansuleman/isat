@@ -1,4 +1,6 @@
-# ISAT — Insulin Sensitivity Analysis Tool
+# ISAT: Insulin Sensitivity Analysis Tool
+
+[![DOI](https://zenodo.org/badge/1399587683.svg)](https://doi.org/10.5281/zenodo.23190906)
 
 Calculate surrogate indices of insulin sensitivity and resistance from fasting, OGTT, lipid and body measurements, for a whole research file or one person.
 
@@ -57,6 +59,8 @@ Compare values within your own study rather than with thresholds from other popu
 ## How to cite
 
 Suleman S, Madsen AL, Ängquist LH, Schubert M, Linneberg A, Loos RJF, Hansen T, Grarup N. Genetic Underpinnings of Fasting and Oral Glucose-stimulated Based Insulin Sensitivity Indices. *J Clin Endocrinol Metab.* 2024;109(11):2754–2763. [doi:10.1210/clinem/dgae275](https://doi.org/10.1210/clinem/dgae275)
+
+To cite the software itself: Suleman S. *ISAT: Insulin Sensitivity Analysis Tool.* Zenodo. [doi:10.5281/zenodo.23190906](https://doi.org/10.5281/zenodo.23190906) (all versions; each version also has its own DOI on Zenodo, e.g. 0.1.0: [10.5281/zenodo.23190907](https://doi.org/10.5281/zenodo.23190907)).
 
 Please also cite the original paper of each index you report, and state the ISAT version (shown on every page and in every results file).
 

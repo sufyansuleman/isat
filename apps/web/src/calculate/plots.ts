@@ -47,11 +47,11 @@ export function drawChart(block: HTMLElement, pts: PlotPoints, label: string, un
         { ...axis, label: `${label} (${unitLabel(unit)})`, labelFont: '13px system-ui, sans-serif', font: '12px system-ui, sans-serif', size: 60 },
       ],
       series: [
-        { label: 'Time (min)', value: (_u, v) => (v == null ? '—' : `${v} min`) },
+        { label: 'Time (min)', value: (_u, v) => (v == null ? '-' : `${v} min`) },
         {
           label, stroke: colour, width: 2, spanGaps: true,
           points: { show: true, size: 8, stroke: colour, fill: colour },
-          value: (_u, v) => (v == null ? '—' : `${v} ${unitLabel(unit)}`),
+          value: (_u, v) => (v == null ? '-' : `${v} ${unitLabel(unit)}`),
         },
       ],
       legend: { show: false },

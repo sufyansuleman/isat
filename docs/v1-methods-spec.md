@@ -32,7 +32,7 @@ All OGTT means and AUCs are computed from explicitly required time points. Parti
 | gutt | [(75000 + (G0_mg − G120_mg)·0.19·BW)/120] / MPG / log10(MSI); MPG = mean(G0,G120) in **mmol/L**, MSI = mean(I0,I120) µU/mL (Gutt 2000) | 0,120 + weight | sensitive | Gutt_index | ≠ constant factor: ISAT = legacy × 18·ln(10) |
 | matsuda_3pt | 10000 / sqrt(G0_mg·I0_uU·mean(G0,G30,G120)_mg·mean(I0,I30,I120)_uU) | 0,30,120 | sensitive | Matsuda_ISI | = (when all 3 present) |
 | matsuda_auc_3pt | 10000 / sqrt(G0_mg·I0_uU·Gm·Im), where Gm, Im = trapezoid AUC over 0/30/120 ÷ 120, i.e. (15v0+60v30+45v120)/120 | 0,30,120 | sensitive | Matsuda_Auc | = |
-| matsuda_5pt | 10000 / sqrt(G0_mg·I0_uU·mean(G0..G120)_mg·mean(I0..I120)_uU) | 0,30,60,90,120 | sensitive | — | new (Matsuda & DeFronzo 1999 original) |
+| matsuda_5pt | 10000 / sqrt(G0_mg·I0_uU·mean(G0..G120)_mg·mean(I0..I120)_uU) | 0,30,60,90,120 | sensitive | - | new (Matsuda & DeFronzo 1999 original) |
 | stumvoll_mod | 0.156 − 0.0000459·I120 − 0.000321·I0 − 0.00541·G120 (I in pmol/L, G in mmol/L) | 0,120 | sensitive | Modified_stumvoll | = |
 | stumvoll_dem | 0.222 − 0.00333·BMI − 0.0000779·I120 − 0.000422·age (I in pmol/L) | 120 + BMI, age | sensitive | Stumvoll_Demographics | = |
 | bigtt_si | exp(4.90 − 0.00402·I0 − 0.000556·I30 − 0.00127·I120 − 0.152·G0 − 0.00871·G30 − 0.0373·G120 − 0.145·male − 0.0376·BMI), with I in pmol/L, G in mmol/L, male = 1/0 | 0,30,120 + sex, BMI | sensitive | BigttSi | = |

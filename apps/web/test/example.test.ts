@@ -22,7 +22,7 @@ describe('example file', () => {
     const cells = [...host.querySelectorAll('tbody td, tbody th')].map((c) => c.textContent);
     expect(cells).toEqual(csv.slice(1).flat());
     expect(cells.includes('')).toBe(true);
-    expect(cells.includes('—')).toBe(false);
+    expect(cells.includes('-')).toBe(false);
   });
 
   it('"Use this example" gives the same parsed rows as uploading the file', async () => {

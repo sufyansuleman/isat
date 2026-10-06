@@ -79,6 +79,6 @@ describe('column mapping summary', () => {
     expect(columnMappingSummary([{ kind: 'id' }, { kind: 'variable' }, { kind: 'variable' }]))
       .toEqual({ text: '3 of 3 columns recognised', notRecognised: 0 });
     expect(columnMappingSummary([{ kind: 'id' }, { kind: 'variable' }, { kind: 'ignored' }]))
-      .toEqual({ text: '2 of 3 columns recognised — 1 not recognised', notRecognised: 1 });
+      .toEqual({ text: '2 of 3 columns recognised, 1 not recognised', notRecognised: 1 });
   });
 });

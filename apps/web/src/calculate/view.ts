@@ -16,7 +16,7 @@ const opt = (v: string, cur: string, label = unitLabel(v)) => `<option value="${
 
 function field(key: string, label: string, hint = ''): string {
   return `<div class="field"><label for="f-${key}">${label}</label>
-<input id="f-${key}" data-f="${key}" type="text" inputmode="decimal" autocomplete="off" placeholder="—" aria-describedby="e-${key}">
+<input id="f-${key}" data-f="${key}" type="text" inputmode="decimal" autocomplete="off" placeholder="-" aria-describedby="e-${key}">
 <span class="hint">${hint}</span><span class="err" id="e-${key}" role="alert"></span></div>`;
 }
 
@@ -88,12 +88,12 @@ export function mountCalculate(root: HTMLElement): () => void {
   function renderRows(): void {
     $('#rows').innerHTML = st.rows.map((r, k) => {
       const time = k === 0
-        ? `<span class="fasting-label">0 min — fasting (before glucose drink)</span>`
-        : `<input data-r="${k}" data-c="time" type="text" inputmode="decimal" aria-label="Minutes after drink, row ${k + 1}" value="${esc(r.time)}" placeholder="—" autocomplete="off"> <span class="after">min after drink</span><span class="err" data-e="row:${k}:time"></span>`;
+        ? `<span class="fasting-label">0 min: fasting (before glucose drink)</span>`
+        : `<input data-r="${k}" data-c="time" type="text" inputmode="decimal" aria-label="Minutes after drink, row ${k + 1}" value="${esc(r.time)}" placeholder="-" autocomplete="off"> <span class="after">min after drink</span><span class="err" data-e="row:${k}:time"></span>`;
       const rm = k === 0 ? '' : `<button type="button" data-rm="${k}" aria-label="Remove row ${k + 1}">Remove</button>`;
       return `<tr><td>${time}</td>
-<td><input data-r="${k}" data-c="glucose" type="text" inputmode="decimal" aria-label="Glucose, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.glucose)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:glucose"></span></td>
-<td><input data-r="${k}" data-c="insulin" type="text" inputmode="decimal" aria-label="Insulin, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.insulin)}" placeholder="—" autocomplete="off"><span class="err" data-e="row:${k}:insulin"></span></td>
+<td><input data-r="${k}" data-c="glucose" type="text" inputmode="decimal" aria-label="Glucose, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.glucose)}" placeholder="-" autocomplete="off"><span class="err" data-e="row:${k}:glucose"></span></td>
+<td><input data-r="${k}" data-c="insulin" type="text" inputmode="decimal" aria-label="Insulin, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.insulin)}" placeholder="-" autocomplete="off"><span class="err" data-e="row:${k}:insulin"></span></td>
 <td>${rm}</td></tr>`;
     }).join('');
   }

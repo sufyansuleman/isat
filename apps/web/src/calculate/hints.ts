@@ -26,13 +26,13 @@ function shown(value: number, q: Q, unit: Unit): string {
 /** Placeholder for an OGTT table cell; rows at non-standard times keep the plain dash. */
 export function seriesHint(q: 'glucose' | 'insulin', time: number, units: UnitChoice): string {
   const v = (q === 'glucose' ? EXAMPLE_GLUCOSE : EXAMPLE_INSULIN)[time];
-  return v === undefined ? '—' : shown(v, q, units[q] as Unit);
+  return v === undefined ? '-' : shown(v, q, units[q] as Unit);
 }
 
 /** Placeholder for a single field (lipids and body measures). Tracer rates get no example. */
 export function fieldHint(key: string, units: UnitChoice): string {
   const v = EXAMPLE_FIELDS[key];
-  if (v === undefined) return '—';
+  if (v === undefined) return '-';
   if (key === 'tg' || key === 'hdl' || key === 'ffa') return shown(v, key, units[key] as Unit);
   return `e.g. ${v}`;
 }
