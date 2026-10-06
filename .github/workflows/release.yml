@@ -1,0 +1,65 @@
+name: Release files
+# When a GitHub release is published, build the command-line tool from that tag,
+# test it, and attach the standalone Linux binaries to the release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to (re)build and attach files to, e.g. v0.1.0
+        required: true
+permissions:
+  contents: write
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      DENO_FLAGS: --no-check --allow-read --allow-write --allow-env --v8-flags=--max-old-space-size=1024,--max-semi-space-size=4
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test --workspaces
+      - name: Version in the code matches the tag
+        run: |
+          v=$(node -p "require('./package.json').version")
+          [ "v$v" = "$TAG" ] || { echo "package.json version $v does not match tag $TAG"; exit 1; }
+      - run: npm run bundle -w @isat/cli
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.5.6
+      - name: Compile binaries
+        run: |
+          mkdir -p out
+          deno compile $DENO_FLAGS --target x86_64-unknown-linux-gnu -o out/x64/isat packages/cli/dist/isat.mjs
+          deno compile $DENO_FLAGS --target aarch64-unknown-linux-gnu -o out/arm64/isat packages/cli/dist/isat.mjs
+      - name: Test the x64 binary
+        run: |
+          set -euo pipefail
+          X="$PWD/out/x64/isat"
+          $X version | grep -q "ISAT ${TAG#v}"
+          $X calculate apps/web/public/isat-template.csv -o t.bin.csv --quiet
+          node packages/cli/dist/isat.mjs calculate apps/web/public/isat-template.csv -o t.node.csv --quiet
+          cmp t.bin.csv t.node.csv
+          echo "binary output identical to the reference"
+      - name: Package
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          for a in x64 arm64; do
+            cp LICENSE "out/$a/LICENSE"
+            tar -C "out/$a" -czf "release/isat-linux-$a.tar.gz" isat LICENSE
+          done
+          cp packages/cli/dist/isat.mjs release/isat.mjs
+          (cd release && sha256sum isat-linux-x64.tar.gz isat-linux-arm64.tar.gz isat.mjs > sha256sums.txt && cat sha256sums.txt)
+          ls -l release
+      - name: Attach to the release
+        run: gh release upload "$TAG" release/* --clobber --repo "$GITHUB_REPOSITORY"

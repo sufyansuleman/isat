@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use ISAT, please cite the article below and the original paper of each index you report, and state the ISAT version."
+title: "ISAT: Insulin Sensitivity Analysis Tool"
+abstract: "Open-source tool that calculates surrogate indices of insulin sensitivity and resistance from fasting, OGTT, lipid and body measurements. Runs in the web browser (data stay local) and as a standalone Linux command-line tool for large cohorts."
+type: software
+authors:
+  - family-names: Suleman
+    given-names: Sufyan
+    orcid: "https://orcid.org/0000-0001-6612-6915"
+version: 0.1.0
+date-released: "2026-10-06"
+license: MIT
+repository-code: "https://github.com/sufyansuleman/isat"
+url: "https://sufyansuleman.github.io/isat/"
+keywords:
+  - insulin sensitivity
+  - insulin resistance
+  - HOMA-IR
+  - Matsuda index
+  - oral glucose tolerance test
+  - surrogate indices
+preferred-citation:
+  type: article
+  title: "Genetic Underpinnings of Fasting and Oral Glucose-stimulated Based Insulin Sensitivity Indices"
+  authors:
+    - family-names: Suleman
+      given-names: Sufyan
+      orcid: "https://orcid.org/0000-0001-6612-6915"
+    - family-names: Madsen
+      given-names: A. L.
+    - family-names: Ängquist
+      given-names: L. H.
+    - family-names: Schubert
+      given-names: M.
+    - family-names: Linneberg
+      given-names: A.
+    - family-names: Loos
+      given-names: R. J. F.
+    - family-names: Hansen
+      given-names: T.
+    - family-names: Grarup
+      given-names: N.
+  journal: "The Journal of Clinical Endocrinology & Metabolism"
+  volume: 109
+  issue: 11
+  start: 2754
+  end: 2763
+  year: 2024
+  doi: "10.1210/clinem/dgae275"

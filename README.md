@@ -21,12 +21,14 @@ Start from the [example file](apps/web/public/isat-template.csv) to see the expe
 
 Use it for files with more than 100,000 individuals, or on an HPC cluster. It is a single file with nothing to install, and its results are identical to the website's.
 
-Download it from the GitHub Releases page (available from the first release):
+Download it from the [Releases page](https://github.com/sufyansuleman/isat/releases/latest), or directly:
 
 ```bash
-curl -L -o isat https://github.com/sufyansuleman/isat/releases/latest/download/isat-linux-x64
-chmod +x isat    # on ARM machines use isat-linux-arm64
+curl -L https://github.com/sufyansuleman/isat/releases/latest/download/isat-linux-x64.tar.gz | tar xz
+./isat version    # on ARM machines use isat-linux-arm64.tar.gz
 ```
+
+The release also has `isat.mjs` (0.16 MB), the same tool for machines with Node.js 20 or newer (`node isat.mjs ...`), and `sha256sums.txt` to verify the downloads.
 
 ```bash
 ./isat check cohort.csv                                   # columns, units, problems
