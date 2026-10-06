@@ -44,6 +44,14 @@ Results are validated against the R package [InsuSensCalc](https://github.com/su
 
 These are surrogate indices, not direct measurements of insulin sensitivity, and not a diagnosis.
 
+## Populations the indices were derived in
+
+Each index was developed in one population, mostly single cohorts in Europe or the USA with a few hundred people or fewer, and most papers do not report ancestry. Examples: Matsuda in 153 adults in San Antonio (USA), HOMA-IR in 23 adults, Gutt in 135 Black and White adults in Miami, TyG in 748 adults in Mexico, LAP in 9,180 US adults (NHANES III).
+
+**Full table (population, N, place, original paper for every index): [docs/derivation-populations.md](docs/derivation-populations.md).**
+
+Compare values within your own study rather than with thresholds from other populations, and account for ancestry in the analysis (for example genetic principal components), not by changing the index.
+
 ## How to cite
 
 Suleman S, Madsen AL, Ängquist LH, Schubert M, Linneberg A, Loos RJF, Hansen T, Grarup N. Genetic Underpinnings of Fasting and Oral Glucose-stimulated Based Insulin Sensitivity Indices. *J Clin Endocrinol Metab.* 2024;109(11):2754–2763. [doi:10.1210/clinem/dgae275](https://doi.org/10.1210/clinem/dgae275)

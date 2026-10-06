@@ -12,6 +12,7 @@
     "dev:web": "npm run dev -w @isat/web",
     "build:web": "npm run build -w @isat/web",
     "cli": "vite-node packages/cli/src/main.ts --",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "prepare": "git config core.hooksPath .githooks || true",
+    "docs": "vite-node scripts/gen-docs.ts"
   }
 }
