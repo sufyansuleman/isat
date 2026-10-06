@@ -1,5 +1,5 @@
 import { describe as suite, it, expect } from 'vitest';
-import { BLOM_OFFSET, describe, qnorm, quantile7, rankAvg, spearman, spearmanMatrix, transform } from '../src/index';
+import { BLOM_OFFSET, describe, qnorm, quantile7, pearson, pearsonMatrix, rankAvg, spearman, spearmanMatrix, transform } from '../src/index';
 
 const arr = (a: ArrayLike<number>) => Array.from(a);
 const nanToNull = (a: ArrayLike<number>) => arr(a).map((v) => (Number.isNaN(v) ? null : v));
@@ -132,6 +132,32 @@ suite('spearman', () => {
       const ref = spearman(cols[i]!, cols[j]!);
       expect(m.n[i * 5 + j]).toBe(ref!.n);
       expect(m.rho[i * 5 + j]).toBeCloseTo(ref!.rho, 12);
+    }
+  });
+});
+
+suite('pearson', () => {
+  it('is pairwise complete and differs from spearman on skewed data', () => {
+    const x = [1, 2, 3, 4, null, 6], y = [2, 1, 4, 3, 9, null];
+    const r = pearson(x, y);
+    expect(r!.n).toBe(4);
+    expect(r!.r).toBeCloseTo(0.6, 12); // same as the rank correlation here (no extremes)
+    const sx = [1, 2, 3, 4, 5, 1000], sy = [1, 3, 2, 5, 4, 6];
+    expect(spearman(sx, sy)!.rho).toBeCloseTo(0.885714285714, 9);
+    expect(pearson(sx, sy)!.r).toBeCloseTo(0.6567509, 6);
+  });
+  it('is null for n < 3 or zero variance', () => {
+    expect(pearson([1, 2, null], [1, 2, 3])).toBeNull();
+    expect(pearson([1, 1, 1, 1], [1, 2, 3, 4])).toBeNull();
+  });
+  it('matrix equals pairwise pearson with differing missingness', () => {
+    const n = 100;
+    const cols = [0, 1, 2].map((c) => Float64Array.from({ length: n }, (_, i) => (c === 2 && i % 4 === 0 ? NaN : Math.sin(i * (c + 1)) + i / 20)));
+    const m = pearsonMatrix(cols);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      const ref = pearson(cols[i]!, cols[j]!);
+      expect(m.n[i * 3 + j]).toBe(ref!.n);
+      expect(m.rho[i * 3 + j]).toBeCloseTo(ref!.r, 12);
     }
   });
 });

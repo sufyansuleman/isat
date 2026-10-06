@@ -274,8 +274,8 @@ export function describe(values: ArrayLike<Num>): Described {
   return out;
 }
 
-// ---------- Spearman ----------
-function pearson(a: Float64Array, b: Float64Array): number {
+// ---------- Spearman and Pearson ----------
+function pearsonArr(a: Float64Array, b: Float64Array): number {
   const n = a.length;
   let ma = 0, mb = 0;
   for (let i = 0; i < n; i++) { ma += a[i]!; mb += b[i]!; }
@@ -292,11 +292,46 @@ export function spearman(x: ArrayLike<Num>, y: ArrayLike<Num>): { rho: number; n
   const xs: number[] = [], ys: number[] = [];
   for (let i = 0; i < len; i++) if (ok(x[i]) && ok(y[i])) { xs.push(x[i] as number); ys.push(y[i] as number); }
   if (xs.length < 3) return null;
-  const rho = pearson(rankAvg(xs), rankAvg(ys));
+  const rho = pearsonArr(rankAvg(xs), rankAvg(ys));
   return Number.isNaN(rho) ? null : { rho, n: xs.length };
 }
 
+/** Pairwise-complete Pearson correlation. Null if n < 3 or either variable is constant on the complete pairs. */
+export function pearson(x: ArrayLike<Num>, y: ArrayLike<Num>): { r: number; n: number } | null {
+  const len = Math.min(x.length, y.length);
+  const xs: number[] = [], ys: number[] = [];
+  for (let i = 0; i < len; i++) if (ok(x[i]) && ok(y[i])) { xs.push(x[i] as number); ys.push(y[i] as number); }
+  if (xs.length < 3) return null;
+  const r = pearsonArr(Float64Array.from(xs), Float64Array.from(ys));
+  return Number.isNaN(r) ? null : { r, n: xs.length };
+}
+
 export interface SpearmanMatrix { k: number; rho: Float64Array; n: Int32Array }
+
+/** All pairwise Pearson correlations (k x k, row-major; NaN = not available), pairwise complete; same shape as spearmanMatrix. */
+export function pearsonMatrix(cols: Float64Array[]): SpearmanMatrix {
+  const k = cols.length;
+  const rho = new Float64Array(k * k).fill(NaN), nn = new Int32Array(k * k);
+  if (k === 0) return { k, rho, n: nn };
+  const len = cols[0]!.length;
+  for (let i = 0; i < k; i++) {
+    const a = cols[i]!;
+    for (let j = i; j < k; j++) {
+      const b = cols[j]!;
+      let n = 0, sa = 0, sb = 0;
+      for (let r = 0; r < len; r++) { const u = a[r]!, v = b[r]!; if (u === u && v === v) { n++; sa += u; sb += v; } }
+      let val = NaN;
+      if (n >= 3) {
+        const ma = sa / n, mb = sb / n;
+        let sab = 0, saa = 0, sbb = 0;
+        for (let r = 0; r < len; r++) { const u = a[r]!, v = b[r]!; if (u === u && v === v) { const da = u - ma, db = v - mb; sab += da * db; saa += da * da; sbb += db * db; } }
+        if (saa > 0 && sbb > 0) val = i === j ? 1 : Math.max(-1, Math.min(1, sab / Math.sqrt(saa * sbb)));
+      }
+      rho[i * k + j] = val; rho[j * k + i] = val; nn[i * k + j] = n; nn[j * k + i] = n;
+    }
+  }
+  return { k, rho, n: nn };
+}
 
 /**
  * All pairwise Spearman correlations (k x k, row-major; NaN = not available). Equal to spearman() on every pair,
@@ -359,8 +394,8 @@ export function spearmanMatrix(cols: Float64Array[]): SpearmanMatrix {
           if (colGroup[j] !== gb || (ga === gb && j < i)) continue;
           let v = NaN;
           if (cnt >= 3) {
-            if (i === j) { const r = get(i, useA); v = Number.isNaN(pearson(r, r)) ? NaN : 1; }
-            else v = pearson(get(i, useA), get(j, useB));
+            if (i === j) { const r = get(i, useA); v = Number.isNaN(pearsonArr(r, r)) ? NaN : 1; }
+            else v = pearsonArr(get(i, useA), get(j, useB));
           }
           rho[i * k + j] = v; rho[j * k + i] = v; nn[i * k + j] = cnt; nn[j * k + i] = cnt;
         }

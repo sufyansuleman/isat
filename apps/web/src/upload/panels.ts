@@ -3,7 +3,8 @@ import { esc, fmt4 } from '../calculate/format';
 import { saveBlob } from '../calculate/plots';
 import { densitySvg, GROUP_STYLE, heatmapSvg, histogramGroupsSvg, histogramSvg, OKABE_ITO, scatterSvg, type Curve } from '../calculate/svg';
 import {
-  Analysis, CATEGORIES, KIND_LABEL, NO_TRANSFORM, densityCsv, matrixCsv, transformedLabel, type TransformSetting,
+  Analysis, CATEGORIES, KIND_LABEL, NO_TRANSFORM, comparisonCsv, densityCsv, diffMatrix, matrixCsv, restrictMatrix, shortTransformName, transformedLabel,
+  type CorMethod, type CorValues, type Matrix, type TransformSetting,
 } from './analysis';
 import { INCLUDED, topReasons, type Counts } from '@isat/core';
 
@@ -204,50 +205,146 @@ export function mountDistributions(host: HTMLElement, an: Analysis, counts: Coun
 }
 
 // ---------- Correlations ----------
-export interface CorUi { pair: [number, number] | undefined }
+export interface CorUi { pair: [number, number] | undefined; method: CorMethod; values: CorValues }
+export const newCorUi = (): CorUi => ({ pair: undefined, method: 'spearman', values: 'transformed' });
+/** Without a transform there is nothing to compare: the Raw view is used whatever was chosen. */
+export const effectiveValues = (ui: { values: CorValues }, tf: TransformSetting): CorValues => (tf.kind === 'none' ? 'raw' : ui.values);
+
+const METHOD_NAME: Record<CorMethod, string> = { spearman: 'Spearman', pearson: 'Pearson' };
+const STAT_LABEL: Record<CorMethod, string> = { spearman: 'Spearman rho', pearson: 'Pearson r' };
+export const SPEARMAN_NOTE = "Spearman uses ranks, so log, z-score and RINT do not change it; only 'within sex' can.";
+export const PEARSON_RAW_NOTE = 'Pearson on raw values is sensitive to skewed distributions and extreme values; consider a transform.';
 
 export function mountCorrelations(host: HTMLElement, an: Analysis, getTf: () => TransformSetting, ui: CorUi): void {
   const tf = getTf();
   const div = document.createElement('div');
   host.replaceChildren(div);
-  const render = () => {
-    if (host.firstChild !== div) return; // superseded by a newer render
-    const m = an.matrix(tf);
-    const files = new Map<string, { svg: string; name: string }>();
-    const tfName = tf.kind === 'none' ? 'raw values' : `${KIND_LABEL[tf.kind]}${tf.bySex ? ', within sex' : ''}`;
-    if (m.k < 2) { div.innerHTML = '<p>Fewer than 2 indices have at least 3 non-missing values, so no correlations can be shown.</p>'; return; }
-    const heat = heatmapSvg({ labels: m.labels, rho: m.rho, n: m.n, title: 'Spearman correlation between indices', subtitle: tfName[0]!.toUpperCase() + tfName.slice(1) });
-    files.set('heat', { svg: heat, name: 'isat-spearman-heatmap.svg' });
-    div.innerHTML = `<p class="notice">Spearman rank correlation, pairwise complete cases, for indices with at least 3 non-missing values (${m.k} shown). Spearman correlation depends only on ranks, so z-score and RINT leave it unchanged unless "within sex" is selected; log also removes values ≤ 0. Click a cell to see the scatter plot.</p>
-<p class="actions"><button type="button" data-dl="heat">Download SVG</button> <button type="button" id="up-cor-csv">Download correlation matrix (CSV)</button> <button type="button" id="up-cor-n">Download pairwise n (CSV)</button></p>
-<div class="heat-wrap" id="up-heat">${heat}</div>
-<div id="up-scatter" aria-live="polite"></div>`;
-    const sc = div.querySelector<HTMLElement>('#up-scatter')!;
-    const show = (ci: number, cj: number) => {
-      ui.pair = [ci, cj];
-      const i = m.cols.indexOf(ci), j = m.cols.indexOf(cj);
-      const xs = an.transformed(cj, tf).values, ys = an.transformed(ci, tf).values;
-      const rho = m.rho[i * m.k + j]!, n = m.n[i * m.k + j]!;
-      const xl = transformedLabel(INCLUDED[cj]!.name, tf), yl = transformedLabel(INCLUDED[ci]!.name, tf);
-      const svg = scatterSvg({ x: xs, y: ys, xLabel: xl, yLabel: yl, rho: Number.isNaN(rho) ? null : rho, n });
-      files.set('sc', { svg, name: `isat-scatter-${INCLUDED[ci]!.id}-vs-${INCLUDED[cj]!.id}.svg` });
-      sc.innerHTML = `<h3>Scatter plot</h3><figure class="plot"><div class="svgbox">${svg}</div><figcaption><button type="button" data-dl="sc">Download SVG</button></figcaption></figure>`;
+  const opt = (v: string, label: string, sel: boolean, dis = false) => `<option value="${v}"${sel ? ' selected' : ''}${dis ? ' disabled' : ''}>${label}</option>`;
+  const none = tf.kind === 'none';
+  const eff0 = effectiveValues(ui, tf);
+  div.innerHTML = `<p class="check"><label for="up-cor-method">Method</label> <select id="up-cor-method">${opt('spearman', 'Spearman (rank)', ui.method === 'spearman')}${opt('pearson', 'Pearson', ui.method === 'pearson')}</select>
+<label for="up-cor-values">Values</label> <select id="up-cor-values">${opt('raw', 'Raw', eff0 === 'raw')}${opt('transformed', 'Transformed', eff0 === 'transformed', none)}${opt('both', 'Both (side by side)', eff0 === 'both', none)}</select></p>
+<p class="hint" id="up-cor-tfnote"${none ? '' : ' hidden'}>Choose a transform above the tabs to enable Transformed and Both.</p>
+<div id="up-cor-notes"></div>
+<div id="up-cor-slot"></div>`;
+  const slot = div.querySelector<HTMLElement>('#up-cor-slot')!;
+  const notes = div.querySelector<HTMLElement>('#up-cor-notes')!;
+  let gen = 0;
+
+  const draw = () => {
+    const my = ++gen;
+    const method = ui.method, values = effectiveValues(ui, tf);
+    const note = [
+      method === 'spearman' && tf.kind !== 'none' && !tf.bySex ? SPEARMAN_NOTE : '',
+      method === 'pearson' && values === 'raw' ? PEARSON_RAW_NOTE : '',
+    ].filter(Boolean);
+    notes.innerHTML = note.map((t) => `<p class="notice cor-note">${esc(t)}</p>`).join('');
+    const need: Array<[TransformSetting, CorMethod]> = values === 'both' ? [[NO_TRANSFORM, method], [tf, method]] : [[values === 'raw' ? NO_TRANSFORM : tf, method]];
+    const body = document.createElement('div');
+    slot.replaceChildren(body);
+    const render = () => {
+      if (my !== gen) return; // superseded by a newer choice
+      renderBody(body, an, tf, ui, method, values);
     };
-    const pick = (t: EventTarget | null) => {
-      const r = (t as HTMLElement).closest<SVGElement>('.heat-cell');
-      if (!r) return;
-      const i = Number(r.dataset['i']), j = Number(r.dataset['j']);
-      if (i === j) { sc.innerHTML = '<p class="hint">Choose a cell off the diagonal to compare two different indices.</p>'; return; }
-      show(m.cols[i]!, m.cols[j]!);
-    };
-    div.querySelector('#up-heat')!.addEventListener('click', (e) => pick(e.target));
-    div.querySelector('#up-heat')!.addEventListener('keydown', (e) => { const k = (e as KeyboardEvent).key; if (k === 'Enter' || k === ' ') { e.preventDefault(); pick(e.target); } });
-    div.querySelector('#up-cor-csv')!.addEventListener('click', () => saveBlob(new Blob([matrixCsv(m, an.mode, 'rho')], { type: 'text/csv;charset=utf-8' }), 'isat-spearman-matrix.csv'));
-    div.querySelector('#up-cor-n')!.addEventListener('click', () => saveBlob(new Blob([matrixCsv(m, an.mode, 'n')], { type: 'text/csv;charset=utf-8' }), 'isat-spearman-n.csv'));
-    wireDownloads(div, files);
-    if (ui.pair && m.cols.includes(ui.pair[0]) && m.cols.includes(ui.pair[1])) show(ui.pair[0], ui.pair[1]);
+    if (need.every(([t, m]) => an.hasMatrix(t, m)) || an.total * 33 * need.length < 2e5) { render(); return; }
+    body.innerHTML = '<p role="status">Calculating…</p>';
+    setTimeout(render, 0);
   };
-  if (an.hasMatrix(tf) || an.total * 33 < 2e5) { render(); return; }
-  div.innerHTML = '<p role="status">Calculating…</p>';
-  setTimeout(render, 0);
+  div.querySelector('#up-cor-method')!.addEventListener('change', (e) => { ui.method = (e.target as HTMLSelectElement).value as CorMethod; draw(); });
+  div.querySelector('#up-cor-values')!.addEventListener('change', (e) => { ui.values = (e.target as HTMLSelectElement).value as CorValues; draw(); });
+  draw();
+}
+
+const csvBlob = (text: string) => new Blob([text], { type: 'text/csv;charset=utf-8' });
+
+function renderBody(div: HTMLElement, an: Analysis, tf: TransformSetting, ui: CorUi, method: CorMethod, values: CorValues): void {
+  const files = new Map<string, { svg: string; name: string }>();
+  const mName = METHOD_NAME[method], sl = STAT_LABEL[method], stem = `isat-${method}`;
+  const few = '<p>Fewer than 2 indices have at least 3 non-missing values, so no correlations can be shown.</p>';
+  const raw = values === 'transformed' ? undefined : an.matrix(NO_TRANSFORM, method);
+  const tfm = values === 'raw' ? undefined : an.matrix(tf, method);
+  const f3 = (v: number) => (Number.isNaN(v) ? 'not available' : v.toFixed(3));
+
+  // The matrices drawn: one (single) or the common indices of both (Both).
+  let shown: Matrix, heatHtml: string, buttons: string;
+  let both: { raw: Matrix; tfm: Matrix } | undefined;
+  if (values === 'both') {
+    const common = raw!.cols.filter((c) => tfm!.cols.includes(c));
+    if (common.length < 2) { div.innerHTML = few; return; }
+    const r = restrictMatrix(raw!, common), t = restrictMatrix(tfm!, common);
+    both = { raw: r, tfm: t };
+    shown = r;
+    const d = diffMatrix(r, t);
+    let mx = 0;
+    for (const v of d) if (Number.isFinite(v) && Math.abs(v) > mx) mx = Math.abs(v);
+    const range = Math.max(0.1, mx);
+    const k = r.k;
+    const longest = Math.max(1, ...r.labels.map((l) => l.length));
+    const lab = Math.min(230, Math.round(longest * 5.6) + 12);
+    const cell = Math.max(8, Math.min(17, Math.floor((860 - lab - 72) / (3 * k))));
+    const tip = (i: number, j: number) => {
+      const p = i * k + j;
+      return `${r.labels[i]} vs ${r.labels[j]}: ${sl}: raw = ${f3(r.rho[p]!)} (n = ${nf(r.n[p]!)}), transformed = ${f3(t.rho[p]!)} (n = ${nf(t.n[p]!)}), difference = ${f3(d[p]!)}`;
+    };
+    const common3 = { cell, compact: true, tip, labels: r.labels, n: r.n };
+    const h1 = heatmapSvg({ ...common3, rho: r.rho, title: 'Raw', statLabel: sl, idPrefix: 'hgr' });
+    const h2 = heatmapSvg({ ...common3, rho: t.rho, title: `Transformed: ${shortTransformName(tf)}`, statLabel: sl, idPrefix: 'hgt', rowLabels: false });
+    const h3 = heatmapSvg({ ...common3, rho: d, title: 'Difference (transformed minus raw)', statLabel: `Difference in ${sl}`, idPrefix: 'hgd', range, rowLabels: false });
+    files.set('heat-raw', { svg: h1, name: `${stem}-heatmap-raw.svg` });
+    files.set('heat-tf', { svg: h2, name: `${stem}-heatmap-transformed.svg` });
+    files.set('heat-diff', { svg: h3, name: `${stem}-heatmap-difference.svg` });
+    heatHtml = `<div class="heat-multi"><div class="heat-one" data-heat="raw">${h1}</div><div class="heat-one" data-heat="transformed">${h2}</div><div class="heat-one" data-heat="difference">${h3}</div></div>`;
+    buttons = '<button type="button" data-dl="heat-raw">Download Raw SVG</button> <button type="button" data-dl="heat-tf">Download Transformed SVG</button> <button type="button" data-dl="heat-diff">Download Difference SVG</button> <button type="button" id="up-cor-long">Download comparison (CSV, long format)</button>';
+  } else {
+    shown = (raw ?? tfm)!;
+    if (shown.k < 2) { div.innerHTML = few; return; }
+    const tfName = values === 'raw' ? 'raw values' : `${KIND_LABEL[tf.kind]}${tf.bySex ? ', within sex' : ''}`;
+    const heat = heatmapSvg({ labels: shown.labels, rho: shown.rho, n: shown.n, title: `${mName} correlation between indices`, subtitle: tfName[0]!.toUpperCase() + tfName.slice(1), statLabel: sl });
+    files.set('heat', { svg: heat, name: `${stem}-heatmap.svg` });
+    heatHtml = heat;
+    buttons = '<button type="button" data-dl="heat">Download SVG</button> <button type="button" id="up-cor-csv">Download correlation matrix (CSV)</button> <button type="button" id="up-cor-n">Download pairwise n (CSV)</button>';
+  }
+  div.innerHTML = `<p class="notice">${mName} correlation, pairwise complete cases, for indices with at least 3 non-missing values (${shown.k} shown). Click a cell to see the scatter plot.</p>
+<p class="actions">${buttons}</p>
+<div class="heat-wrap" id="up-heat">${heatHtml}</div>
+<div id="up-scatter" aria-live="polite"></div>`;
+  const sc = div.querySelector<HTMLElement>('#up-scatter')!;
+
+  const figure = (setting: TransformSetting, m: Matrix, ci: number, cj: number, key: string, heading: string) => {
+    const i = m.cols.indexOf(ci), j = m.cols.indexOf(cj);
+    const rho = m.rho[i * m.k + j]!, n = m.n[i * m.k + j]!;
+    const svg = scatterSvg({
+      x: an.transformed(cj, setting).values, y: an.transformed(ci, setting).values,
+      xLabel: transformedLabel(INCLUDED[cj]!.name, setting), yLabel: transformedLabel(INCLUDED[ci]!.name, setting),
+      rho: Number.isNaN(rho) ? null : rho, n, method,
+    });
+    const suffix = both ? (key === 'sc-raw' ? '-raw' : '-transformed') : '';
+    files.set(key, { svg, name: `isat-${method}-scatter-${INCLUDED[ci]!.id}-vs-${INCLUDED[cj]!.id}${suffix}.svg` });
+    return `<figure class="plot">${heading ? `<p class="cap">${esc(heading)}</p>` : ''}<div class="svgbox">${svg}</div><figcaption><button type="button" data-dl="${key}">Download SVG</button></figcaption></figure>`;
+  };
+  const show = (ci: number, cj: number) => {
+    ui.pair = [ci, cj];
+    const figs = both
+      ? figure(NO_TRANSFORM, raw!, ci, cj, 'sc-raw', 'Raw') + figure(tf, tfm!, ci, cj, 'sc-tf', `Transformed: ${shortTransformName(tf)}`)
+      : figure(values === 'raw' ? NO_TRANSFORM : tf, shown, ci, cj, 'sc', '');
+    sc.innerHTML = `<h3>Scatter plot</h3><div class="scatter-row">${figs}</div>`;
+  };
+  const pick = (t: EventTarget | null) => {
+    const r = (t as HTMLElement).closest<SVGElement>('.heat-cell');
+    if (!r) return;
+    const i = Number(r.dataset['i']), j = Number(r.dataset['j']);
+    if (i === j) { sc.innerHTML = '<p class="hint">Choose a cell off the diagonal to compare two different indices.</p>'; return; }
+    show(shown.cols[i]!, shown.cols[j]!);
+  };
+  div.querySelector('#up-heat')!.addEventListener('click', (e) => pick(e.target));
+  div.querySelector('#up-heat')!.addEventListener('keydown', (e) => { const k = (e as KeyboardEvent).key; if (k === 'Enter' || k === ' ') { e.preventDefault(); pick(e.target); } });
+  if (both) {
+    div.querySelector('#up-cor-long')!.addEventListener('click', () => saveBlob(csvBlob(comparisonCsv(both!.raw, both!.tfm, an.mode)), `${stem}-comparison.csv`));
+  } else {
+    div.querySelector('#up-cor-csv')!.addEventListener('click', () => saveBlob(csvBlob(matrixCsv(shown, an.mode, 'rho')), `${stem}-matrix.csv`));
+    div.querySelector('#up-cor-n')!.addEventListener('click', () => saveBlob(csvBlob(matrixCsv(shown, an.mode, 'n')), `${stem}-n.csv`));
+  }
+  wireDownloads(div, files);
+  const p = ui.pair;
+  if (p && shown.cols.includes(p[0]) && shown.cols.includes(p[1])) show(p[0], p[1]);
 }

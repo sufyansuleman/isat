@@ -313,35 +313,60 @@ export interface HeatmapOpts {
   n: ArrayLike<number>;
   title: string;
   subtitle?: string;
+  /** Cell size in px (default 17). */
+  cell?: number;
+  /** Row labels on the left (default true); column labels are always drawn so side-by-side maps stay aligned. */
+  rowLabels?: boolean;
+  /** The colour scale spans -range..+range (default 1). */
+  range?: number;
+  /** Legend caption (default "Spearman rho"). */
+  statLabel?: string;
+  /** Gradient id; give each heatmap on one page its own (default "hg"). */
+  idPrefix?: string;
+  /** Tooltip text per cell, replacing the default. */
+  tip?: (i: number, j: number) => string;
+  /** Narrow layout: smaller title, legend caption below the bar. */
+  compact?: boolean;
 }
 
+const tick = (v: number) => String(Number(v.toFixed(3)));
+
 export function heatmapSvg(o: HeatmapOpts): string {
-  const k = o.labels.length, cell = 17;
+  const k = o.labels.length, cell = o.cell ?? 17, range = o.range ?? 1, compact = o.compact === true;
+  const rowLabels = o.rowLabels !== false;
   const longest = Math.max(1, ...o.labels.map((l) => l.length));
   const lab = Math.min(230, Math.round(longest * 5.6) + 12);
-  const L = lab, T = lab, size = k * cell;
-  const W = L + size + 16, H = T + size + 70;
-  let g = `<text x="${L}" y="16" font-size="13.5" font-weight="600" fill="${INK}">${esc(o.title)}</text>${o.subtitle ? `<text x="${L}" y="32" font-size="11.5" fill="${MUTED}">${esc(o.subtitle)}</text>` : ''}`;
+  const L = rowLabels ? lab : 8, T = lab, size = k * cell;
+  const lw = compact ? Math.max(120, Math.min(220, size)) : 220;
+  const W = Math.max(L + size, L + lw) + 16, H = T + size + (compact ? 92 : 70);
+  const gid = o.idPrefix ?? 'hg';
+  let g = `<text x="${L}" y="16" font-size="${compact ? 12.5 : 13.5}" font-weight="600" fill="${INK}">${esc(o.title)}</text>${o.subtitle ? `<text x="${L}" y="32" font-size="11.5" fill="${MUTED}">${esc(o.subtitle)}</text>` : ''}`;
   o.labels.forEach((t, i) => {
-    g += `<text x="${L - 5}" y="${T + i * cell + cell / 2 + 3.5}" text-anchor="end" font-size="10" fill="${INK}">${esc(t)}</text>`
-      + `<text transform="translate(${L + i * cell + cell / 2 + 3.5} ${T - 5}) rotate(-90)" font-size="10" fill="${INK}">${esc(t)}</text>`;
+    if (rowLabels) g += `<text x="${L - 5}" y="${T + i * cell + cell / 2 + 3.5}" text-anchor="end" font-size="10" fill="${INK}">${esc(t)}</text>`;
+    g += `<text transform="translate(${L + i * cell + cell / 2 + 3.5} ${T - 5}) rotate(-90)" font-size="10" fill="${INK}">${esc(t)}</text>`;
   });
+  const sl = o.statLabel ?? 'Spearman rho';
   for (let i = 0; i < k; i++) {
     for (let j = 0; j < k; j++) {
       const r = o.rho[i * k + j]!, n = o.n[i * k + j]!;
       const na = Number.isNaN(r);
-      const tip = na ? `${o.labels[i]} vs ${o.labels[j]}: not available (n = ${num(n)})` : `${o.labels[i]} vs ${o.labels[j]}: rho = ${r.toFixed(3)}, n = ${num(n)}`;
-      g += `<rect class="heat-cell" data-i="${i}" data-j="${j}" tabindex="0" role="button" x="${L + j * cell}" y="${T + i * cell}" width="${cell}" height="${cell}" fill="${na ? '#e3e3e3' : divergingColour(r)}" stroke="#ffffff" stroke-width="1"><title>${esc(tip)}</title></rect>`;
+      const tip = o.tip ? o.tip(i, j) : na ? `${o.labels[i]} vs ${o.labels[j]}: not available (n = ${num(n)})` : `${o.labels[i]} vs ${o.labels[j]}: ${sl} = ${r.toFixed(3)}, n = ${num(n)}`;
+      g += `<rect class="heat-cell" data-i="${i}" data-j="${j}" tabindex="0" role="button" x="${L + j * cell}" y="${T + i * cell}" width="${cell}" height="${cell}" fill="${na ? '#e3e3e3' : divergingColour(r / range)}" stroke="#ffffff" stroke-width="1"><title>${esc(tip)}</title></rect>`;
     }
   }
-  const ly = T + size + 26, lw = 220;
-  g += `<defs><linearGradient id="hg" x1="0" x2="1" y1="0" y2="0">${STOPS.map(([v, c]) => `<stop offset="${(v + 1) / 2}" stop-color="rgb(${c.join(',')})"/>`).join('')}</linearGradient></defs>`
-    + `<rect x="${L}" y="${ly}" width="${lw}" height="12" fill="url(#hg)" stroke="${MUTED}" stroke-width="0.5"/>`;
+  const ly = T + size + 26;
+  g += `<defs><linearGradient id="${gid}" x1="0" x2="1" y1="0" y2="0">${STOPS.map(([v, c]) => `<stop offset="${(v + 1) / 2}" stop-color="rgb(${c.join(',')})"/>`).join('')}</linearGradient></defs>`
+    + `<rect x="${L}" y="${ly}" width="${lw}" height="12" fill="url(#${gid})" stroke="${MUTED}" stroke-width="0.5"/>`;
   for (const v of [-1, -0.5, 0, 0.5, 1]) {
-    g += `<text x="${L + ((v + 1) / 2) * lw}" y="${ly + 25}" text-anchor="middle" font-size="10" fill="${MUTED}">${v}</text>`;
+    g += `<text x="${L + ((v + 1) / 2) * lw}" y="${ly + 25}" text-anchor="middle" font-size="10" fill="${MUTED}">${range === 1 ? v : tick(v * range)}</text>`;
   }
-  g += `<text x="${L + lw + 10}" y="${ly + 10}" font-size="10.5" fill="${INK}">Spearman rho</text>`
-    + `<rect x="${L + lw + 100}" y="${ly}" width="12" height="12" fill="#e3e3e3"/><text x="${L + lw + 116}" y="${ly + 10}" font-size="10.5" fill="${INK}">not available</text>`;
+  if (compact) {
+    g += `<text x="${L}" y="${ly + 44}" font-size="10.5" fill="${INK}">${esc(sl)}</text>`
+      + `<rect x="${L + lw - 92}" y="${ly + 34}" width="12" height="12" fill="#e3e3e3"/><text x="${L + lw - 76}" y="${ly + 44}" font-size="10.5" fill="${INK}">not available</text>`;
+  } else {
+    g += `<text x="${L + lw + 10}" y="${ly + 10}" font-size="10.5" fill="${INK}">${esc(sl)}</text>`
+      + `<rect x="${L + lw + 100}" y="${ly}" width="12" height="12" fill="#e3e3e3"/><text x="${L + lw + 116}" y="${ly + 10}" font-size="10.5" fill="${INK}">not available</text>`;
+  }
   return svgDoc(W, H, g, o.title);
 }
 
@@ -350,6 +375,8 @@ export interface ScatterOpts {
   x: ArrayLike<number>; y: ArrayLike<number>;
   xLabel: string; yLabel: string;
   rho: number | null; n: number;
+  /** Correlation shown in the title (default Spearman). */
+  method?: 'spearman' | 'pearson';
   maxPoints?: number;
 }
 
@@ -367,7 +394,7 @@ export function scatterSvg(o: ScatterOpts): string {
   const { px, py, total } = samplePairs(o.x, o.y, max);
   const W = 640, H = 520, m = { l: 66, r: 16, t: 58, b: 84 };
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
-  const stats = `Spearman rho = ${o.rho === null ? 'not available' : o.rho.toFixed(3)}, n = ${num(o.n)}`;
+  const stats = `${o.method === 'pearson' ? 'Pearson r' : 'Spearman rho'} = ${o.rho === null ? 'not available' : o.rho.toFixed(3)}, n = ${num(o.n)}`;
   const title = `${o.yLabel} vs ${o.xLabel}: ${stats}`;
   let g = `<text x="16" y="20" font-size="12.5" font-weight="600" fill="${INK}">${esc(`${o.yLabel} vs ${o.xLabel}`)}</text><text x="16" y="38" font-size="12.5" font-weight="600" fill="${INK}">${esc(stats)}</text>`;
   if (!px.length) return svgDoc(W, H, g + `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="12" fill="${MUTED}">No complete pairs</text>`, title);
@@ -389,7 +416,7 @@ export function scatterSvg(o: ScatterOpts): string {
     + `<text x="${m.l + pw / 2}" y="${m.t + ph + 38}" text-anchor="middle" font-size="12.5" fill="${INK}">${esc(o.xLabel)}</text>`
     + `<text transform="translate(16 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle" font-size="12.5" fill="${INK}">${esc(o.yLabel)}</text>`;
   const sampled = total > px.length;
-  g += `<text x="${m.l}" y="${H - 22}" font-size="11.5" fill="${MUTED}">${sampled ? `Showing ${num(px.length)} of ${num(total)} pairs (evenly spaced sample); rho uses all pairs.` : `All ${num(total)} pairs shown.`}</text>`;
+  g += `<text x="${m.l}" y="${H - 22}" font-size="11.5" fill="${MUTED}">${sampled ? `Showing ${num(px.length)} of ${num(total)} pairs (evenly spaced sample); ${o.method === 'pearson' ? 'r' : 'rho'} uses all pairs.` : `All ${num(total)} pairs shown.`}</text>`;
   return svgDoc(W, H, g, title);
 }
 

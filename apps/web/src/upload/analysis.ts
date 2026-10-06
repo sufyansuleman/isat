@@ -1,7 +1,7 @@
 // Analysis model for uploaded-file results: oriented index columns, lazy transforms / statistics and a cached
 // Spearman matrix. No DOM. Values are the oriented values the user selected (the ones that are downloaded).
 import {
-  describe, kde, spearmanMatrix, transform,
+  describe, kde, pearsonMatrix, spearmanMatrix, transform,
   type Described, type Kde, type SpearmanMatrix, type TransformKind, type TransformResult,
 } from '@isat/core';
 import { INCLUDED, NEGATED, SEP, columnName, type ChunkPayload } from '@isat/core';
@@ -50,6 +50,9 @@ export const HEATMAP_ORDER: number[] = (() => {
   const rank = (c: string) => { const k = CATEGORIES.findIndex(([id]) => id === c); return k < 0 ? CATEGORIES.length : k; };
   return INCLUDED.map((_, i) => i).sort((a, b) => rank(INCLUDED[a]!.category) - rank(INCLUDED[b]!.category) || INCLUDED[a]!.name.localeCompare(INCLUDED[b]!.name));
 })();
+
+export type CorMethod = 'spearman' | 'pearson';
+export type CorValues = 'raw' | 'transformed' | 'both';
 
 export interface Matrix extends SpearmanMatrix {
   /** INCLUDED positions in display order (>= 3 non-missing values). */
@@ -159,27 +162,32 @@ export class Analysis {
     return r;
   }
 
-  /** Spearman is rank-based, so z / RINT only matter within sex; log also changes which values are present. */
-  private matrixKey(t: TransformSetting): string {
+  /**
+   * Spearman is rank-based, so z / RINT only matter within sex; log also changes which values are present.
+   * Pearson depends on the transformed values, so every transform has its own matrix.
+   */
+  private matrixKey(t: TransformSetting, method: CorMethod): string {
+    if (method === 'pearson') return t.kind === 'none' ? 'p:raw' : `p:${t.kind}:${t.bySex ? 'sex' : 'all'}`;
     if (t.kind === 'none' || (!t.bySex && t.kind !== 'log')) return 'raw';
     return t.bySex ? `${t.kind}:sex` : 'log';
   }
 
-  hasMatrix(t: TransformSetting): boolean { return this.matrices.has(this.matrixKey(t)); }
+  hasMatrix(t: TransformSetting, method: CorMethod = 'spearman'): boolean { return this.matrices.has(this.matrixKey(t, method)); }
 
-  /** Spearman matrix over indices with >= 3 non-missing (transformed) values; computed once per setting. */
-  matrix(t: TransformSetting): Matrix {
-    const key = this.matrixKey(t);
+  /** Correlation matrix (Spearman by default) over indices with >= 3 non-missing (transformed) values; computed once per setting. */
+  matrix(t: TransformSetting, method: CorMethod = 'spearman'): Matrix {
+    const key = this.matrixKey(t, method);
     let m = this.matrices.get(key);
     if (m) return m;
-    const use: TransformSetting = key === 'raw' ? NO_TRANSFORM : t;
+    const use: TransformSetting = key === 'raw' || key === 'p:raw' ? NO_TRANSFORM : t;
     const cols = HEATMAP_ORDER.filter((c) => {
       const v = this.transformed(c, use).values;
       let n = 0;
       for (let i = 0; i < v.length && n < 3; i++) if (!Number.isNaN(v[i]!)) n++;
       return n >= 3;
     });
-    const sm = spearmanMatrix(cols.map((c) => this.transformed(c, use).values));
+    const vals = cols.map((c) => this.transformed(c, use).values);
+    const sm = method === 'pearson' ? pearsonMatrix(vals) : spearmanMatrix(vals);
     m = { ...sm, cols, labels: cols.map((c) => INCLUDED[c]!.name) };
     this.matrices.set(key, m);
     return m;
@@ -204,6 +212,38 @@ export function matrixCsv(m: Matrix, mode: 'published' | 'sensitivity', what: 'r
   return lines.join('\r\n') + '\r\n';
 }
 
+
+/** The part of `m` over the indices `cols` (all of which must be in m.cols), in that order. */
+export function restrictMatrix(m: Matrix, cols: number[]): Matrix {
+  const pos = cols.map((c) => m.cols.indexOf(c));
+  const k = cols.length, rho = new Float64Array(k * k), n = new Int32Array(k * k);
+  for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) { rho[i * k + j] = m.rho[pos[i]! * m.k + pos[j]!]!; n[i * k + j] = m.n[pos[i]! * m.k + pos[j]!]!; }
+  return { k, rho, n, cols, labels: cols.map((c) => INCLUDED[c]!.name) };
+}
+
+/** Transformed minus raw, cell by cell (NaN when either is missing); both matrices must cover the same indices. */
+export function diffMatrix(raw: Matrix, tfm: Matrix): Float64Array {
+  return Float64Array.from(tfm.rho, (v, i) => v - raw.rho[i]!);
+}
+
+/** Long-format comparison of raw and transformed correlations: one row per ordered index pair. */
+export function comparisonCsv(raw: Matrix, tfm: Matrix, mode: 'published' | 'sensitivity'): string {
+  const names = raw.cols.map((c) => columnName(INCLUDED[c]!.id, mode));
+  const d = diffMatrix(raw, tfm);
+  const f = (v: number) => (Number.isNaN(v) ? '' : String(v));
+  const lines = ['row,col,raw,transformed,difference,n_raw,n_transformed'];
+  for (let i = 0; i < raw.k; i++) for (let j = 0; j < raw.k; j++) {
+    const p = i * raw.k + j;
+    lines.push([names[i]!, names[j]!, f(raw.rho[p]!), f(tfm.rho[p]!), f(d[p]!), raw.n[p]!, tfm.n[p]!].join(','));
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+/** Short transform name for titles, e.g. "RINT, within sex". */
+export function shortTransformName(t: TransformSetting): string {
+  const f = { none: 'none', log: 'natural log', z: 'z-score', rint: 'RINT' }[t.kind];
+  return t.kind !== 'none' && t.bySex ? `${f}, within sex` : f;
+}
 
 /** Long-format density CSV: one row per grid point and group. */
 export function densityCsv(rows: Array<{ index: string; scale: string; curves: Array<{ group: string; n: number; kde: Kde }> }>): string {

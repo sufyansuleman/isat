@@ -183,3 +183,13 @@ figure.plot figcaption { margin-top: 4px; }
 .populations[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 .table-scroll { overflow-x: auto; }
 .populations td.num { white-space: nowrap; }
+.heat-multi { display: flex; gap: 4px; align-items: flex-start; width: max-content; }
+.heat-one { flex: none; }
+.scatter-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.scatter-row .plot { margin: 0; }
+.cap { font-weight: 600; margin: 0 0 4px; }
+#up-cor-tfnote[hidden] { display: none; }
+
+/* Correlations "Both": let the three heatmaps use the full window width (desktop-first) */
+.heat-wrap:has(.heat-multi) { max-width: none; width: min(1600px, calc(100vw - 48px)); margin-left: 50%; transform: translateX(-50%); }
+.heat-multi { margin: 0 auto; }

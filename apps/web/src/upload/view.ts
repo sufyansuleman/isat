@@ -11,7 +11,7 @@ import {
 } from '@isat/core';
 import { checkFileSize, checkRowCount, hasAllowedExtension } from '@isat/core';
 import { Analysis, NO_TRANSFORM, transformExplanation, transformSuffix, type TransformSetting } from './analysis';
-import { mountCorrelations, mountDistributions, summaryHtml, type CorUi, type DistUi } from './panels';
+import { effectiveValues, mountCorrelations, mountDistributions, newCorUi, summaryHtml, type CorUi, type DistUi } from './panels';
 import { loadTable, toCanonical, type Loaded } from '@isat/core';
 import { checkUnits, warningText, type UnitCheckItem } from '@isat/core';
 import { unitLabel } from '../calculate/results';
@@ -78,7 +78,7 @@ export function mountUpload(root: HTMLElement): () => void {
   let tab: TabId = 'summary';
   let analysis: Analysis | undefined;
   let distUi: DistUi = { sel: undefined, all: false };
-  let corUi: CorUi = { pair: undefined };
+  let corUi: CorUi = newCorUi();
 
   const stopWorker = () => { worker?.terminate(); worker = undefined; };
 
@@ -160,7 +160,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
 
   function resetResults(): void {
     disposePerson?.(); disposePerson = undefined; openIndex = undefined; run = undefined; analysis = undefined;
-    distUi = { sel: undefined, all: false }; corUi = { pair: undefined }; tab = 'summary';
+    distUi = { sel: undefined, all: false }; corUi = newCorUi(); tab = 'summary';
     $('#up-results').hidden = true; $('#up-results').innerHTML = '';
   }
 
@@ -355,7 +355,8 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
         rows: { total: loaded!.total, withProblems: run.withProblems, calculated: loaded!.total },
         transform: { kind: effTf().kind, withinSex: effTf().bySex, addedColumns: tf.kind !== 'none' && addTransformed, suffix: transformSuffix(effTf()) },
       });
-      saveBlob(new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }), 'isat-settings.json');
+      const out = { ...doc, correlation: { method: corUi.method, values: effectiveValues(corUi, effTf()) } };
+      saveBlob(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }), 'isat-settings.json');
     }
   });
   const drop = $('#up-drop');

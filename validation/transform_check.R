@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Independent base-R recomputation of the ISAT transforms, descriptive statistics and Spearman correlations.
+# Independent base-R recomputation of the ISAT transforms, descriptive statistics, Spearman and Pearson correlations.
 # Compares against validation/fixtures/transform_results.json (from validation/export_transform.ts).
 # Usage (repo root): Rscript validation/transform_check.R
 
@@ -45,6 +45,13 @@ for (key in names(res$spearman)) {
   ok <- !is.na(v[[ab[1]]]) & !is.na(v[[ab[2]]])
   r <- cor(v[[ab[1]]], v[[ab[2]]], method = "spearman", use = "pairwise.complete.obs")
   check(paste("spearman", key), c(res$spearman[[key]]$rho, res$spearman[[key]]$n), c(r, sum(ok)))
+}
+
+for (key in names(res$pearson)) {
+  ab <- strsplit(key, "__", fixed = TRUE)[[1]]
+  ok <- !is.na(v[[ab[1]]]) & !is.na(v[[ab[2]]])
+  r <- cor(v[[ab[1]]], v[[ab[2]]], method = "pearson", use = "pairwise.complete.obs")
+  check(paste("pearson", key), c(res$pearson[[key]]$r, res$pearson[[key]]$n), c(r, sum(ok)))
 }
 
 check("qnorm", vapply(res$qnorm, function(e) e$q, numeric(1)), qnorm(vapply(res$qnorm, function(e) e$p, numeric(1))))
