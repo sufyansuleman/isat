@@ -6,7 +6,7 @@ import {
   INCLUDED, composeCsv, loadTable, parseDelimited, runBatch, settingsFile, toCanonical, checkUnits,
   type AvignonUse, type UnitChoice,
 } from '@isat/core';
-import { run, settingsPathFor, shortRef } from '../src/cli';
+import { isBrokenPipe, run, settingsPathFor, shortRef } from '../src/cli';
 import { ISAT_VERSION } from '../src/version';
 
 const root = resolve(__dirname, '../../..');
@@ -250,4 +250,16 @@ describe('streaming', () => {
     const doc = JSON.parse(readFileSync(settingsPathFor(out), 'utf8')) as { row_counts: { total: number } };
     expect(doc.row_counts.total).toBe(N);
   }, 120_000);
+});
+
+describe('closed output pipe', () => {
+  it('exits quietly with 0 when the reader stops early (Node EPIPE or Deno BrokenPipe)', async () => {
+    for (const err of [Object.assign(new Error('write EPIPE'), { code: 'EPIPE' }), Object.assign(new Error('Broken pipe (os error 32)'), { name: 'BrokenPipe' })]) {
+      let stderr = '';
+      const code = await run(['methods'], { out: () => { throw err; }, err: (s) => { stderr += s; } });
+      expect(code).toBe(0);
+      expect(stderr).toBe('');
+    }
+    expect(isBrokenPipe(new Error('ENOENT: no such file'))).toBe(false);
+  });
 });

@@ -63,6 +63,16 @@ jobs:
           echo "exit code on a bad file: $code"
           test "$code" -ne 0
           DENO_V8_FLAGS=--max-old-space-size=256 $X version
+          # Output piped into a reader that stops early must not print an error
+          set +o pipefail
+          for c in version methods; do
+            $X $c 2> smoke/pipe_err.txt | head -1 > /dev/null
+            sleep 0.2
+            if [ -s smoke/pipe_err.txt ]; then echo "stderr after '$c | head -1':"; cat smoke/pipe_err.txt; exit 1; fi
+          done
+          $X calculate "$F" -o smoke/pipe.csv --quiet && cat smoke/pipe.csv | head -1 > /dev/null
+          echo "piping into head: no error message"
+          set -o pipefail
       - name: Speed and memory on 200,000 rows
         run: |
           set -euo pipefail

@@ -17,6 +17,12 @@ import { cmdTransform } from './transform';
 
 export interface Io { out(s: string): void; err(s: string): void }
 
+/** True for the error a write raises when the reading end of a pipe has closed (Node: EPIPE, Deno: BrokenPipe). */
+export function isBrokenPipe(e: unknown): boolean {
+  const x = e as { code?: string; name?: string; message?: string } | null;
+  return x?.code === 'EPIPE' || x?.name === 'BrokenPipe' || /broken pipe/i.test(x?.message ?? '');
+}
+
 export function nodeIo(): Io {
   return { out: (s) => { process.stdout.write(s); }, err: (s) => { process.stderr.write(s); } };
 }
@@ -490,6 +496,7 @@ export async function run(argv: string[], io: Io): Promise<number> {
     if (cmd === 'transform') return cmdTransform(rest, io, ['isat', ...argv].join(' '));
     return cmdCalculate(rest, io, ['isat', ...argv].join(' '));
   } catch (e) {
+    if (isBrokenPipe(e)) return 0; // output piped into e.g. `head`, which stopped reading: not an error
     if (e instanceof UsageError) { io.err(`error: ${e.message}\n`); return 1; }
     if (e instanceof DataError) { io.err(`error: ${e.message}\n`); return 2; }
     io.err(`error: ${e instanceof Error ? e.message : String(e)}\n`);
