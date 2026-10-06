@@ -5,7 +5,7 @@ import { densitySvg, GROUP_STYLE, heatmapSvg, histogramGroupsSvg, histogramSvg, 
 import {
   Analysis, CATEGORIES, KIND_LABEL, NO_TRANSFORM, densityCsv, matrixCsv, transformedLabel, type TransformSetting,
 } from './analysis';
-import { INCLUDED, topReasons, type Counts } from './batch';
+import { INCLUDED, topReasons, type Counts } from '@isat/core';
 
 const nf = (v: number) => v.toLocaleString('en-GB');
 const DASH = '—';

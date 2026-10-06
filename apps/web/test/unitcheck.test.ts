@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Inputs } from '@isat/core';
 import { DEFAULT_UNITS, type UnitChoice } from '../src/calculate/state';
-import { checkUnits } from '../src/upload/unitcheck';
+import { checkUnits } from '@isat/core';
 import { mountUpload } from '../src/upload/view';
 
 const rows = (n: number, mk: (k: number) => Inputs): Inputs[] => Array.from({ length: n }, (_, k) => mk(k));

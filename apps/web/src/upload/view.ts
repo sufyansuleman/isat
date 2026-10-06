@@ -8,12 +8,12 @@ import { ISAT_VERSION } from '../version';
 import {
   composeCsv, emptyCounts, INCLUDED, mergeCounts, settingsFile,
   type AvignonChoice, type AvignonUse, type ChunkPayload, type Counts, type RunRequest, type WorkerMessage,
-} from './batch';
-import { checkFileSize, checkRowCount, hasAllowedExtension } from './limits';
+} from '@isat/core';
+import { checkFileSize, checkRowCount, hasAllowedExtension } from '@isat/core';
 import { Analysis, NO_TRANSFORM, transformExplanation, transformSuffix, type TransformSetting } from './analysis';
 import { mountCorrelations, mountDistributions, summaryHtml, type CorUi, type DistUi } from './panels';
-import { loadTable, toCanonical, type Loaded } from './parse';
-import { checkUnits, warningText, type UnitCheckItem } from './unitcheck';
+import { loadTable, toCanonical, type Loaded } from '@isat/core';
+import { checkUnits, warningText, type UnitCheckItem } from '@isat/core';
 import { unitLabel } from '../calculate/results';
 import { renderPerson } from './person';
 import { exampleDetailsHtml, exampleFile } from './example';

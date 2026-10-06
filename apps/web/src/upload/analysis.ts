@@ -4,7 +4,7 @@ import {
   describe, kde, spearmanMatrix, transform,
   type Described, type Kde, type SpearmanMatrix, type TransformKind, type TransformResult,
 } from '@isat/core';
-import { INCLUDED, NEGATED, SEP, columnName, type ChunkPayload } from './batch';
+import { INCLUDED, NEGATED, SEP, columnName, type ChunkPayload } from '@isat/core';
 
 /** One density curve (or one sex group) of an index under a transform. */
 export interface GroupDensity { key: 'male' | 'female' | 'all'; n: number; median: number; kde: Kde }

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { EXAMPLE_CSV, EXAMPLE_FILE_NAME, exampleFile, exampleTableHtml } from '../src/upload/example';
-import { loadTable, parseDelimited } from '../src/upload/parse';
+import { loadTable, parseDelimited } from '@isat/core';
 import { mountUpload } from '../src/upload/view';
 
 const file = readFileSync(resolve(process.cwd(), 'public/isat-template.csv'), 'utf8');

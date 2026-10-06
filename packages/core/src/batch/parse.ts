@@ -1,8 +1,15 @@
-import { CANONICAL, parseWideRow, toUnit, type ConversionSettings, type Inputs, type Series } from '@isat/core';
-import type { UnitChoice } from '../calculate/state';
+import { CANONICAL, toUnit, type ConversionSettings, type Unit } from '../units';
+import type { Inputs, Series } from '../types';
+import { parseWideRow } from '../io/wide';
+
+/** Units chosen for the columns of a file. */
+export interface UnitChoice {
+  glucose: 'mmol/L' | 'mg/dL'; insulin: 'pmol/L' | 'uU/mL'; tg: 'mmol/L' | 'mg/dL'; hdl: 'mmol/L' | 'mg/dL'; ffa: 'mmol/L' | 'umol/L';
+}
+export const DEFAULT_UNIT_CHOICE: UnitChoice = { glucose: 'mmol/L', insulin: 'pmol/L', tg: 'mmol/L', hdl: 'mmol/L', ffa: 'mmol/L' };
 
 export type DelimiterName = 'comma' | 'semicolon' | 'tab';
-const DELIMS: Record<DelimiterName, string> = { comma: ',', semicolon: ';', tab: '\t' };
+export const DELIMS: Record<DelimiterName, string> = { comma: ',', semicolon: ';', tab: '\t' };
 
 /** Detect the delimiter from the header line (characters outside double quotes). Ties and none -> comma. */
 export function detectDelimiter(text: string): DelimiterName {
@@ -21,7 +28,11 @@ export function detectDelimiter(text: string): DelimiterName {
 
 /** Quote-aware delimited text -> rows of cells (CRLF/LF, BOM stripped, blank lines dropped). */
 export function parseDelimited(input: string, delimiter: string): string[][] {
-  const text = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
+  return parseBody(input.charCodeAt(0) === 0xfeff ? input.slice(1) : input, delimiter);
+}
+
+/** parseDelimited without BOM handling (text must start at a row boundary). */
+export function parseBody(text: string, delimiter: string): string[][] {
   const n = text.length;
   const rows: string[][] = [];
   let row: string[] = [];
@@ -103,6 +114,8 @@ export function columnConflicts(columns: ColumnInfo[]): string[] {
 }
 
 
+export const dataColumns = (columns: ColumnInfo[]): DataCol[] => columns.map((c, k) => ({ c, k })).filter((x) => x.c.kind === 'variable');
+
 export interface RowProblem { row: number; id: string; messages: string[] }
 
 export interface Loaded {
@@ -127,6 +140,25 @@ export interface Loaded {
 const MAX_PROBLEMS_KEPT = 500;
 const COMMA_DECIMAL = /^[+-]?\d+,\d+$/;
 
+export interface RowResult { id: string; inputs: Inputs; msgs: string[] }
+export type DataCol = { c: ColumnInfo; k: number };
+
+/** One data row (cells) -> ID, parsed inputs in file units, and problem messages. n = 1-based data row number. */
+export function processRow(cells: string[], n: number, idCol: number, dataCols: DataCol[]): RowResult {
+  let id = idCol >= 0 ? (cells[idCol] ?? '') : '';
+  const msgs: string[] = [];
+  if (id === '') { id = `row_${n}`; if (idCol >= 0) msgs.push('participant ID is empty; generated ' + id); }
+  const rec: Record<string, string> = {};
+  for (const { c, k } of dataCols) {
+    const v = cells[k] ?? '';
+    if (COMMA_DECIMAL.test(v.trim()) && c.variable !== 'sex') { msgs.push(`${c.name}: use a decimal point ("${v}")`); continue; }
+    rec[c.canonical ?? c.name] = v;
+  }
+  const w = parseWideRow(rec);
+  msgs.push(...w.problems);
+  return { id, inputs: w.inputs, msgs };
+}
+
 /** Text -> participants. IDs are kept exactly as text. Pure; no file access. */
 export function loadTable(text: string): Loaded {
   const delimiter = detectDelimiter(text);
@@ -134,30 +166,21 @@ export function loadTable(text: string): Loaded {
   const header = (table[0] ?? []).map((h) => h);
   const columns = header.map(classifyColumn);
   const idCol = columns.findIndex((c) => c.kind === 'id');
-  const dataCols = columns.map((c, k) => ({ c, k })).filter((x) => x.c.kind === 'variable');
+  const dataCols = dataColumns(columns);
   const ids: string[] = [], inputs: Inputs[] = [], problems: RowProblem[] = [], preview: string[][] = [], rowProblems: string[] = [];
   const seen = new Set<string>(), dup = new Set<string>();
   let rowsWithProblems = 0;
   for (let r = 1; r < table.length; r++) {
-    const cells = table[r]!;
     const n = r; // 1-based data row number
-    let id = idCol >= 0 ? (cells[idCol] ?? '') : '';
-    const msgs: string[] = [];
-    if (id === '') { id = `row_${n}`; if (idCol >= 0) msgs.push('participant ID is empty; generated ' + id); }
+    const pr = processRow(table[r]!, n, idCol, dataCols);
+    const { id, msgs } = pr;
     if (seen.has(id)) dup.add(id); else seen.add(id);
-    const rec: Record<string, string> = {};
-    for (const { c, k } of dataCols) {
-      const v = cells[k] ?? '';
-      if (COMMA_DECIMAL.test(v.trim()) && c.variable !== 'sex') { msgs.push(`${c.name}: use a decimal point ("${v}")`); continue; }
-      rec[c.canonical ?? c.name] = v;
-    }
-    const w = parseWideRow(rec);
-    msgs.push(...w.problems);
     if (msgs.length) {
       rowsWithProblems++;
       if (problems.length < MAX_PROBLEMS_KEPT) problems.push({ row: n, id, messages: msgs });
     }
-    ids.push(id); inputs.push(w.inputs); rowProblems.push(msgs.join(" | "));
+    ids.push(id); inputs.push(pr.inputs); rowProblems.push(msgs.join(' | '));
+    const cells = table[r]!;
     if (preview.length < 20) preview.push(cells);
   }
   return {
@@ -171,7 +194,7 @@ export function toCanonical(i: Inputs, u: UnitChoice, s: Partial<ConversionSetti
   const series = (x: Series | undefined, q: 'glucose' | 'insulin' | 'ffa', from: string): Series | undefined => {
     if (!x) return undefined;
     const out: Series = {};
-    for (const [t, v] of Object.entries(x)) if (typeof v === 'number') out[Number(t)] = toUnit(v, q, from as never, CANONICAL[q], s);
+    for (const [t, v] of Object.entries(x)) if (typeof v === 'number') out[Number(t)] = toUnit(v, q, from as Unit, CANONICAL[q], s);
     return out;
   };
   const out: Inputs = { ...i };

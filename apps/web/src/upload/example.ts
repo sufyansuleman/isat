@@ -1,6 +1,6 @@
 import templateCsv from '../../public/isat-template.csv?raw';
 import { esc } from '../calculate/format';
-import { parseDelimited } from './parse';
+import { parseDelimited } from '@isat/core';
 
 /** The example file, bundled from the single source public/isat-template.csv (also the download link target). */
 export const EXAMPLE_CSV: string = templateCsv;

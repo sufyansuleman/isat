@@ -1,4 +1,4 @@
-import { runBatch, type RunRequest, type WorkerMessage } from './batch';
+import { runBatch, type RunRequest, type WorkerMessage } from '@isat/core';
 
 const ctx = self as unknown as { postMessage(m: WorkerMessage): void; onmessage: ((e: MessageEvent<RunRequest>) => void) | null };
 

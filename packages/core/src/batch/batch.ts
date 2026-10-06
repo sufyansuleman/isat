@@ -1,7 +1,8 @@
-import {
-  AVIGNON_1999_WEIGHT, avignonSi0, avignonSi120, registry, resolveSettings,
-  type AvignonWeightSource, type ConversionSettings, type Inputs, type MethodEntry, type Result, type TransformKind,
-} from '@isat/core';
+import { resolveSettings, type ConversionSettings } from '../units';
+import type { Inputs, Result } from '../types';
+import { AVIGNON_1999_WEIGHT, avignonSi0, avignonSi120, type AvignonWeightSource } from '../indices/ogtt';
+import { registry, type MethodEntry } from '../registry';
+import type { TransformKind } from '../transform';
 import { CHUNK_ROWS } from './limits';
 
 /** Methods that get an output column (deferred/excluded methods never calculate). */
@@ -15,25 +16,36 @@ export const NEGATED = new Set(
 export type AvignonChoice = 'default' | 'cohort';
 export interface AvignonUse { w: number; source: AvignonWeightSource; warnings: string[] }
 
+const SAMPLE_WARNING = 'Sample-derived Avignon coefficient (InsuSensCalc / Suleman 2024 variant; ratio of mean Si120 to mean Si0 in the analysed cohort): the result depends on the cohort analysed.';
+
+/** Incremental form of the sample-derived Avignon weight (same summation order as the all-rows version). */
+export class AvignonAccumulator {
+  private s0 = 0; private s1 = 0; private n = 0;
+  private readonly s: ConversionSettings;
+  constructor(settings: Partial<ConversionSettings>) { this.s = resolveSettings(settings); }
+  /** Rows in canonical units. */
+  add(rows: Inputs[]): void {
+    for (const r of rows) {
+      const a = avignonSi0(r, this.s), b = avignonSi120(r, this.s);
+      if (a.status === 'ok' && b.status === 'ok') { this.s0 += a.value as number; this.s1 += b.value as number; this.n++; }
+    }
+  }
+  get pairs(): number { return this.n; }
+  result(): AvignonUse {
+    if (this.n >= 2) return { w: (this.s1 / this.n) / (this.s0 / this.n), source: 'sample', warnings: [SAMPLE_WARNING] };
+    return {
+      w: AVIGNON_1999_WEIGHT, source: 'avignon_1999',
+      warnings: ['Fewer than 2 rows have both Si0 and Si120; sample weight unavailable, using 0.137 (Avignon 1999).'],
+    };
+  }
+}
+
 /** Mirrors core calculateBatch weight semantics (explicit weight passed to each row run). */
 export function resolveAvignon(rows: Inputs[], settings: Partial<ConversionSettings>, choice: AvignonChoice): AvignonUse {
   if (choice === 'default') return { w: AVIGNON_1999_WEIGHT, source: 'avignon_1999', warnings: [] };
-  const s = resolveSettings(settings);
-  const pairs = rows
-    .map((r) => [avignonSi0(r, s), avignonSi120(r, s)] as const)
-    .filter(([a, b]) => a.status === 'ok' && b.status === 'ok')
-    .map(([a, b]) => [a.value as number, b.value as number] as const);
-  if (pairs.length >= 2) {
-    const m = (k: 0 | 1) => pairs.reduce((acc, p) => acc + p[k], 0) / pairs.length;
-    return {
-      w: m(1) / m(0), source: 'sample',
-      warnings: ['Sample-derived Avignon coefficient (InsuSensCalc / Suleman 2024 variant; ratio of mean Si120 to mean Si0 in the analysed cohort): the result depends on the cohort analysed.'],
-    };
-  }
-  return {
-    w: AVIGNON_1999_WEIGHT, source: 'avignon_1999',
-    warnings: ['Fewer than 2 rows have both Si0 and Si120; sample weight unavailable, using 0.137 (Avignon 1999).'],
-  };
+  const acc = new AvignonAccumulator(settings);
+  acc.add(rows);
+  return acc.result();
 }
 
 /** All registry results for one participant (Belfiore default reference set; Avignon weight as given). */
@@ -151,32 +163,43 @@ export function columnName(id: string, orientation: 'published' | 'sensitivity')
 /** Transformed values to add after each index column: suffix (e.g. "_rint_bysex") and one full-length column per INCLUDED method (NaN = missing). */
 export interface TransformedColumns { suffix: string; cols: ArrayLike<number>[] }
 
+/** CSV header line (with line ending). */
+export function csvHead(orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns): string {
+  const names = INCLUDED.map((m) => columnName(m.id, orientation));
+  const idxHead = tf ? names.flatMap((n) => [n, n + tf.suffix]) : names;
+  return ['participant_id', 'input_problems', ...idxHead, ...(includeStatus ? names.map((n) => `${n}_status`) : [])].join(',') + '\r\n';
+}
+
+/** CSV data lines (each with line ending) for one chunk; offset = rows before this chunk (for transformed columns). */
+export function csvChunkText(
+  ch: ChunkPayload, orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns, offset = 0,
+): string {
+  const ids = ch.ids.split(SEP);
+  const probs = ch.problems.split(SEP);
+  const cols = ch.vals.map((v, c) => {
+    const cells = v.split(SEP);
+    return orientation === 'sensitivity' && NEGATED.has(INCLUDED[c]!.id) ? cells.map(negate) : cells;
+  });
+  const stat = includeStatus ? ch.status.map((s) => s.split(SEP)) : [];
+  const lines: string[] = [];
+  for (let r = 0; r < ids.length; r++) {
+    const idx = tf
+      ? cols.flatMap((c, k) => { const t = tf.cols[k]![offset + r]!; return [c[r]!, Number.isNaN(t) ? '' : String(t)]; })
+      : cols.map((c) => c[r]!);
+    lines.push([ids[r]!, probs[r]!, ...idx, ...stat.map((c) => c[r]!)].join(','));
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
 /** CSV text parts (join to get the file). Empty = not calculated; never 0. */
 export function composeCsv(
   chunks: ChunkPayload[], orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns,
 ): string[] {
-  const names = INCLUDED.map((m) => columnName(m.id, orientation));
-  const idxHead = tf ? names.flatMap((n) => [n, n + tf.suffix]) : names;
-  const head = ['participant_id', 'input_problems', ...idxHead, ...(includeStatus ? names.map((n) => `${n}_status`) : [])].join(',');
-  const parts: string[] = [head + '\r\n'];
+  const parts: string[] = [csvHead(orientation, includeStatus, tf)];
   let offset = 0;
   for (const ch of chunks) {
-    const ids = ch.ids.split(SEP);
-    const probs = ch.problems.split(SEP);
-    const cols = ch.vals.map((v, c) => {
-      const cells = v.split(SEP);
-      return orientation === 'sensitivity' && NEGATED.has(INCLUDED[c]!.id) ? cells.map(negate) : cells;
-    });
-    const stat = includeStatus ? ch.status.map((s) => s.split(SEP)) : [];
-    const lines: string[] = [];
-    for (let r = 0; r < ids.length; r++) {
-      const idx = tf
-        ? cols.flatMap((c, k) => { const t = tf.cols[k]![offset + r]!; return [c[r]!, Number.isNaN(t) ? '' : String(t)]; })
-        : cols.map((c) => c[r]!);
-      lines.push([ids[r]!, probs[r]!, ...idx, ...stat.map((c) => c[r]!)].join(','));
-    }
-    offset += ids.length;
-    parts.push(lines.join('\r\n') + '\r\n');
+    parts.push(csvChunkText(ch, orientation, includeStatus, tf, offset));
+    offset += ch.ids.split(SEP).length;
   }
   return parts;
 }

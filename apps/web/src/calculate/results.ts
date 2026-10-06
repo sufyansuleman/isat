@@ -1,4 +1,4 @@
-import { registry, methodSpecs, toUnit, summarize, type Inputs, type Result, type Unit } from '@isat/core';
+import { registry, methodSpecs, unitLabel, toUnit, summarize, type Inputs, type Result, type Unit } from '@isat/core';
 import { esc, fmt4 } from './format';
 import type { Built, FormState } from './state';
 
@@ -31,7 +31,7 @@ export interface Snapshot {
   version: string;
 }
 
-export const unitLabel = (u: string) => u.replace('uU/mL', 'µU/mL').replace('umol/L', 'µmol/L');
+export { unitLabel };
 
 // ---------- availability panel ----------
 export function availabilityHtml(results: Result[]): string {

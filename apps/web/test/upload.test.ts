@@ -4,11 +4,11 @@ import { resolve } from 'node:path';
 import { calculateAll, calculateBatch, orient, parseCsv, parseWideRow, registry, type Inputs } from '@isat/core';
 import {
   checkFileSize, checkRowCount, countDataRows, hasAllowedExtension, LIMIT_MESSAGE, MAX_DATA_ROWS, MAX_FILE_BYTES,
-} from '../src/upload/limits';
-import { classifyColumn, detectDelimiter, loadTable, parseDelimited, toCanonical } from '../src/upload/parse';
+} from '@isat/core';
+import { classifyColumn, detectDelimiter, loadTable, parseDelimited, toCanonical } from '@isat/core';
 import {
   composeCsv, INCLUDED, mergeCounts, emptyCounts, NEGATED, runBatch, settingsFile, type ChunkPayload, type WorkerMessage,
-} from '../src/upload/batch';
+} from '@isat/core';
 import { DEFAULT_UNITS } from '../src/calculate/state';
 
 const fixtureText = readFileSync(resolve(process.cwd(), '../../validation/fixtures/inputs.csv'), 'utf8');

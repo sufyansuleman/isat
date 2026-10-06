@@ -5,7 +5,7 @@ import { drawChart, downloadPng, seriesPoints, type Chart } from '../calculate/p
 import { aucHtml, summaryHtml, wireSummary, resultsFooterHtml, type Snapshot } from '../calculate/results';
 import { emptyState, type FormState, type UnitChoice } from '../calculate/state';
 import { ISAT_VERSION } from '../version';
-import { runRow, type AvignonUse } from './batch';
+import { runRow, type AvignonUse } from '@isat/core';
 
 /** Canonical Inputs -> form state in the user's units, so the manual-mode renderer can be reused. */
 export function stateFromInputs(i: Inputs, units: UnitChoice, settings: Partial<ConversionSettings>, factors: { insulin: string; glucose: string }): FormState {

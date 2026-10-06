@@ -11,10 +11,10 @@ vi.mock('../src/calculate/plots', async (orig) => ({
 }));
 
 import { mountUpload } from '../src/upload/view';
-import { runBatch, composeCsv, settingsFile, INCLUDED } from '../src/upload/batch';
+import { runBatch, composeCsv, settingsFile, INCLUDED } from '@isat/core';
 import { Analysis, matrixCsv, transformSuffix } from '../src/upload/analysis';
 import { densitySvg, histogram, histogramSvg, heatmapSvg, scatterSvg, samplePairs, divergingColour } from '../src/calculate/svg';
-import { loadTable, parseDelimited, toCanonical } from '../src/upload/parse';
+import { loadTable, parseDelimited, toCanonical } from '@isat/core';
 import { DEFAULT_UNITS } from '../src/calculate/state';
 
 const template = readFileSync(resolve(process.cwd(), 'public/isat-template.csv'), 'utf8');

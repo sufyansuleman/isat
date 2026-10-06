@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { calculateAll, parseCsv, parseWideRow, type Inputs } from '@isat/core';
-import { classifyColumn, columnConflicts, loadTable, SCALARS } from '../src/upload/parse';
-import { INCLUDED, SEP, runBatch } from '../src/upload/batch';
-import { MAX_DATA_ROWS, MAX_FILE_BYTES } from '../src/upload/limits';
+import { classifyColumn, columnConflicts, loadTable, SCALARS } from '@isat/core';
+import { INCLUDED, SEP, runBatch } from '@isat/core';
+import { MAX_DATA_ROWS, MAX_FILE_BYTES } from '@isat/core';
 import { specFor } from '../src/calculate/results';
 
 const guide = readFileSync(resolve(process.cwd(), 'src/calculate/guide.html'), 'utf8');
