@@ -30,6 +30,8 @@ curl -L https://github.com/sufyansuleman/isat/releases/latest/download/isat-linu
 ./isat version    # on ARM machines use isat-linux-arm64.tar.gz
 ```
 
+Latest development build, rebuilt with every change (not a citable version): `https://sufyansuleman.github.io/isat/download/isat-linux-x64.tar.gz` (also `isat-linux-arm64.tar.gz`, `isat.mjs`, `sha256sums.txt`, and `BUILD.txt` with the commit it was built from).
+
 The release also has `isat.mjs` (0.16 MB), the same tool for machines with Node.js 20 or newer (`node isat.mjs ...`), and `sha256sums.txt` to verify the downloads.
 
 ```bash

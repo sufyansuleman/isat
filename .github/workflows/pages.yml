@@ -23,6 +23,29 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build:web
+      # Latest build of the command-line tool, served from the site under /download/ (not a release, so no DOI).
+      - run: npm run bundle -w @isat/cli
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.5.6
+      - name: Latest command-line tool build
+        env:
+          DENO_FLAGS: --no-check --allow-read --allow-write --allow-env --v8-flags=--max-old-space-size=1024,--max-semi-space-size=4
+        run: |
+          set -euo pipefail
+          D=apps/web/dist/download
+          mkdir -p "$D" out/x64 out/arm64
+          deno compile $DENO_FLAGS --target x86_64-unknown-linux-gnu -o out/x64/isat packages/cli/dist/isat.mjs
+          deno compile $DENO_FLAGS --target aarch64-unknown-linux-gnu -o out/arm64/isat packages/cli/dist/isat.mjs
+          out/x64/isat calculate apps/web/public/isat-template.csv -o t.bin.csv --quiet
+          node packages/cli/dist/isat.mjs calculate apps/web/public/isat-template.csv -o t.node.csv --quiet
+          cmp t.bin.csv t.node.csv
+          for a in x64 arm64; do cp LICENSE "out/$a/LICENSE"; tar -C "out/$a" -czf "$D/isat-linux-$a.tar.gz" isat LICENSE; done
+          cp packages/cli/dist/isat.mjs "$D/isat.mjs"
+          (cd "$D" && sha256sum isat-linux-x64.tar.gz isat-linux-arm64.tar.gz isat.mjs > sha256sums.txt)
+          printf 'ISAT command-line tool, latest development build\nversion: %s\ncommit: %s\nbuilt: %s\nFor citable versions use the releases: https://github.com/%s/releases\n' \
+            "$(out/x64/isat version | head -1)" "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%MZ)" "$GITHUB_REPOSITORY" > "$D/BUILD.txt"
+          ls -l "$D"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/dist
