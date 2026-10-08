@@ -27,7 +27,7 @@ describe('limits', () => {
     expect(checkFileSize(MAX_FILE_BYTES)).toEqual({ ok: true });
     const r = checkFileSize(MAX_FILE_BYTES + 1);
     expect(r).toEqual({ ok: false, message: LIMIT_MESSAGE });
-    expect(LIMIT_MESSAGE).toBe('File exceeds the online limit (100,000 rows / 25 MB). For more than 100,000 individuals, use the ISAT command-line tool for Linux (in preparation).');
+    expect(LIMIT_MESSAGE).toBe('File exceeds the online limit (100,000 rows / 25 MB). For more than 100,000 individuals, use the ISAT command-line tool for Linux: https://github.com/sufyansuleman/isat/releases/latest');
   });
   it('accepts 100,000 data rows and rejects 100,001', () => {
     const mk = (n: number) => 'id,G0\n' + '1,5\n'.repeat(n);

@@ -2,7 +2,7 @@
 export const MAX_FILE_BYTES = 25 * 1024 * 1024;
 export const MAX_DATA_ROWS = 100_000;
 export const LIMIT_MESSAGE =
-  'File exceeds the online limit (100,000 rows / 25 MB). For more than 100,000 individuals, use the ISAT command-line tool for Linux (in preparation).';
+  'File exceeds the online limit (100,000 rows / 25 MB). For more than 100,000 individuals, use the ISAT command-line tool for Linux: https://github.com/sufyansuleman/isat/releases/latest';
 export const CHUNK_ROWS = 1000;
 
 export type LimitCheck = { ok: true } | { ok: false; message: string };

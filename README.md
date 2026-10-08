@@ -23,16 +23,29 @@ Start from the [example file](apps/web/public/isat-template.csv) to see the expe
 
 Use it for files with more than 100,000 individuals, or on an HPC cluster. It is a single file with nothing to install, and its results are identical to the website's.
 
-Download it from the [Releases page](https://github.com/sufyansuleman/isat/releases/latest), or directly:
+### How to get it
+
+**Option A: on the server, one command** (the server needs internet access):
 
 ```bash
 curl -L https://github.com/sufyansuleman/isat/releases/latest/download/isat-linux-x64.tar.gz | tar xz
-./isat version    # on ARM machines use isat-linux-arm64.tar.gz
+./isat version
 ```
+
+**Option B: in your browser.** Use this if the server has no internet access:
+
+1. Open the [latest release](https://github.com/sufyansuleman/isat/releases/latest) and scroll down to **Assets**.
+2. Download `isat-linux-x64.tar.gz`, or `isat-linux-arm64.tar.gz` for ARM machines.
+3. Copy it to the server, e.g. `scp isat-linux-x64.tar.gz user@server:~/`.
+4. On the server, unpack and test it: `tar xzf isat-linux-x64.tar.gz && ./isat version`
+
+That's all: no installation, no root access, no R, Python or Node. To run it from any folder, move `isat` into a folder on your PATH, e.g. `mkdir -p ~/bin && mv isat ~/bin/`.
+
+The release also has `isat.mjs` (0.16 MB), the same tool for machines with Node.js 20 or newer (`node isat.mjs ...`), and `sha256sums.txt` to verify the downloads (`sha256sum -c sha256sums.txt`).
 
 Latest development build, rebuilt with every change (not a citable version): `https://sufyansuleman.github.io/isat/download/isat-linux-x64.tar.gz` (also `isat-linux-arm64.tar.gz`, `isat.mjs`, `sha256sums.txt`, and `BUILD.txt` with the commit it was built from).
 
-The release also has `isat.mjs` (0.16 MB), the same tool for machines with Node.js 20 or newer (`node isat.mjs ...`), and `sha256sums.txt` to verify the downloads.
+### How to use it
 
 ```bash
 ./isat check cohort.csv                                   # columns, units, problems

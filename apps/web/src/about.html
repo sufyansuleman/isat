@@ -15,6 +15,13 @@
 <h2>Relationship to InsuSensCalc</h2>
 <p>ISAT is the successor to the R package <a href="https://github.com/sufyansuleman/InsuSensCalc">InsuSensCalc</a>. It accepts the same input column names. A small number of indices were deliberately corrected to their published definitions; each difference is documented on the Methods page.</p>
 
+<h2>Command-line tool for large cohorts</h2>
+<p>For files with more than 100,000 individuals, or to run on a server or HPC cluster, use the ISAT command-line tool for Linux. It is a single file with nothing to install, and gives the same results as this website.</p>
+<p><a href="https://github.com/sufyansuleman/isat/releases/latest">Download it from the GitHub releases page</a> (<code>isat-linux-x64.tar.gz</code> for most Linux machines, <code>isat-linux-arm64.tar.gz</code> for ARM). Or on the command line:</p>
+<pre><code>curl -L https://github.com/sufyansuleman/isat/releases/latest/download/isat-linux-x64.tar.gz | tar xz
+./isat calculate cohort.csv -o results.csv</code></pre>
+<p>Run <code>./isat --help</code> for all commands, including splitting large files across an HPC job array.</p>
+
 <h2>How to cite</h2>
 <p>If you use ISAT, please cite the study for which the underlying index set was assembled:</p>
 <p class="citation">Suleman S, Madsen AL, Ängquist LH, Schubert M, Linneberg A, Loos RJF, Hansen T, Grarup N. Genetic Underpinnings of Fasting and Oral Glucose-stimulated Based Insulin Sensitivity Indices. J Clin Endocrinol Metab. 2024;109(11):2754-2763. doi: <a href="https://doi.org/10.1210/clinem/dgae275">10.1210/clinem/dgae275</a>. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/38635292/">38635292</a>.</p>

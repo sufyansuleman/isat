@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use ISAT, please cite the article below and the original paper of each index you report, and state the ISAT version."
 title: "ISAT: Insulin Sensitivity Analysis Tool"
-abstract: "Open-source tool that calculates surrogate indices of insulin sensitivity and resistance from fasting, OGTT, lipid and body measurements. Runs in the web browser (data stay local) and as a standalone Linux command-line tool for large cohorts."
+abstract: "Open-source tool that calculates surrogate indices of insulin sensitivity and resistance from fasting, OGTT, lipid and body measurements. Runs in the web browser (data stay local) and as a standalone Linux command-line tool for large cohorts. Linux binaries are attached to each GitHub release: https://github.com/sufyansuleman/isat/releases"
 type: software
 authors:
   - family-names: Suleman
