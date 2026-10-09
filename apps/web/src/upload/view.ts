@@ -14,7 +14,7 @@ import { Analysis, NO_TRANSFORM, transformExplanation, transformSuffix, type Tra
 import { effectiveValues, mountCorrelations, mountDistributions, newCorUi, summaryHtml, type CorUi, type DistUi } from './panels';
 import { loadTable, toCanonical, type Loaded } from '@isat/core';
 import { checkUnits, warningText, type UnitCheckItem } from '@isat/core';
-import { unitLabel } from '../calculate/results';
+import { orientationNoteHtml, unitLabel } from '../calculate/results';
 import { renderPerson } from './person';
 import { exampleDetailsHtml, exampleFile } from './example';
 
@@ -235,6 +235,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
 <fieldset class="orient"><legend>Orientation (applies to the analysis tabs, the download and the participant view)</legend>
 <label><input type="radio" name="up-orient" value="published"${orientMode === 'published' ? ' checked' : ''}> Published direction</label>
 <label><input type="radio" name="up-orient" value="sensitivity"${orientMode === 'sensitivity' ? ' checked' : ''}> InsuSensCalc convention (resistance indices negated, _inv)</label>
+${orientationNoteHtml()}
 </fieldset>
 <fieldset class="orient"><legend>Transform (applies to Distributions, Correlations and the results CSV)</legend>
 <p class="check"><label for="up-tf">Transform</label> <select id="up-tf">${(['none', 'log', 'z', 'rint'] as const).map((k) => `<option value="${k}"${tf.kind === k ? ' selected' : ''}>${esc(kindLabel[k])}</option>`).join('')}</select>

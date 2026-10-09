@@ -33,6 +33,18 @@ export interface Snapshot {
 
 export { unitLabel };
 
+// ---------- orientation explanation ----------
+/** Explains the two orientations; lists which indices are resistance and which are sensitivity indices (from the method files). */
+export function orientationNoteHtml(): string {
+  const incl = registry.filter((m) => m.deferredReason === undefined);
+  const res = incl.filter((m) => m.direction === 'higher_more_resistant').map((m) => esc(m.name));
+  const sen = incl.filter((m) => m.direction === 'higher_more_sensitive').map((m) => esc(m.name));
+  return `<p class="hint"><strong>Published direction</strong> keeps each index as defined in its original paper, so the indices point in two directions: ${res.length} are <strong>insulin-resistance</strong> indices (higher = more resistant, e.g. HOMA-IR, TyG) and ${sen.length} are <strong>insulin-sensitivity</strong> indices (higher = more sensitive, e.g. QUICKI, Matsuda). Resistance and sensitivity indices therefore correlate negatively with each other. <strong>InsuSensCalc convention</strong> multiplies the resistance indices by -1 (names end in _inv), so that higher means more insulin-sensitive for every index.</p>
+<details class="orient-list"><summary>Which indices are which</summary>
+<p><strong>Insulin resistance</strong> (higher = more resistant): ${res.join(', ')}.</p>
+<p><strong>Insulin sensitivity</strong> (higher = more sensitive): ${sen.join(', ')}.</p></details>`;
+}
+
 // ---------- availability panel ----------
 export function availabilityHtml(results: Result[]): string {
   const included = registry.filter((m) => m.deferredReason === undefined);

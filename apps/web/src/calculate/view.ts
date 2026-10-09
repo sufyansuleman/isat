@@ -5,7 +5,7 @@ import { esc } from './format';
 import { exampleState } from './example';
 import { buildInputs, emptyState, settingsOf, type FormState, type UnitChoice } from './state';
 import {
-  aucHtml, availabilityHtml, notCalculatedHtml, summaryHtml, wireSummary, csvText, resultsFooterHtml, unitLabel, type Snapshot,
+  aucHtml, availabilityHtml, notCalculatedHtml, orientationNoteHtml, summaryHtml, wireSummary, csvText, resultsFooterHtml, unitLabel, type Snapshot,
 } from './results';
 import { hydrateFormulas } from './mathml';
 import { unitsSectionHtml } from './units';
@@ -62,6 +62,7 @@ ${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
 <fieldset class="orient"><legend>Orientation</legend>
 <label><input type="radio" name="orient" value="published" checked> Published direction</label>
 <label><input type="radio" name="orient" value="sensitivity"> InsuSensCalc convention (resistance indices negated, _inv)</label>
+${orientationNoteHtml()}
 </fieldset>
 <h3>OGTT plots</h3>
 <div id="plots" class="plots"></div>
