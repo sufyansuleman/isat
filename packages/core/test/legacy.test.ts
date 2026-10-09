@@ -84,6 +84,7 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
       const out = orient(batch[idx]!, 'sensitivity');
       for (const r of out.filter((x) => x.id.endsWith('_inv'))) {
         const m = registry.find((x) => x.id === r.id.replace(/_inv$/, ''))!;
+        if (m.legacy.relation !== 'negated') continue; // FIRI: InsuSensCalc never negated it (column Firi)
         const col = typeof m.legacy.column === 'string' ? m.legacy.column : m.legacy.column![row.inputs.sex!];
         expect(r.orientation).toBe('sensitivity');
         expect(r.status).toBe('ok');
@@ -93,6 +94,18 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
       expect(orient(batch[idx]!, 'published')).toEqual(batch[idx]);
     }
     expect(n).toBe(8 * 13); // 13 negated methods x 8 rows
+  });
+
+  it('orient(sensitivity) negates every resistance index, FIRI included, and nothing else', () => {
+    const out = orient(batch[0]!, 'sensitivity');
+    for (const r of batch[0]!) {
+      const o = out.find((x) => x.id === r.id || x.id === `${r.id}_inv`)!;
+      const resistant = r.direction === 'higher_more_resistant';
+      expect(o.id, r.id).toBe(resistant ? `${r.id}_inv` : r.id);
+      if (r.value !== null) expect(o.value, r.id).toBe(resistant ? -(r.value as number) : r.value);
+      expect(o.direction).not.toBe('higher_more_resistant');
+    }
+    expect(out.some((x) => x.id === 'firi_inv')).toBe(true);
   });
 
   afterAll(() => {

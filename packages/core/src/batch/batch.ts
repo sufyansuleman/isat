@@ -9,9 +9,9 @@ import { insertAfter, transformBlock, transformedRowFields } from './transformcs
 /** Methods that get an output column (deferred/excluded methods never calculate). */
 export const INCLUDED: MethodEntry[] = registry.filter((m) => m.deferredReason === undefined);
 
-/** Same rule as core orient(): resistant-direction methods whose legacy relation is "negated" get the _inv convention. */
+/** Same rule as core orient(): every resistant-direction method gets the _inv convention (FIRI included). */
 export const NEGATED = new Set(
-  INCLUDED.filter((m) => m.legacy.relation === 'negated' && m.direction === 'higher_more_resistant').map((m) => m.id),
+  INCLUDED.filter((m) => m.direction === 'higher_more_resistant').map((m) => m.id),
 );
 
 export type AvignonChoice = 'default' | 'cohort';

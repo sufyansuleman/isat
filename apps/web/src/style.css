@@ -130,6 +130,7 @@ details.method[hidden], #m-main[hidden], #m-excluded[hidden] { display: none; }
 details.method > summary { padding: 8px 0; cursor: pointer; }
 details.method .mname { font-weight: 600; }
 details.method .mdir { color: var(--muted); font-size: 0.875rem; margin: 0 6px; }
+details.method .mpop { display: block; color: var(--muted); font-size: 0.85rem; margin: 2px 0 0 18px; font-weight: normal; }
 details.method .ref, details.method .legacy, details.method .extra { font-size: 0.9rem; overflow-wrap: anywhere; }
 .variant { margin: 4px 0; }
 .vlabel { font-size: 0.8rem; color: var(--muted); }

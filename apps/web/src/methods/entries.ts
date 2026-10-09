@@ -113,6 +113,16 @@ export function searchText(m: MethodEntry, spec: Spec): string {
   return `${m.name} ${m.id} ${typeof spec.source === 'string' ? spec.source : ''} ${refs}`.toLowerCase();
 }
 
+/** One-line "derived in" note shown on the collapsed row: place (or a short population description) and N. */
+function derivedShort(spec: Spec): string {
+  const d = spec.derived_in;
+  if (!d) return '';
+  const pop = String(d.population ?? '');
+  const where = d.setting ? String(d.setting) : (pop.length > 70 ? pop.slice(0, 67).replace(/\s+\S*$/, '') + '...' : pop);
+  const n = d.n ? `, N = ${d.n}` : '';
+  return `<span class="mpop">Derived in: ${esc(where)}${esc(n)}</span>`;
+}
+
 export function entryHtml(m: MethodEntry): string {
   const spec = specFor(m.id);
   const excluded = m.deferredReason !== undefined;
@@ -130,7 +140,7 @@ ${referencesHtml(spec)}
 ${list('Limitations', spec.limitations)}${list('Notes', (Array.isArray(spec.notes) ? spec.notes : []).filter((n: string) => !JUDGEMENT.test(n)))}
 <p class="legacy">${legacyText(spec)}</p>`;
   return `<details class="method" id="m-${esc(m.id)}" data-id="${esc(m.id)}" data-cat="${categoryOf(m)}" data-search="${esc(searchText(m, spec))}">
-<summary><span class="mname">${esc(m.name)}</span> <span class="mdir">${excluded ? 'not included' : DIRECTION_PHRASE[m.direction] ?? ''}</span> <span class="badge" data-sv="${esc(m.source_verification)}">${esc(badgeText(m.source_verification))}</span></summary>
+<summary><span class="mname">${esc(m.name)}</span> <span class="mdir">${excluded ? 'not included' : DIRECTION_PHRASE[m.direction] ?? ''}</span> <span class="badge" data-sv="${esc(m.source_verification)}">${esc(badgeText(m.source_verification))}</span>${excluded ? '' : derivedShort(spec)}</summary>
 ${body}
 </details>`;
 }

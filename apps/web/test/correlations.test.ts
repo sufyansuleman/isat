@@ -43,6 +43,7 @@ const pick = (root: HTMLElement, id: string, value: string) => {
   el.value = value;
   el.dispatchEvent(new Event('change', { bubbles: true }));
 };
+const noTransform = (root: HTMLElement) => { pick(root, '#up-tf', 'none'); return root; };
 const openCor = (root: HTMLElement) => (root.querySelector('#up-tabbtn-cor') as HTMLButtonElement).click();
 const titles = (root: HTMLElement, scope = '#up-tab-cor') => [...root.querySelectorAll(`${scope} .heat-cell title`)].map((t) => t.textContent!);
 const SPEARMAN_NOTE = "Spearman uses ranks, so log, z-score and RINT do not change it; only 'within sex' can.";
@@ -66,7 +67,7 @@ describe('Correlations tab: method, values and notes', () => {
   });
 
   it('disables Transformed and Both when the transform is None, with a note', async () => {
-    const root = await mountWith(template);
+    const root = noTransform(await mountWith(template));
     openCor(root);
     const opts = [...root.querySelectorAll<HTMLOptionElement>('#up-cor-values option')];
     expect(opts.map((o) => [o.value, o.disabled])).toEqual([['raw', false], ['transformed', true], ['both', true]]);
@@ -77,13 +78,14 @@ describe('Correlations tab: method, values and notes', () => {
   });
 
   it('shows the Spearman and Pearson notes only in their conditions', async () => {
-    const root = await mountWith(template);
+    const root = noTransform(await mountWith(template));
     openCor(root);
     const notes = () => [...root.querySelectorAll('#up-tab-cor .cor-note')].map((n) => n.textContent);
     expect(notes()).toEqual([]); // Spearman, no transform
     pick(root, '#up-tf', 'rint');
-    expect(notes()).toEqual([SPEARMAN_NOTE]);
     const by = root.querySelector<HTMLInputElement>('#up-bysex')!;
+    by.checked = false; by.dispatchEvent(new Event('change', { bubbles: true })); // within sex is on by default
+    expect(notes()).toEqual([SPEARMAN_NOTE]);
     by.checked = true; by.dispatchEvent(new Event('change', { bubbles: true }));
     expect(notes()).toEqual([]); // within sex can change Spearman
     pick(root, '#up-cor-method', 'pearson');
@@ -140,7 +142,7 @@ describe('Correlations tab: method, values and notes', () => {
   });
 
   it('records the correlation settings in the settings file', async () => {
-    const root = await mountWith(template);
+    const root = noTransform(await mountWith(template));
     (root.querySelector('#up-json') as HTMLButtonElement).click();
     let doc = JSON.parse(await saved.at(-1)!.blob.text());
     expect(doc.correlation).toEqual({ method: 'spearman', values: 'raw' }); // no transform: Raw

@@ -73,11 +73,12 @@ export function mountUpload(root: HTMLElement): () => void {
   let includeStatus = false;
   let disposePerson: (() => void) | undefined;
   let openIndex: number | undefined;
-  const tf: TransformSetting = { ...NO_TRANSFORM };
+  // Defaults: z-score within sex (switched off automatically when the file has no sex), Distributions tab showing all indices.
+  const tf: TransformSetting = { kind: 'z', bySex: true };
   let addTransformed = true;
-  let tab: TabId = 'summary';
+  let tab: TabId = 'dist';
   let analysis: Analysis | undefined;
-  let distUi: DistUi = { sel: undefined, all: false };
+  let distUi: DistUi = { sel: undefined, all: true };
   let corUi: CorUi = newCorUi();
 
   const stopWorker = () => { worker?.terminate(); worker = undefined; };
@@ -160,7 +161,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
 
   function resetResults(): void {
     disposePerson?.(); disposePerson = undefined; openIndex = undefined; run = undefined; analysis = undefined;
-    distUi = { sel: undefined, all: false }; corUi = newCorUi(); tab = 'summary';
+    distUi = { sel: undefined, all: true }; corUi = newCorUi(); tab = 'dist';
     $('#up-results').hidden = true; $('#up-results').innerHTML = '';
   }
 

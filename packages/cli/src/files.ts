@@ -12,6 +12,20 @@ export const PROGRESS_ROWS = 100_000;
 
 export const fmtN = (n: number) => n.toLocaleString('en-GB');
 
+/**
+ * Rename a finished temporary file into place. On Windows a just-written file can be locked briefly
+ * (antivirus, search indexer), giving EPERM/EBUSY/EACCES: retry for up to about 2 s before failing.
+ */
+export function renameIntoPlace(from: string, to: string): void {
+  for (let attempt = 0; ; attempt++) {
+    try { renameSync(from, to); return; } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code;
+      if (attempt >= 20 || !(code === 'EPERM' || code === 'EBUSY' || code === 'EACCES')) throw e;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+    }
+  }
+}
+
 /** results.csv -> results.settings.json (extension replaced, other names get the suffix appended). */
 export function settingsPathFor(output: string): string {
   return output.replace(/\.(csv|tsv|txt)$/i, '') + '.settings.json';
@@ -71,7 +85,7 @@ export class OutFile {
   /** Raw bytes (used by merge to copy chunk files unchanged). */
   writeBytes(b: Uint8Array): void { this.flush(); writeSync(this.fd, b); }
   private flush(): void { if (this.used > 0) { writeSync(this.fd, this.buf, 0, this.used); this.used = 0; } }
-  commit(): void { this.flush(); closeSync(this.fd); this.fd = -1; renameSync(this.tmp, this.path); }
+  commit(): void { this.flush(); closeSync(this.fd); this.fd = -1; renameIntoPlace(this.tmp, this.path); }
   abort(): void {
     if (this.fd >= 0) { try { closeSync(this.fd); } catch { /* already closed */ } this.fd = -1; }
     try { unlinkSync(this.tmp); } catch { /* nothing written */ }

@@ -51,11 +51,21 @@ const pick = (root: HTMLElement, id: string, value: string) => {
 };
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
+// The app defaults are z-score within sex, Distributions tab, Show all. These tests need the classic state, so set it explicitly.
+function classic(root: HTMLElement) {
+  pick(root, '#up-tf', 'none');
+  (root.querySelector('#up-tabbtn-dist') as HTMLButtonElement).click();
+  const all = root.querySelector<HTMLInputElement>('#up-dist-all')!;
+  all.checked = false; all.dispatchEvent(new Event('change', { bubbles: true }));
+  (root.querySelector('#up-tabbtn-summary') as HTMLButtonElement).click();
+  return root;
+}
+
 beforeEach(() => { saved.length = 0; });
 
 describe('results tabs', () => {
   it('renders Summary | Distributions | Correlations | Participants', async () => {
-    const root = await mountWith(template);
+    const root = classic(await mountWith(template));
     const tabs = [...root.querySelectorAll('[role="tab"]')].map((t) => t.textContent);
     expect(tabs).toEqual(['Summary', 'Distributions', 'Correlations', 'Participants']);
     expect(root.querySelector('#up-tab-summary table.stats')).not.toBeNull();
@@ -129,7 +139,7 @@ describe('results tabs', () => {
   });
 
   it('downloads a standalone density SVG (default plot type)', async () => {
-    const root = await mountWith(template);
+    const root = classic(await mountWith(template));
     (root.querySelector('#up-tabbtn-dist') as HTMLButtonElement).click();
     (root.querySelector('#up-tab-dist button[data-dl="raw"]') as HTMLButtonElement).click();
     expect(saved.at(-1)!.name).toMatch(/^isat-density-.*-raw\.svg$/);
@@ -249,7 +259,7 @@ describe('density and sex split', () => {
   };
 
   it('density SVG has one path per sex plus a legend with n, and an optional combined curve', async () => {
-    const root = await mountWith(template);
+    const root = classic(await mountWith(template));
     openDist(root);
     const svg = root.querySelector('#up-tab-dist svg')!;
     expect(svg.querySelectorAll('path.dens').length).toBe(2);
@@ -264,7 +274,7 @@ describe('density and sex split', () => {
     expect(root.querySelectorAll('#up-tab-dist svg')[0]!.querySelectorAll('path.dens').length).toBe(1);
   });
   it('shows raw and RINT-within-sex density side by side', async () => {
-    const root = await mountWith(template);
+    const root = classic(await mountWith(template));
     pick(root, '#up-tf', 'rint');
     openDist(root);
     const svgs = root.querySelectorAll('#up-tab-dist svg');
@@ -278,12 +288,12 @@ describe('density and sex split', () => {
     expect(root.querySelectorAll('#up-tab-dist svg')[0]!.querySelectorAll('path.dens').length).toBe(1);
   });
   it('summary has per-sex median columns only when sex is available', async () => {
-    const withSex = await mountWith(template);
+    const withSex = classic(await mountWith(template));
     const heads = [...withSex.querySelectorAll('#up-tab-summary thead th')].map((t) => t.textContent);
     expect(heads).toContain('Median (men)');
     expect(heads).toContain('Median (women)');
     expect(withSex.querySelector('#up-tab-summary td[title^="n = "]')).not.toBeNull();
-    const without = await mountWith(noSex);
+    const without = classic(await mountWith(noSex));
     const h2 = [...without.querySelectorAll('#up-tab-summary thead th')].map((t) => t.textContent);
     expect(h2).not.toContain('Median (men)');
     expect(without.querySelectorAll('#up-tab-summary thead th').length).toBe(6);
@@ -299,7 +309,7 @@ describe('density and sex split', () => {
     expect(svg.textContent).toMatch(/Women \(n = \d+\)/);
   });
   it('downloads density data as a long-format CSV', async () => {
-    const root = await mountWith(template);
+    const root = classic(await mountWith(template));
     openDist(root);
     (root.querySelector('#up-dist-csv') as HTMLButtonElement).click();
     expect(saved.at(-1)!.name).toMatch(/^isat-density-.*-raw\.csv$/);
@@ -327,5 +337,41 @@ describe('density and sex split', () => {
     expect(svg).toContain('bandwidth (bw.nrd0) = 0.123');
     expect(svg).toContain('median = 3.142');
     expect(svg).toContain('missing = 2 (of 22)');
+  });
+});
+
+describe('new upload defaults', () => {
+  const noSex = template.split(/\r?\n/).map((l) => { const c = l.split(','); c.splice(2, 1); return c.join(','); }).join('\n');
+  const checked = (root: HTMLElement, sel: string) => root.querySelector<HTMLInputElement>(sel)!.checked;
+
+  it('opens on z-score within sex, Distributions, Show all, Density, Split by sex', async () => {
+    const root = await mountWith(template);
+    expect(root.querySelector<HTMLOptionElement>('#up-tf option[selected]')!.value).toBe('z'); // happy-dom mis-reports select.value for a parsed selected option
+    expect(checked(root, '#up-bysex')).toBe(true);
+    expect(root.querySelector<HTMLInputElement>('#up-bysex')!.disabled).toBe(false);
+    expect(checked(root, '#up-addtf')).toBe(true);
+    expect(root.querySelector('#up-tabbtn-dist')!.getAttribute('aria-selected')).toBe('true');
+    expect(root.querySelector<HTMLElement>('#up-tab-dist')!.hidden).toBe(false);
+    expect(checked(root, '#up-dist-all')).toBe(true);
+    expect(checked(root, 'input[name="up-dist-kind"][value="density"]')).toBe(true);
+    expect(checked(root, '#up-dist-split')).toBe(true);
+  });
+
+  it('without a sex column, within sex is off and disabled', async () => {
+    const root = await mountWith(noSex);
+    expect(root.querySelector<HTMLOptionElement>('#up-tf option[selected]')!.value).toBe('z'); // happy-dom mis-reports select.value for a parsed selected option
+    expect(checked(root, '#up-bysex')).toBe(false);
+    expect(root.querySelector<HTMLInputElement>('#up-bysex')!.disabled).toBe(true);
+  });
+
+  it('the default results CSV has *_z_bysex columns and the settings file records z within sex', async () => {
+    const root = await mountWith(template);
+    (root.querySelector('#up-csv') as HTMLButtonElement).click();
+    const h = parseDelimited(await saved.at(-1)!.blob.text(), ',')[0]!;
+    expect(h).toContain('homa_ir_z_bysex');
+    expect(h.length).toBe(2 + 2 * INCLUDED.length);
+    (root.querySelector('#up-json') as HTMLButtonElement).click();
+    const doc = JSON.parse(await saved.at(-1)!.blob.text());
+    expect(doc.transform).toMatchObject({ kind: 'z', within_sex: true, transformed_columns_added: true });
   });
 });

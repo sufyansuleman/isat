@@ -61,7 +61,7 @@ describe('methods page', () => {
     // Quoted YAML text is exempt: limitations, and verification details (e.g. Belfiore's "normal-mean normalisation").
     clone.querySelectorAll('.extra').forEach((e) => { if (/^(Limitations|Verification)/.test(e.textContent ?? '')) e.remove(); });
     // "Derived in" quotes the papers' clinical categories (e.g. "normal glucose tolerance").
-    clone.querySelectorAll('.derived').forEach((e) => e.remove());
+    clone.querySelectorAll('.derived, .mpop').forEach((e) => e.remove());
     clone.querySelectorAll('[data-search]').forEach((e) => e.removeAttribute('data-search'));
     expect(clone.textContent).not.toMatch(/\b(abnormal|normal|good|bad|cut-?off)\b/i);
   });
@@ -140,5 +140,15 @@ describe('derivation populations overview', () => {
     expect(gutt.textContent).toContain('Gutt 2000');
     const homa = [...t.querySelectorAll('tr')].find((r) => r.textContent!.includes('HOMA-IR'))!;
     expect(homa.textContent).toContain('Matthews 1985');
+  });
+});
+
+describe('derived-in note on collapsed rows', () => {
+  it('shows place and N without opening the entry', () => {
+    const vai = host.querySelector('#m-vai summary')!.textContent!;
+    expect(vai).toContain('Derived in: Palermo, Sicily, Italy, N = 315');
+    const homa = host.querySelector('#m-homa_ir summary')!.textContent!;
+    expect(homa).toContain('Derived in:');
+    expect(homa).toContain('N = 23');
   });
 });

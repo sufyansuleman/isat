@@ -9,7 +9,7 @@ import {
   type AvignonUse, type ConversionSettings, type DelimiterName, type StreamRow, type UnitChoice,
 } from '@isat/core';
 import { UsageError, parseArgs } from './args';
-import { DataError, PROGRESS_ROWS, WRITE_BYTES, checkInput, fmtN, readPieces, settingsPathFor } from './files';
+import { DataError, PROGRESS_ROWS, WRITE_BYTES, checkInput, fmtN, readPieces, renameIntoPlace, settingsPathFor } from './files';
 export { settingsPathFor } from './files';
 import { ISAT_VERSION } from './version';
 import { cmdMerge } from './merge';
@@ -443,7 +443,7 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
     if (range && rs.rows < range.last) throw new DataError(`${input}: row count changed while reading (counted ${fmtN(totalRows)}, parsed ${fmtN(rs.rows)})`);
     flush(true);
     if (fd !== undefined) { closeSync(fd); fd = undefined; }
-    renameSync(tmp, output);
+    renameIntoPlace(tmp, output);
   } catch (e) {
     if (fd !== undefined) closeSync(fd);
     try { unlinkSync(tmp); } catch { /* nothing written */ }

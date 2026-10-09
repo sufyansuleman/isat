@@ -1,4 +1,3 @@
-import { registry } from './registry';
 import type { Result } from './types';
 
 export type OrientMode = 'published' | 'sensitivity';
@@ -7,13 +6,13 @@ const NOTE = 'negated published index (InsuSensCalc convention): higher = more s
 
 /**
  * 'published' (default): unchanged. 'sensitivity': negates every result whose direction is resistant
- * and whose YAML legacy relation is `negated` (InsuSensCalc `_inv` convention); id gets `_inv`.
+ * (InsuSensCalc `_inv` convention: higher = more sensitive for every index); id gets `_inv`.
+ * This includes FIRI, which InsuSensCalc 0.1.0 itself left un-negated (column `Firi`).
  */
 export function orient(results: Result[], mode: OrientMode = 'published'): Result[] {
   if (mode === 'published') return results;
-  const negated = new Set(registry.filter((m) => m.legacy.relation === 'negated').map((m) => m.id));
   return results.map((r) =>
-    r.direction === 'higher_more_resistant' && negated.has(r.id)
+    r.direction === 'higher_more_resistant'
       ? {
           ...r,
           id: `${r.id}_inv`,
