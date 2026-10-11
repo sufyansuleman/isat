@@ -1,10 +1,11 @@
 <h1>About ISAT</h1>
 
-<p>ISAT (Insulin Sensitivity Analysis Tool) calculates surrogate indices of insulin sensitivity and resistance from fasting, oral glucose tolerance test (OGTT), lipid, anthropometric and tracer/DXA measurements. It is open source and runs entirely in the web browser.</p>
+<p>ISAT (Insulin Sensitivity Analysis Tool) calculates surrogate indices of insulin sensitivity and resistance from fasting, oral glucose tolerance test (OGTT), lipid, anthropometric and tracer/DXA measurements. It also calculates insulin secretion (beta-cell) and glucagon (alpha-cell) indices from the same data, following <a href="https://github.com/sufyansuleman/IsletCalc">IsletCalc</a> (<a href="https://doi.org/10.5281/zenodo.21420133">doi:10.5281/zenodo.21420133</a>) and Madsen et al. 2024. It is open source and runs entirely in the web browser.</p>
 
 <h2>Scientific scope</h2>
 <ul>
   <li>The indices are <strong>surrogate measures</strong> derived from routine measurements. They are not direct measurements of insulin sensitivity (such as the hyperinsulinaemic-euglycaemic clamp) and are not a diagnosis.</li>
+  <li>The secretion and glucagon indices describe islet hormone release, not insulin sensitivity. Their direction depends on the index and is stated for each; they are never negated by the InsuSensCalc convention.</li>
   <li>ISAT does not apply universal cut-offs or classify results. Interpretation depends on the population, protocol and assay.</li>
   <li>Every formula, reference and verification level is listed on the <a href="#/methods">Methods</a> page, which is generated from the same method files the calculation engine uses.</li>
 </ul>
@@ -14,6 +15,9 @@
 
 <h2>Relationship to InsuSensCalc</h2>
 <p>ISAT is the successor to the R package <a href="https://github.com/sufyansuleman/InsuSensCalc">InsuSensCalc</a>. It accepts the same input column names. A small number of indices were deliberately corrected to their published definitions; each difference is documented on the Methods page.</p>
+
+<h2>Relationship to IsletCalc</h2>
+<p>The insulin secretion and glucagon indices follow the R package <a href="https://github.com/sufyansuleman/IsletCalc">IsletCalc</a>, and the beta-cell formulas were checked against Supplementary Table 1 of Madsen et al. 2024. Two disposition indices are reported because the table prints a different expression from the one described in the paper's text; the Methods page explains both. ISAT converts insulin with its own factor (default 6.0 pmol/L per µU/mL), which differs very slightly from IsletCalc's 0.1667.</p>
 
 <h2>Command-line tool for large cohorts</h2>
 <p>For files with more than 100,000 individuals, or to run on a server or HPC cluster, use the ISAT command-line tool for Linux. It is a single file with nothing to install, and gives the same results as this website.</p>
@@ -25,6 +29,7 @@
 <h2>How to cite</h2>
 <p>If you use ISAT, please cite the study for which the underlying index set was assembled:</p>
 <p class="citation">Suleman S, Madsen AL, Ängquist LH, Schubert M, Linneberg A, Loos RJF, Hansen T, Grarup N. Genetic Underpinnings of Fasting and Oral Glucose-stimulated Based Insulin Sensitivity Indices. J Clin Endocrinol Metab. 2024;109(11):2754-2763. doi: <a href="https://doi.org/10.1210/clinem/dgae275">10.1210/clinem/dgae275</a>. PMID: <a href="https://pubmed.ncbi.nlm.nih.gov/38635292/">38635292</a>.</p>
+<p>For the secretion and glucagon indices, also cite Madsen AL et al. Nat Metab 2024, doi: <a href="https://doi.org/10.1038/s42255-024-01140-6">10.1038/s42255-024-01140-6</a>, and the IsletCalc package (<a href="https://github.com/sufyansuleman/IsletCalc">github.com/sufyansuleman/IsletCalc</a>, doi: <a href="https://doi.org/10.5281/zenodo.21420133">10.5281/zenodo.21420133</a>).</p>
 <p>To cite the software itself: Suleman S. ISAT: Insulin Sensitivity Analysis Tool. Zenodo. doi: <a href="https://doi.org/10.5281/zenodo.23190906">10.5281/zenodo.23190906</a> (all versions; each version also has its own DOI on Zenodo).</p>
 <p>Please also cite the original publication of each index you report; these are listed with every result and on the Methods page. Please state the ISAT version (shown at the bottom of every page and in every results file).</p>
 

@@ -22,8 +22,10 @@ describe('form state -> engine', () => {
   it('(a) NGT_M form gives exactly the fixture Inputs and identical results', () => {
     const built = buildInputs(exampleState());
     expect(built.errors).toEqual({});
-    expect(built.inputs).toEqual(fixture);
-    const a = calculateAll(built.inputs), b = calculateAll(fixture as Inputs);
+    const { glucagon, ...rest } = built.inputs;
+    expect(rest).toEqual(fixture);
+    expect(glucagon).toEqual({ 0: 12, 30: 9, 60: 7, 90: 7, 120: 8 });
+    const a = calculateAll(rest), b = calculateAll(fixture as Inputs);
     expect(a.map((r) => [r.id, r.status, r.value])).toEqual(b.map((r) => [r.id, r.status, r.value]));
   });
 

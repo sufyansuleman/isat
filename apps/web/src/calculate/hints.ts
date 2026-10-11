@@ -8,13 +8,14 @@ import type { UnitChoice } from './state';
  */
 export const EXAMPLE_GLUCOSE: Record<number, number> = { 0: 5.0, 30: 7.8, 60: 7.0, 90: 6.2, 120: 5.6 };
 export const EXAMPLE_INSULIN: Record<number, number> = { 0: 42, 30: 300, 60: 360, 90: 280, 120: 200 };
+export const EXAMPLE_GLUCAGON: Record<number, number> = { 0: 12, 30: 9, 60: 7, 90: 7, 120: 8 };
 export const EXAMPLE_FIELDS: Record<string, number> = {
   tg: 1.0, hdl: 1.4, ffa: 0.45, age: 45, weight: 75, height: 175, bmi: 24.5, waist: 85, fat_mass: 18,
 };
 
-type Q = 'glucose' | 'insulin' | 'tg' | 'hdl' | 'ffa';
+type Q = 'glucose' | 'insulin' | 'glucagon' | 'tg' | 'hdl' | 'ffa';
 const DECIMALS: Record<string, number> = {
-  'glucose:mmol/L': 1, 'glucose:mg/dL': 0, 'insulin:pmol/L': 0, 'insulin:uU/mL': 0, 'insulin:mU/L': 0,
+  'glucose:mmol/L': 1, 'glucose:mg/dL': 0, 'insulin:pmol/L': 0, 'insulin:uU/mL': 0, 'insulin:mU/L': 0, 'glucagon:pmol/L': 0, 'glucagon:pg/mL': 0,
   'tg:mmol/L': 1, 'tg:mg/dL': 0, 'hdl:mmol/L': 1, 'hdl:mg/dL': 0, 'ffa:mmol/L': 2, 'ffa:umol/L': 0,
 };
 
@@ -24,9 +25,9 @@ function shown(value: number, q: Q, unit: Unit): string {
 }
 
 /** Placeholder for an OGTT table cell; rows at non-standard times keep the plain dash. */
-export function seriesHint(q: 'glucose' | 'insulin', time: number, units: UnitChoice): string {
-  const v = (q === 'glucose' ? EXAMPLE_GLUCOSE : EXAMPLE_INSULIN)[time];
-  return v === undefined ? '-' : shown(v, q, units[q] as Unit);
+export function seriesHint(q: 'glucose' | 'insulin' | 'glucagon', time: number, units: UnitChoice): string {
+  const v = (q === 'glucose' ? EXAMPLE_GLUCOSE : q === 'insulin' ? EXAMPLE_INSULIN : EXAMPLE_GLUCAGON)[time];
+  return v === undefined ? '-' : shown(v, q, (units[q] ?? 'pmol/L') as Unit);
 }
 
 /** Placeholder for a single field (lipids and body measures). Tracer rates get no example. */

@@ -3,8 +3,8 @@
 
   <h3>Many people: Upload file</h3>
   <ol>
-    <li>Prepare a CSV file with one row per person (comma, semicolon or tab separated; decimal point, not comma). <a href="isat-template.csv" download>Download an example file</a> (10 participants; glucose, lipids and FFA in mmol/L, insulin in pmol/L; it includes people with a full OGTT, a 3-point OGTT, a missing 90-min sample and fasting values only).</li>
-    <li>Upload it, then choose the units used in the file. All rows must use the same units. ISAT warns when the values in a column do not fit the chosen unit (for example glucose around 95 with mmol/L selected).</li>
+    <li>Prepare a CSV file with one row per person (comma, semicolon or tab separated; decimal point, not comma). <a href="isat-template.csv" download>Download an example file</a> (10 participants; glucose, lipids and FFA in mmol/L, insulin and glucagon in pmol/L; it includes people with a full OGTT, a 3-point OGTT, a missing 90-min sample, fasting values only and some missing glucagon values).</li>
+    <li>Upload it, then choose the units used in the file. All rows must use the same units. ISAT warns when the values in a column do not fit the chosen unit (for example glucose around 95 with mmol/L selected). The glucagon unit (pmol/L or pg/mL) is only offered when the file has glucagon columns.</li>
     <li>Check the column list and the problem report, then press <strong>Calculate</strong>.</li>
     <li>Download the <strong>results CSV</strong> (one row per person) and the <strong>settings file</strong> (version, units and options used, for reproducibility). Click any person to see their full results.</li>
   </ol>
@@ -34,18 +34,22 @@
       <tr><td><code>G30</code>, <code>G60</code>, <code>G90</code>, <code>G120</code></td><td>Glucose 30, 60, 90 and 120 min after the drink</td></tr>
       <tr><td><code>I30</code>, <code>I60</code>, <code>I90</code>, <code>I120</code></td><td>Insulin 30, 60, 90 and 120 min after the drink</td></tr>
       <tr><td><code>glucose_30</code>, <code>insulin_30</code>, <code>glucose_120</code>, ... (<code>glucose_&lt;min&gt;</code>, <code>insulin_&lt;min&gt;</code>)</td><td>Alternative spelling of <code>G30</code>, <code>I30</code>, <code>G120</code>, ... at any minute; use either spelling, not both for the same sample</td></tr>
+      <tr class="guide-group"><th colspan="2">Glucagon, optional (for the glucagon indices; pmol/L or pg/mL)</th></tr>
+      <tr><td><code>Glucagon0</code> (or <code>glucagon_0</code>, <code>fasting_glucagon</code>)</td><td>Fasting glucagon</td></tr>
+      <tr><td><code>Glucagon30</code>, <code>Glucagon60</code>, <code>Glucagon90</code>, <code>Glucagon120</code> (or <code>glucagon_30</code> ... <code>glucagon_&lt;min&gt;</code>)</td><td>Glucagon 30, 60, 90 and 120 min after the drink</td></tr>
       <tr class="guide-group"><th colspan="2">Person</th></tr>
       <tr><td><code>age</code>, <code>sex</code></td><td>Years; sex as 1 = male, 2 = female (or m/f, male/female)</td></tr>
       <tr><td><code>weight</code>, <code>bmi</code>, <code>waist</code></td><td>kg, kg/m², cm</td></tr>
       <tr><td><code>fat_mass</code>, <code>rate_glycerol</code>, <code>rate_palmitate</code></td><td>Optional: DXA fat mass (kg) and tracer rates</td></tr>
     </tbody>
   </table>
-  <p>Only fasting data? Include <code>G0</code> and <code>I0</code> and leave out the OGTT columns; the fasting indices (e.g. HOMA-IR, QUICKI) are still calculated. Only include the columns you have. Leave a cell <strong>empty</strong> when a value is missing; never enter 0 for missing. Other columns are ignored.</p>
+  <p>Only fasting data? Include <code>G0</code> and <code>I0</code> and leave out the OGTT columns; the fasting indices (e.g. HOMA-IR, QUICKI) are still calculated. Insulin secretion (beta-cell) indices need fasting values (HOMA-beta) or the 30 min values, some also 120 min, and the glucagon indices need glucagon columns; glucagon is always optional. Only include the columns you have. Leave a cell <strong>empty</strong> when a value is missing; never enter 0 for missing. Other columns are ignored.</p>
 
   <h3>Good to know</h3>
   <ul>
     <li>Your data stay in this browser; nothing is uploaded.</li>
     <li>Results are surrogate indices of insulin sensitivity, not direct measurements and not a diagnosis.</li>
+    <li>Beyond insulin sensitivity, ISAT also calculates <strong>insulin secretion</strong> (beta-cell) indices and <strong>glucagon</strong> (alpha-cell) indices from the same file. These describe hormone release rather than sensitivity, so their direction depends on the index (each result says what higher means) and they are never negated by the InsuSensCalc convention.</li>
     <li>Some indices measure insulin <strong>resistance</strong> (higher = more resistant, e.g. HOMA-IR) and others insulin <strong>sensitivity</strong> (higher = more sensitive, e.g. Matsuda); each result says which. Choose <em>InsuSensCalc convention</em> under Orientation to flip the resistance indices so that higher means more sensitive for all of them.</li>
     <li>Each index was developed in one population (shown as <em>Derived in</em>) and may behave differently in others. Compare values within your own study rather than against cut-offs from elsewhere.</li>
     <li>Insulin conversion uses 6.0 pmol/L per µU/mL by default; change it under <em>Conversion factors</em> if your lab uses another value.</li>

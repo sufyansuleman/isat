@@ -580,7 +580,7 @@ export const methodSpecs = {
   },
   "di_xinsg30_matsuda": {
     "id": "di_xinsg30_matsuda",
-    "name": "Disposition index (insulinogenic x Matsuda)",
+    "name": "Disposition index (xinsG30 x Matsuda)",
     "category": "secretion",
     "direction": "descriptive",
     "direction_text": "higher = better beta-cell function relative to insulin sensitivity",

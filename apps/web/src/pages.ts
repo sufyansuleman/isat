@@ -5,7 +5,7 @@ import aboutHtml from './about.html?raw';
 export const PRIVACY_STATEMENT =
   'Your data are processed locally in your browser and are never uploaded. Visits are counted anonymously, without cookies.';
 export const SURROGATE_NOTE =
-  'These are surrogate indices of insulin sensitivity, not direct measurements, and are not a diagnosis.';
+  'These are surrogate indices calculated from routine measurements, not direct measurements of insulin sensitivity or secretion, and are not a diagnosis.';
 
 const NAV: Array<[Route, string]> = [
   ['/', 'Calculate'], ['/methods', 'Methods'], ['/about', 'About'],
@@ -16,7 +16,7 @@ export function landing(): string {
   return `
 <h1>ISAT</h1>
 <p class="subtitle">Insulin Sensitivity Analysis Tool</p>
-<p class="lede">Calculate and explore insulin sensitivity indices from metabolic data, for a whole research file or one person, entirely in your browser.</p>
+<p class="lede">Calculate and explore insulin sensitivity, insulin secretion and glucagon indices from metabolic data, for a whole research file or one person, entirely in your browser.</p>
 <p class="notice">${PRIVACY_STATEMENT}</p>
 <p class="notice">${SURROGATE_NOTE}</p>`;
 }

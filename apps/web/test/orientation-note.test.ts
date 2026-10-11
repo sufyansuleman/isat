@@ -10,6 +10,7 @@ describe('orientation note', () => {
     const text = d.textContent!;
     expect(text).toContain('insulin-resistance');
     expect(text).toContain('insulin-sensitivity');
+    expect(text).toContain('Insulin secretion and glucagon indices are never negated.');
     const [res, sen] = [...d.querySelectorAll('details p')].map((p) => p.textContent!);
     expect(res).toContain('FIRI');
     expect(res).toContain('HOMA-IR');

@@ -13,6 +13,7 @@ ${head ? `<p class="hint">${esc(head.intro)}</p>
 ` : ''}<div class="units">
   <span class="upair"><label for="${prefix}-u-glucose">Glucose</label>${sel('glucose', opt('mmol/L', u.glucose) + opt('mg/dL', u.glucose))}</span>
   <span class="upair"><label for="${prefix}-u-insulin">Insulin</label>${sel('insulin', opt('pmol/L', u.insulin) + opt('uU/mL', u.insulin, 'µU/mL (= mU/L)'))}</span>
+  <span class="upair" data-glucagon-unit><label for="${prefix}-u-glucagon">Glucagon</label>${sel('glucagon', opt('pmol/L', u.glucagon ?? 'pmol/L') + opt('pg/mL', u.glucagon ?? 'pmol/L'))}</span>
   <span class="upair"><label for="${prefix}-u-tg">TG</label>${sel('tg', opt('mmol/L', u.tg) + opt('mg/dL', u.tg))}</span>
   <span class="upair"><label for="${prefix}-u-hdl">HDL</label>${sel('hdl', opt('mmol/L', u.hdl) + opt('mg/dL', u.hdl))}</span>
   <span class="upair"><label for="${prefix}-u-ffa">FFA</label>${sel('ffa', opt('mmol/L', u.ffa) + opt('umol/L', u.ffa))}</span>

@@ -12,12 +12,14 @@ export function stateFromInputs(i: Inputs, units: UnitChoice, settings: Partial<
   const st = emptyState(units);
   st.insulinFactor = factors.insulin; st.glucoseFactor = factors.glucose;
   const conv = (v: number, q: 'glucose' | 'insulin' | 'ffa' | 'tg' | 'hdl') => clean(toUnit(v, q, CANONICAL[q], units[q], settings));
+  const convG = (v: number) => clean(toUnit(v, 'glucagon', CANONICAL.glucagon, units.glucagon ?? 'pmol/L', settings));
   const times = new Set<number>();
-  for (const s of [i.glucose, i.insulin]) for (const [t, v] of Object.entries(s ?? {})) if (typeof v === 'number') times.add(Number(t));
+  for (const s of [i.glucose, i.insulin, i.glucagon]) for (const [t, v] of Object.entries(s ?? {})) if (typeof v === 'number') times.add(Number(t));
   st.rows = [...times].sort((a, b) => a - b).map((t) => ({
     time: String(t),
     glucose: typeof i.glucose?.[t] === 'number' ? conv(i.glucose[t]!, 'glucose') : '',
     insulin: typeof i.insulin?.[t] === 'number' ? conv(i.insulin[t]!, 'insulin') : '',
+    glucagon: typeof i.glucagon?.[t] === 'number' ? convG(i.glucagon[t]!) : '',
   }));
   const f0 = i.ffa?.[0];
   if (typeof f0 === 'number') st.ffa = conv(f0, 'ffa');

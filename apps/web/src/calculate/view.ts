@@ -25,11 +25,11 @@ function formHtml(st: FormState): string {
 ${unitsSectionHtml(st.units, "m")}
 <p class="hint">Changing a unit changes how your typed numbers are interpreted; it does not rewrite them.</p>
 
-<section aria-labelledby="h-table"><h2 id="h-table">Glucose and insulin: fasting and OGTT</h2>
-<p>Row 0 is the fasting sample, taken before the 75 g oral glucose drink. Other rows are minutes after the drink. For fasting-only data, fill row 0 and leave the others empty.</p>
+<section aria-labelledby="h-table"><h2 id="h-table">Glucose, insulin and glucagon: fasting and OGTT</h2>
+<p>Row 0 is the fasting sample, taken before the 75 g oral glucose drink. Other rows are minutes after the drink. For fasting-only data, fill row 0 and leave the others empty. Glucagon is optional and only needed for the glucagon (alpha-cell) indices.</p>
 <p class="hint">Grey values (e.g. 5.0) are examples for a typical healthy adult. They are only a guide and are not used unless you type them in.</p>
 <div class="table-wrap"><table class="ogtt"><thead><tr>
-<th scope="col">Time (min)</th><th scope="col">Glucose (<span data-ul="glucose"></span>)</th><th scope="col">Insulin (<span data-ul="insulin"></span>)</th><th scope="col"><span class="sr">Remove row</span></th>
+<th scope="col">Time (min)</th><th scope="col">Glucose (<span data-ul="glucose"></span>)</th><th scope="col">Insulin (<span data-ul="insulin"></span>)</th><th scope="col">Glucagon, optional (<span data-ul="glucagon"></span>)</th><th scope="col"><span class="sr">Remove row</span></th>
 </tr></thead><tbody id="rows"></tbody></table></div>
 <p><button type="button" id="add-row">Add row</button></p>
 <p class="hint">Leave a cell empty if it was not measured; empty is treated as missing, never as 0.</p>
@@ -95,6 +95,7 @@ export function mountCalculate(root: HTMLElement): () => void {
       return `<tr><td>${time}</td>
 <td><input data-r="${k}" data-c="glucose" type="text" inputmode="decimal" aria-label="Glucose, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.glucose)}" placeholder="-" autocomplete="off"><span class="err" data-e="row:${k}:glucose"></span></td>
 <td><input data-r="${k}" data-c="insulin" type="text" inputmode="decimal" aria-label="Insulin, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.insulin)}" placeholder="-" autocomplete="off"><span class="err" data-e="row:${k}:insulin"></span></td>
+<td><input data-r="${k}" data-c="glucagon" type="text" inputmode="decimal" aria-label="Glucagon, ${k === 0 ? 'fasting' : `row ${k + 1}`}" value="${esc(r.glucagon)}" placeholder="-" autocomplete="off"><span class="err" data-e="row:${k}:glucagon"></span></td>
 <td>${rm}</td></tr>`;
     }).join('');
   }
@@ -102,14 +103,14 @@ export function mountCalculate(root: HTMLElement): () => void {
     root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-f]').forEach((el) => {
       el.value = (st as unknown as Record<string, string>)[el.dataset['f']!] ?? '';
     });
-    root.querySelectorAll<HTMLSelectElement>('[data-u]').forEach((el) => { el.value = st.units[el.dataset['u'] as keyof UnitChoice]; });
+    root.querySelectorAll<HTMLSelectElement>('[data-u]').forEach((el) => { el.value = st.units[el.dataset['u'] as keyof UnitChoice] ?? 'pmol/L'; });
     root.querySelectorAll<HTMLSelectElement>('[data-x]').forEach((el) => {
       el.value = (st as unknown as Record<string, string>)[el.dataset['x']!]!;
     });
     renderRows();
   }
   function refreshLabels(): void {
-    root.querySelectorAll<HTMLElement>('[data-ul]').forEach((el) => { el.textContent = unitLabel(st.units[el.dataset['ul'] as 'glucose' | 'insulin']); });
+    root.querySelectorAll<HTMLElement>('[data-ul]').forEach((el) => { el.textContent = unitLabel(st.units[el.dataset['ul'] as 'glucose' | 'insulin' | 'glucagon'] ?? 'pmol/L'); });
     const hints: Record<string, string> = { tg: st.units.tg, hdl: st.units.hdl, ffa: st.units.ffa };
     for (const [k, u] of Object.entries(hints)) $(`#f-${k}`).parentElement!.querySelector('.hint')!.textContent = unitLabel(u);
   }
@@ -117,10 +118,10 @@ export function mountCalculate(root: HTMLElement): () => void {
   /** Grey example values ("e.g. …") in empty fields, converted to the selected units. */
   function refreshHints(): void {
     root.querySelectorAll<HTMLInputElement>('input[data-f]').forEach((el) => { el.placeholder = fieldHint(el.dataset['f']!, st.units); });
-    root.querySelectorAll<HTMLInputElement>('input[data-r][data-c="glucose"], input[data-r][data-c="insulin"]').forEach((el) => {
+    root.querySelectorAll<HTMLInputElement>('input[data-r][data-c="glucose"], input[data-r][data-c="insulin"], input[data-r][data-c="glucagon"]').forEach((el) => {
       const row = st.rows[Number(el.dataset['r'])];
       const t = row && row.time.trim() !== '' ? Number(row.time) : NaN;
-      el.placeholder = seriesHint(el.dataset['c'] as 'glucose' | 'insulin', t, st.units);
+      el.placeholder = seriesHint(el.dataset['c'] as 'glucose' | 'insulin' | 'glucagon', t, st.units);
     });
   }
 
@@ -213,7 +214,7 @@ export function mountCalculate(root: HTMLElement): () => void {
   root.addEventListener('click', (e) => {
     const el = (e.target as HTMLElement).closest('button');
     if (!el) return;
-    if (el.id === 'add-row') { st.rows.push({ time: '', glucose: '', insulin: '' }); renderRows(); refresh(); }
+    if (el.id === 'add-row') { st.rows.push({ time: '', glucose: '', insulin: '', glucagon: '' }); renderRows(); refresh(); }
     else if (el.dataset["rm"] !== undefined && el.dataset["rm"] !== "0") { st.rows.splice(Number(el.dataset['rm']), 1); renderRows(); refresh(); }
     else if (el.id === 'calc') calculate();
     else if (el.id === 'show-why') {

@@ -11,14 +11,16 @@ const file = readFileSync(resolve(process.cwd(), 'public/isat-template.csv'), 'u
 describe('example file', () => {
   it('is bundled from public/isat-template.csv', () => expect(EXAMPLE_CSV).toBe(file));
 
-  it('renders 10 rows and 19 columns with the CSV header, blanks left blank', () => {
+  it('renders 10 rows and every CSV column with the CSV header, blanks left blank', () => {
     const host = document.createElement('div');
     host.innerHTML = exampleTableHtml();
     const csv = parseDelimited(file, ',');
     expect(host.querySelectorAll('tbody tr').length).toBe(10);
-    expect(host.querySelectorAll('thead th').length).toBe(19);
+    const ncol = csv[0]!.length;
+    expect(ncol).toBe(23);
+    expect(host.querySelectorAll('thead th').length).toBe(ncol);
     expect([...host.querySelectorAll('thead th')].map((t) => t.textContent)).toEqual(csv[0]);
-    expect(host.querySelector('tbody tr')!.children.length).toBe(19);
+    expect(host.querySelector('tbody tr')!.children.length).toBe(ncol);
     const cells = [...host.querySelectorAll('tbody td, tbody th')].map((c) => c.textContent);
     expect(cells).toEqual(csv.slice(1).flat());
     expect(cells.includes('')).toBe(true);

@@ -7,6 +7,7 @@ export const NGT_M = {
   age: 45, sex: 'male' as const, weight: 78, bmi: 24.1, waist: 86, tg: 1.1, hdl: 1.45, ffa: 0.45,
   glucose: { 0: 5.1, 30: 7.8, 60: 7.2, 90: 6.4, 120: 5.9 } as Record<number, number>,
   insulin: { 0: 42, 30: 310, 60: 365, 90: 290, 120: 210 } as Record<number, number>,
+  glucagon: { 0: 12, 30: 9, 60: 7, 90: 7, 120: 8 } as Record<number, number>,
   fat_mass: 17.5, rate_glycerol: 2.6, rate_palmitate: 1.9,
 };
 
@@ -16,10 +17,11 @@ export function exampleState(units: UnitChoice = DEFAULT_UNITS, base?: FormState
   const { settings } = settingsOf(st);
   const c = (v: number, q: 'glucose' | 'insulin' | 'ffa' | 'tg' | 'hdl') =>
     clean(toUnit(v, q, CANONICAL[q], units[q], settings));
+  const ga = (v: number) => clean(toUnit(v, 'glucagon', 'pmol/L', units.glucagon ?? 'pmol/L', settings));
   const times = Object.keys(NGT_M.glucose).map(Number);
   return {
     ...st,
-    rows: times.map((t) => ({ time: String(t), glucose: c(NGT_M.glucose[t]!, 'glucose'), insulin: c(NGT_M.insulin[t]!, 'insulin') })),
+    rows: times.map((t) => ({ time: String(t), glucose: c(NGT_M.glucose[t]!, 'glucose'), insulin: c(NGT_M.insulin[t]!, 'insulin'), glucagon: ga(NGT_M.glucagon[t]!) })),
     tg: c(NGT_M.tg, 'tg'), hdl: c(NGT_M.hdl, 'hdl'), ffa: c(NGT_M.ffa, 'ffa'),
     age: String(NGT_M.age), sex: NGT_M.sex, weight: String(NGT_M.weight), bmi: String(NGT_M.bmi),
     waist: String(NGT_M.waist), height: '', fat_mass: String(NGT_M.fat_mass),

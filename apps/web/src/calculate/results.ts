@@ -39,7 +39,7 @@ export function orientationNoteHtml(): string {
   const incl = registry.filter((m) => m.deferredReason === undefined);
   const res = incl.filter((m) => m.direction === 'higher_more_resistant').map((m) => esc(m.name));
   const sen = incl.filter((m) => m.direction === 'higher_more_sensitive').map((m) => esc(m.name));
-  return `<p class="hint"><strong>Published direction</strong> keeps each index as defined in its original paper, so the indices point in two directions: ${res.length} are <strong>insulin-resistance</strong> indices (higher = more resistant, e.g. HOMA-IR, TyG) and ${sen.length} are <strong>insulin-sensitivity</strong> indices (higher = more sensitive, e.g. QUICKI, Matsuda). Resistance and sensitivity indices therefore correlate negatively with each other. <strong>InsuSensCalc convention</strong> multiplies the resistance indices by -1 (names end in _inv), so that higher means more insulin-sensitive for every index.</p>
+  return `<p class="hint"><strong>Published direction</strong> keeps each index as defined in its original paper, so the indices point in two directions: ${res.length} are <strong>insulin-resistance</strong> indices (higher = more resistant, e.g. HOMA-IR, TyG) and ${sen.length} are <strong>insulin-sensitivity</strong> indices (higher = more sensitive, e.g. QUICKI, Matsuda). Resistance and sensitivity indices therefore correlate negatively with each other. <strong>InsuSensCalc convention</strong> multiplies the resistance indices by -1 (names end in _inv), so that higher means more insulin-sensitive for every index. Insulin secretion and glucagon indices are never negated.</p>
 <details class="orient-list"><summary>Which indices are which</summary>
 <p><strong>Insulin resistance</strong> (higher = more resistant): ${res.join(', ')}.</p>
 <p><strong>Insulin sensitivity</strong> (higher = more sensitive): ${sen.join(', ')}.</p></details>`;
@@ -72,10 +72,11 @@ export function notCalculatedHtml(results: Result[]): string {
 // ---------- inputs used (values as entered, in the user's units) ----------
 function unitFor(q: string, st: FormState): string | undefined {
   if (q === 'glucose' || q === 'insulin' || q === 'ffa' || q === 'tg' || q === 'hdl') return st.units[q];
+  if (q === 'glucagon') return st.units.glucagon ?? 'pmol/L';
   return { weight: 'kg', fat_mass: 'kg', waist: 'cm', bmi: 'kg/m²', age: 'years' }[q];
 }
 
-function enteredSeries(st: FormState, q: 'glucose' | 'insulin', t: number): string | undefined {
+function enteredSeries(st: FormState, q: 'glucose' | 'insulin' | 'glucagon', t: number): string | undefined {
   for (const r of st.rows) if (r.time.trim() !== '' && Number(r.time) === t && r[q].trim() !== '') return r[q].trim();
   return undefined;
 }
@@ -84,14 +85,14 @@ export function usedInputs(id: string, r: Result, snap: Snapshot): string[] {
   const st = snap.state;
   const spec = specFor(id);
   const out: string[] = [];
-  const times = (all: 'glucose' | 'insulin') =>
+  const times = (all: 'glucose' | 'insulin' | 'glucagon') =>
     st.rows.filter((x) => x[all].trim() !== '' && x.time.trim() !== '').map((x) => Number(x.time)).sort((a, b) => a - b);
   const seen = new Set<string>();
   for (const item of (spec.inputs ?? []) as Array<string | { var: string }>) {
     const tok = typeof item === "string" ? item : item.var;
-    const m = /^(glucose|insulin|ffa)(?:_([\d,]+))?/.exec(tok.trim());
+    const m = /^(glucose|insulin|glucagon|ffa)(?:_([\d,]+))?/.exec(tok.trim());
     if (m) {
-      const q = m[1] as 'glucose' | 'insulin' | 'ffa';
+      const q = m[1] as 'glucose' | 'insulin' | 'glucagon' | 'ffa';
       let ts: number[];
       if (q === 'ffa') ts = [0];
       else if (m[2]) ts = m[2].split(',').map(Number);
@@ -100,7 +101,7 @@ export function usedInputs(id: string, r: Result, snap: Snapshot): string[] {
       for (const t of ts) {
         const raw = q === 'ffa' ? st.ffa.trim() : enteredSeries(st, q, t);
         const key = `${q}${t}`;
-        if (raw && !seen.has(key)) { seen.add(key); out.push(`${t === 0 ? `${q}, fasting` : `${q} at ${t} min`}: ${esc(raw)} ${esc(unitLabel(st.units[q]))}`); }
+        if (raw && !seen.has(key)) { seen.add(key); out.push(`${t === 0 ? `${q}, fasting` : `${q} at ${t} min`}: ${esc(raw)} ${esc(unitLabel(q === 'glucagon' ? (st.units.glucagon ?? 'pmol/L') : st.units[q]))}`); }
       }
       continue;
     }
@@ -241,7 +242,7 @@ export function resultsFooterHtml(snap: Snapshot): string {
   return `<div class="results-foot">
 <p>Surrogate indices; not direct measurements of insulin sensitivity and not a diagnosis.</p>
 ${bmi}
-<p>Conversion factors used: glucose ${f(s.glucose_mg_per_dL_per_mmol)} mg/dL per mmol/L; insulin ${f(s.insulin_pmol_per_uU)} pmol/L per µU/mL; TG 88.57 mg/dL per mmol/L; HDL 38.67 mg/dL per mmol/L.</p>
+<p>Conversion factors used: glucose ${f(s.glucose_mg_per_dL_per_mmol)} mg/dL per mmol/L; insulin ${f(s.insulin_pmol_per_uU)} pmol/L per µU/mL; TG 88.57 mg/dL per mmol/L; HDL 38.67 mg/dL per mmol/L${snap.built.inputs.glucagon ? '; glucagon 3.485 pg/mL per pmol/L' : ''}.</p>
 <p>ISAT version ${esc(snap.version)}; calculated ${when}.</p></div>`;
 }
 

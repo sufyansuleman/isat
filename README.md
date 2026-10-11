@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/1399587683.svg)](https://doi.org/10.5281/zenodo.23190906)
 
-Calculate surrogate indices of insulin sensitivity and resistance from fasting, OGTT, lipid and body measurements, for a whole research file or one person.
+Calculate surrogate indices of insulin sensitivity and resistance, plus insulin secretion (beta-cell) and glucagon (alpha-cell) indices, from fasting, OGTT, lipid and body measurements, for a whole research file or one person.
 
 **Use it online: <https://sufyansuleman.github.io/isat/>**
 
@@ -10,7 +10,8 @@ No installation and no account. Everything runs in your browser; your data are n
 
 ## What it does
 
-- **33 published indices**: HOMA-IR, QUICKI, Matsuda, Stumvoll, Gutt, BIGTT-SI, TyG, VAI, Adipo-IR and more.
+- **47 published indices**: 33 insulin sensitivity and resistance indices (HOMA-IR, QUICKI, Matsuda, Stumvoll, Gutt, BIGTT-SI, TyG, VAI, Adipo-IR and more) and 14 insulin secretion and glucagon indices (HOMA-beta, CIR, insulinogenic index, disposition index, BIGTT-AIR, glucagon AUC and more), following [IsletCalc](https://github.com/sufyansuleman/IsletCalc) and Madsen et al. 2024.
+- **Optional glucagon columns** (`glucagon_0`, `glucagon_30`, `glucagon_60`, `glucagon_120`, in pmol/L or pg/mL) in the file or the one-person form unlock the glucagon indices.
 - **Upload a file** (CSV/TSV, up to 100,000 people): results for everyone, with warnings when values do not fit the chosen units.
 - **Explore the results**: summary per index, distributions (density or histogram, split by sex), Spearman correlation heatmap, scatter plots.
 - **Transform** for analysis: log, z-score or rank-based inverse normal (RINT), optionally within sex.

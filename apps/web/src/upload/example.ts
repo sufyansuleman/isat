@@ -6,8 +6,8 @@ import { parseDelimited } from '@isat/core';
 export const EXAMPLE_CSV: string = templateCsv;
 export const EXAMPLE_FILE_NAME = 'isat-example.csv';
 
-export const EXAMPLE_CAPTION_1 = 'Fasting values: fasting_glucose, fasting_insulin (and TG, HDL_c, FFA). OGTT values: glucose_30 … insulin_120 = minutes after the 75 g glucose drink.';
-export const EXAMPLE_CAPTION_2 = 'Units in this example: glucose, lipids and FFA in mmol/L; insulin in pmol/L. Empty cell = not measured.';
+export const EXAMPLE_CAPTION_1 = 'Fasting values: fasting_glucose, fasting_insulin (and TG, HDL_c, FFA). OGTT values: glucose_30 … insulin_120 = minutes after the 75 g glucose drink. Glucagon (optional): glucagon_0, glucagon_30, glucagon_60, glucagon_120.';
+export const EXAMPLE_CAPTION_2 = 'Units in this example: glucose, lipids and FFA in mmol/L; insulin and glucagon in pmol/L. Empty cell = not measured.';
 
 /** The example as an HTML table with the exact headers and cells (empty cells stay blank). */
 export function exampleTableHtml(csv: string = EXAMPLE_CSV): string {

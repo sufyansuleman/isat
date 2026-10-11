@@ -33,7 +33,7 @@ const UNIT_WORDS: Record<string, string> = {
   uU_per_mL: 'µU/mL', mg_per_dL: 'mg/dL', mmol_per_L: 'mmol/L', pmol_per_L: 'pmol/L', 'uU/mL': 'µU/mL',
 };
 const DEFAULT_UNIT: Record<string, string> = {
-  glucose: 'mmol/L', insulin: 'pmol/L', ffa: 'mmol/L', tg: 'mmol/L', hdl: 'mmol/L', weight: 'kg', fat_mass: 'kg',
+  glucose: 'mmol/L', insulin: 'pmol/L', glucagon: 'pmol/L', ffa: 'mmol/L', tg: 'mmol/L', hdl: 'mmol/L', weight: 'kg', fat_mass: 'kg',
   waist: 'cm', bmi: 'kg/m²', age: 'years',
 };
 
@@ -43,7 +43,7 @@ export function describeInput(item: string | { var: string; unit?: string }): st
   const explicit = typeof item === 'string' ? /\(([^)]*)\)/.exec(raw)?.[1] : item.unit;
   const unitText = explicit !== undefined ? (UNIT_WORDS[explicit] ?? explicit) : undefined;
   const tok = raw.replace(/\s*\(.*\)\s*$/, '').trim();
-  const m = /^(glucose|insulin|ffa)_([\d,]+)$/.exec(tok);
+  const m = /^(glucose|insulin|glucagon|ffa)_([\d,]+)$/.exec(tok);
   if (m) {
     const times = m[2]!.split(',').map((t) => (Number(t) === 0 ? 'fasting' : t)).join(', ');
     const hasMin = m[2]!.split(',').some((t) => Number(t) !== 0);
@@ -80,7 +80,23 @@ function colText(c: unknown): string {
   return String(c);
 }
 
+/** Relationship to IsletCalc for the secretion and glucagon indices (YAML field `isletcalc`). */
+function isletcalcText(spec: Spec): string {
+  const ic = spec.isletcalc as { column?: string | null; relation?: string; difference?: string };
+  const col = esc(ic.column ?? '');
+  const diff = ic.difference ? ` Known difference: ${esc(ic.difference)}` : '';
+  switch (ic.relation) {
+    case 'equal':
+      return spec.id === 'glucagon_ratio_120_0'
+        ? `Identical to IsletCalc column ${col}. This is IsletCalc's own definition of glucagon suppression (a 120 min to fasting ratio, lower = stronger suppression); the percentage form used by Chen 2021 is glucagon_suppression_pct_60.${diff}`
+        : `Identical to IsletCalc column ${col}.${diff}`;
+    case 'different': return `Deliberately different from IsletCalc ${col}: ${esc(ic.difference ?? 'see method file')}.`;
+    default: return 'Not in IsletCalc.';
+  }
+}
+
 export function legacyText(spec: Spec): string {
+  if (spec.isletcalc) return isletcalcText(spec);
   const lg = spec.legacy ?? {};
   const col = lg.insusenscalc_column;
   const scale = lg.scale_factor ? ` Scale factor: ${esc(lg.scale_factor)}.` : '';
@@ -124,6 +140,8 @@ function derivedShort(spec: Spec): string {
   return `<span class="mpop">Derived in: ${esc(where)}${esc(n)}</span>`;
 }
 
+const DI_NOTE = `<div class="extra"><strong>Two disposition indices from Madsen 2024:</strong> the paper's text describes a disposition index for the modified insulinogenic index and Matsuda (xinsG30 x Matsuda ISI, ISAT id di_xinsg30_matsuda), but Supplementary Table 1 prints a different expression (di_madsen_table, which is what IsletCalc computes: xinsG30 x 1000 / (sqrt(G0 x I0) x mean G x mean I), with glucose in mg/dL and insulin in µU/mL). The two are not equivalent and are on very different scales; for the same person the Matsuda form is several hundred times larger than the table form (for example 0.066 versus 38). Use one of them consistently and state which.</div>`;
+
 export function entryHtml(m: MethodEntry): string {
   const spec = specFor(m.id);
   const excluded = m.deferredReason !== undefined;
@@ -138,7 +156,7 @@ ${inputs.length ? `<div class="extra"><strong>Required inputs:</strong><ul>${inp
 ${derivedHtml(spec)}
 ${referencesHtml(spec)}
 <div class="extra"><strong>Verification:</strong> ${esc(m.source_verification_detail)}</div>
-${list('Limitations', spec.limitations)}${list('Notes', (Array.isArray(spec.notes) ? spec.notes : []).filter((n: string) => !JUDGEMENT.test(n)))}
+${m.id === 'di_madsen_table' || m.id === 'di_xinsg30_matsuda' ? DI_NOTE : ''}${list('Limitations', spec.limitations)}${list('Notes', (Array.isArray(spec.notes) ? spec.notes : []).filter((n: string) => !JUDGEMENT.test(n)))}
 <p class="legacy">${legacyText(spec)}</p>`;
   return `<details class="method" id="m-${esc(m.id)}" data-id="${esc(m.id)}" data-cat="${categoryOf(m)}" data-search="${esc(searchText(m, spec))}">
 <summary><span class="mname">${esc(m.name)}</span> <span class="mdir">${excluded ? 'not included' : (m.direction_text ?? DIRECTION_PHRASE[m.direction]) ?? ''}</span> <span class="badge" data-sv="${esc(m.source_verification)}">${esc(badgeText(m.source_verification))}</span>${excluded ? '' : derivedShort(spec)}</summary>

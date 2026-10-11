@@ -12,12 +12,12 @@ const template = readFileSync(resolve(process.cwd(), 'public/isat-template.csv')
 
 describe('usage guide', () => {
   it('(a) mentions every column name and alias the upload parser recognises', () => {
-    const names = ['participant_id', 'id', ...Object.keys(SCALARS).filter((k) => k !== 'hdl'), 'G0', 'G30', 'G60', 'G90', 'G120', 'I0', 'I30', 'I60', 'I90', 'I120'];
+    const names = ['participant_id', 'id', ...Object.keys(SCALARS).filter((k) => k !== 'hdl'), 'G0', 'G30', 'G60', 'G90', 'G120', 'I0', 'I30', 'I60', 'I90', 'I120', 'Glucagon0', 'Glucagon30', 'Glucagon60', 'Glucagon90', 'Glucagon120'];
     for (const n of names) {
       expect(classifyColumn(n).kind).not.toBe('ignored');
       expect(guide.toLowerCase()).toContain(n.toLowerCase());
     }
-    for (const a of ['fasting_glucose', 'fasting_insulin', 'glucose_', 'insulin_']) expect(guide).toContain(a);
+    for (const a of ['fasting_glucose', 'fasting_insulin', 'glucose_', 'insulin_', 'fasting_glucagon', 'glucagon_']) expect(guide).toContain(a);
     expect(guide).toContain('HDL');
   });
 
@@ -73,8 +73,8 @@ describe('example file (alias headers)', () => {
       const x = h.toLowerCase();
       if (x === 'fasting_glucose') return 'G0';
       if (x === 'fasting_insulin') return 'I0';
-      const m = /^(glucose|insulin)_(\d+)$/.exec(x);
-      return m ? `${m[1] === 'glucose' ? 'G' : 'I'}${m[2]}` : h;
+      const m = /^(glucose|insulin|glucagon)_(\d+)$/.exec(x);
+      return m ? (m[1] === 'glucagon' ? `Glucagon${m[2]}` : `${m[1] === 'glucose' ? 'G' : 'I'}${m[2]}`) : h;
     };
     const direct: Inputs[] = parseCsv(template).map((r) => parseWideRow(Object.fromEntries(Object.entries(r).map(([k, v]) => [canon(k), v]))).inputs);
     l.ids.forEach((id, row) => {

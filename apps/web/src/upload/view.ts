@@ -45,7 +45,7 @@ const html = `
 </div>
 <p id="up-err" class="err" role="alert"></p>
 ${exampleDetailsHtml()}
-<p class="hint">One row per person. Recognised columns (any case): participant_id (or id), age, sex, weight, bmi, waist, TG, HDL_c, FFA, G0 to G120 (or fasting_glucose, glucose_30 …), I0 to I120 (or fasting_insulin, insulin_30 …), fat_mass, rate_glycerol, rate_palmitate. Use a dot as the decimal separator. Sex: 1/2, m/f or male/female (1 = male, 2 = female). Values must be in the units chosen below.</p>
+<p class="hint">One row per person. Recognised columns (any case): participant_id (or id), age, sex, weight, bmi, waist, TG, HDL_c, FFA, G0 to G120 (or fasting_glucose, glucose_30 …), I0 to I120 (or fasting_insulin, insulin_30 …), optional Glucagon0 to Glucagon120 (or fasting_glucagon, glucagon_30 …), fat_mass, rate_glycerol, rate_palmitate. Use a dot as the decimal separator. Sex: 1/2, m/f or male/female (1 = male, 2 = female). Values must be in the units chosen below.</p>
 </section>
 <div id="up-loaded" hidden></div>
 <section id="up-results" aria-labelledby="up-h-res" hidden></section>`;
@@ -104,6 +104,7 @@ export function mountUpload(root: HTMLElement): () => void {
     const l = loaded!;
     const idCol = l.columns.find((c) => c.kind === 'id');
     const recognised = l.columns.filter((c) => c.kind === 'variable').length;
+    const hasGlucagon = l.columns.some((c) => c.kind === 'variable' && c.canonical?.startsWith('Glucagon'));
     const shown = (c: (typeof l.columns)[number]) => c.kind === "ignored" ? "ignored" : esc(c.variable ?? "") + (c.canonical && c.canonical.toLowerCase() !== c.name.trim().toLowerCase() ? ` (${esc(c.canonical)})` : "");
     const map = l.columns.map((c) => `<tr><td>${esc(c.name)}</td><td>${shown(c)}</td></tr>`).join("");
     const { text: mapSummary, notRecognised } = columnMappingSummary(l.columns);
@@ -149,6 +150,9 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     $<HTMLSelectElement>('#u-u-tg').value = units.tg;
     $<HTMLSelectElement>('#u-u-hdl').value = units.hdl;
     $<HTMLSelectElement>('#u-u-ffa').value = units.ffa;
+    $<HTMLSelectElement>('#u-u-glucagon').value = units.glucagon ?? 'pmol/L';
+    // The glucagon unit only matters (and is only shown) when the file has glucagon columns.
+    root.querySelectorAll<HTMLElement>('[data-glucagon-unit]').forEach((e) => { e.hidden = !hasGlucagon; });
     $<HTMLSelectElement>('#u-x-insulin').value = factors.insulin;
     $<HTMLSelectElement>('#u-x-glucose').value = factors.glucose;
     renderUnitCheck();
@@ -157,6 +161,13 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
   function renderUnitCheck(): void {
     const warn = checkUnits(loaded!.inputs, units).filter((i) => i.suggested !== null);
     $('#up-unitcheck').innerHTML = warn.map((i) => `<p class="warn unitwarn">${esc(warningText(i))} <button type="button" data-uc="${i.quantity}" data-to="${esc(i.suggested!)}">Switch to ${esc(unitLabel(i.suggested!))}</button></p>`).join('');
+  }
+
+  /** Units recorded for a run; the glucagon unit is only included when the file has glucagon columns (keeps other files' outputs unchanged). */
+  function unitsForRun(l: Loaded): UnitChoice {
+    const u = { ...units };
+    if (!l.columns.some((c) => c.kind === 'variable' && c.canonical?.startsWith('Glucagon'))) delete u.glucagon;
+    return u;
   }
 
   function resetResults(): void {
@@ -173,9 +184,9 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     const settings = { glucose_mg_per_dL_per_mmol: Number(factors.glucose), insulin_pmol_per_uU: Number(factors.insulin) };
     const canonical = l.inputs.map((i) => toCanonical(i, units, settings));
     const cur: Run = {
-      canonical, units: { ...units }, factors: { ...factors }, settings,
+      canonical, units: unitsForRun(l), factors: { ...factors }, settings,
       av: { w: 0.137, source: 'avignon_1999', warnings: [] }, counts: emptyCounts(), chunks: [], fileName,
-      delimiter: l.delimiter, withProblems: l.rowsWithProblems, unitCheck: checkUnits(l.inputs, units), finishedAt: '',
+      delimiter: l.delimiter, withProblems: l.rowsWithProblems, unitCheck: checkUnits(l.inputs, unitsForRun(l)), finishedAt: '',
     };
     const box = $('#up-progress-box'), bar = $<HTMLProgressElement>('#up-progress'), txt = $('#up-progress-text');
     box.hidden = false; bar.max = canonical.length; bar.value = 0; txt.textContent = `0 / ${canonical.length.toLocaleString('en-GB')}`;

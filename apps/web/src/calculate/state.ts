@@ -4,9 +4,10 @@ export type GlucoseUnit = 'mmol/L' | 'mg/dL';
 export type InsulinUnit = 'pmol/L' | 'uU/mL';
 export type FfaUnit = 'mmol/L' | 'umol/L';
 export type MassUnit = 'mmol/L' | 'mg/dL';
+export type GlucagonUnit = 'pmol/L' | 'pg/mL';
 
-export interface UnitChoice { glucose: GlucoseUnit; insulin: InsulinUnit; tg: MassUnit; hdl: MassUnit; ffa: FfaUnit }
-export interface Row { time: string; glucose: string; insulin: string }
+export interface UnitChoice { glucose: GlucoseUnit; insulin: InsulinUnit; tg: MassUnit; hdl: MassUnit; ffa: FfaUnit; glucagon?: GlucagonUnit }
+export interface Row { time: string; glucose: string; insulin: string; glucagon: string }
 
 export interface FormState {
   units: UnitChoice;
@@ -19,14 +20,14 @@ export interface FormState {
   fat_mass: string; rate_glycerol: string; rate_palmitate: string;
 }
 
-export const DEFAULT_UNITS: UnitChoice = { glucose: 'mmol/L', insulin: 'pmol/L', tg: 'mmol/L', hdl: 'mmol/L', ffa: 'mmol/L' };
+export const DEFAULT_UNITS: UnitChoice = { glucose: 'mmol/L', insulin: 'pmol/L', tg: 'mmol/L', hdl: 'mmol/L', ffa: 'mmol/L', glucagon: 'pmol/L' };
 
 export function emptyState(units: UnitChoice = DEFAULT_UNITS): FormState {
   return {
     units: { ...units },
     insulinFactor: String(DEFAULT_SETTINGS.insulin_pmol_per_uU),
     glucoseFactor: String(DEFAULT_SETTINGS.glucose_mg_per_dL_per_mmol),
-    rows: [0, 30, 60, 90, 120].map((t) => ({ time: String(t), glucose: '', insulin: '' })),
+    rows: [0, 30, 60, 90, 120].map((t) => ({ time: String(t), glucose: '', insulin: '', glucagon: '' })),
     tg: '', hdl: '', ffa: '', age: '', sex: '', weight: '', bmi: '', waist: '', height: '',
     fat_mass: '', rate_glycerol: '', rate_palmitate: '',
   };
@@ -65,7 +66,7 @@ export function settingsOf(st: FormState): { settings: Partial<ConversionSetting
 /** Form state -> canonical-unit Inputs. All unit conversion goes through core toUnit. */
 export function buildInputs(st: FormState): Built {
   const { settings, errors } = settingsOf(st);
-  const conv = (v: number, q: 'glucose' | 'insulin' | 'ffa' | 'tg' | 'hdl', from: Unit) =>
+  const conv = (v: number, q: 'glucose' | 'insulin' | 'glucagon' | 'ffa' | 'tg' | 'hdl', from: Unit) =>
     toUnit(v, q, from, CANONICAL[q], settings);
   const inputs: Inputs = {};
   const num = (key: string, raw: string): number | undefined => {
@@ -74,23 +75,26 @@ export function buildInputs(st: FormState): Built {
     return p.value;
   };
 
-  const glucose: Series = {}, insulin: Series = {};
+  const glucose: Series = {}, insulin: Series = {}, glucagon: Series = {};
   const seen = new Set<number>();
   st.rows.forEach((r, k) => {
     const t = num(`row:${k}:time`, r.time);
     const g = num(`row:${k}:glucose`, r.glucose);
     const i = num(`row:${k}:insulin`, r.insulin);
+    const a = num(`row:${k}:glucagon`, r.glucagon);
     if (t === undefined) {
-      if (!errors[`row:${k}:time`] && (g !== undefined || i !== undefined)) errors[`row:${k}:time`] = 'time is required';
+      if (!errors[`row:${k}:time`] && (g !== undefined || i !== undefined || a !== undefined)) errors[`row:${k}:time`] = 'time is required';
       return;
     }
     if (seen.has(t)) { errors[`row:${k}:time`] = 'duplicate time'; return; }
     seen.add(t);
     if (g !== undefined) glucose[t] = conv(g, 'glucose', st.units.glucose);
     if (i !== undefined) insulin[t] = conv(i, 'insulin', st.units.insulin);
+    if (a !== undefined) glucagon[t] = conv(a, 'glucagon', st.units.glucagon ?? 'pmol/L');
   });
   if (Object.keys(glucose).length) inputs.glucose = glucose;
   if (Object.keys(insulin).length) inputs.insulin = insulin;
+  if (Object.keys(glucagon).length) inputs.glucagon = glucagon;
 
   const ffa = num('ffa', st.ffa); if (ffa !== undefined) inputs.ffa = { 0: conv(ffa, 'ffa', st.units.ffa) };
   const tg = num('tg', st.tg); if (tg !== undefined) inputs.tg = conv(tg, 'tg', st.units.tg);

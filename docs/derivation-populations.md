@@ -74,7 +74,7 @@ The same information is shown with every result and on the [Methods page](https:
 | Insulinogenic index (delta glucose, 30 min) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,588 | Denmark and Finland | Madsen 2024 |
 | Insulinogenic index (30-min glucose) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,769 | Denmark and Finland | Madsen 2024 |
 | Disposition index (Madsen 2024 table form) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,000 | Denmark and Finland | Madsen 2024 |
-| Disposition index (insulinogenic x Matsuda) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,000 | Denmark and Finland | Madsen 2024 |
+| Disposition index (xinsG30 x Matsuda) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,000 | Denmark and Finland | Madsen 2024 |
 | BIGTT-AIR | Adults with normal glucose tolerance (fasting below 7.0 and 2-h glucose below 7.8 mmol/L); 28 more for external validation | 258 | Denmark | Hansen 2007 |
 | Disposition index (BIGTT-AIR x BIGTT-SI) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,561 | Denmark and Finland | Madsen 2024 |
 

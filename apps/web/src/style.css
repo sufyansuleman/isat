@@ -47,6 +47,7 @@ input[aria-invalid="true"] { border-color: var(--err); }
 .sr { position: absolute; left: -999px; }
 .units { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
 .upair { display: inline-flex; align-items: center; gap: 6px; }
+.upair[hidden] { display: none; }
 .upair label { font-weight: 600; font-size: 0.9rem; }
 .upair select { max-width: 100%; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 12px 16px; }
