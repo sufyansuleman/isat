@@ -139,6 +139,16 @@ describe('ISAT vs InsuSensCalc 0.1.0', () => {
       '|---|---|---|---|',
       ...unavailRows,
       '',
+      '## ISAT vs IsletCalc 0.0.1 (insulin secretion and glucagon indices)',
+      '',
+      'Compared by `packages/core/test/isletcalc.test.ts` against `validation/fixtures/isletcalc_0.0.1.json`.',
+      '',
+      '- IsletCalc converts insulin from pmol/L to uU/mL with a multiplier of 0.1667; ISAT divides by its insulin factor (default 6.0, i.e. multiplies by 0.166667).',
+      '- The multipliers differ by a relative 2.0e-4 (0.1667 / 0.166667 = 1.0002), so every IsletCalc column that includes an insulin conversion (Homa_beta, Cir, Xinsdg30, Xinsg30, Di) differs from ISAT at the default factor by about 2e-4 to 3e-4 (relative).',
+      "- With ISAT's insulin factor set to 1 / 0.1667 the two agree to 1e-9 for all 12 shared columns; columns that use insulin in pmol/L or no insulin (Stumvoll, Bigtt_air, Dibig, glucagon columns, Glucagon_insulin_ratio) agree at the default settings.",
+      '- ISAT returns "unavailable" where IsletCalc returns a meaningless number: HOMA-beta with fasting glucose of 3.5 mmol/L or lower (zero or negative denominator), CIR with 30-min glucose of 70 mg/dL or lower, and the delta-glucose insulinogenic index when 30-min glucose equals fasting glucose.',
+      "- ISAT adds di_xinsg30_matsuda and glucagon_suppression_pct_60, which IsletCalc does not compute; glucagon_ratio_120_0 is IsletCalc's Glucagon_suppression_ratio, kept under a name that states what it is.",
+      '',
     ].join('\n');
     mkdirSync(resolve(root, 'validation'), { recursive: true });
     writeFileSync(resolve(root, 'validation/legacy-differences.md'), md);

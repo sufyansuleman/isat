@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { calculateBatch, calculateAll, parseCsv, parseWideRow, registry } from '../packages/core/src/index';
 import type { Inputs } from '../packages/core/src/types';
 
-const csv = readFileSync('validation/fixtures/inputs.csv', 'utf8');
+const csv = readFileSync('validation/fixtures/inputs_islet.csv', 'utf8');
 const rows = parseCsv(csv);
 const parsed = rows.map((r) => parseWideRow(r));
 const inputs = parsed.map((p) => p.inputs as Inputs);
@@ -32,6 +32,11 @@ const edge: Record<string, Inputs> = {
   insulin_equals_1uU: { ...base, insulin: { ...base.insulin, 0: 6 } }, // 1 uU/mL -> log10 = 0
   no_sex: { ...base, sex: undefined },
   no_weight: { ...base, weight: undefined },
+  g0_at_3_5: { ...base, glucose: { ...base.glucose, 0: 3.5 } }, // homa_beta undefined
+  g30_at_70mg: { ...base, glucose: { ...base.glucose, 30: 70 / 18 } }, // cir30 undefined
+  g30_equals_g0: { ...base, glucose: { ...base.glucose, 30: base.glucose![0] } }, // insulinogenic_dg30 undefined
+  no_glucagon_60: { ...base, glucagon: { 0: 8, 30: 6, 120: 6 } },
+  glucagon_zero: { ...base, glucagon: { 0: 0, 30: 6, 60: 5, 120: 6 } },
 };
 out.edge = Object.fromEntries(Object.entries(edge).map(([k, v]) => [k, pack(calculateAll(v))]));
 

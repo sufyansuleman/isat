@@ -12,6 +12,13 @@ import {
   stumvollMod, stumvollDem, bigttSi, avignonSi0, avignonSi120, avignonSim, AVIGNON_1999_WEIGHT,
   type AvignonWeightSource,
 } from './indices/ogtt';
+import {
+  homaBeta, cir30, stumvollFirstPhase, insulinogenicDg30, insulinogenicG30, diMadsenTable, diXinsg30Matsuda,
+  bigttAir, diBigtt,
+} from './indices/secretion';
+import {
+  glucagonFasting, glucagonAuc, glucagonRatio1200, glucagonSuppressionPct60, glucagonInsulinRatio,
+} from './indices/glucagon';
 import { revisedQuicki, mcauley, tyg, tgHdl, vai, lap, adipoIr } from './indices/lipid';
 
 export type SourceVerification =
@@ -30,10 +37,13 @@ export interface MethodEntry {
   name: string;
   category: string;
   direction: Direction;
+  /** Per-index direction phrase (used for descriptive indices). */
+  direction_text?: string;
   source_verification: SourceVerification;
   source_verification_detail: string;
   verification?: { status: VerificationStatus; detail?: string };
   legacy: { column: string | { male: string; female: string } | null; relation: LegacyRelation; scale_factor?: string };
+  isletcalc?: { column: string | null; relation: LegacyRelation; difference?: string };
   deferredReason?: string;
   needsReference: boolean;
   run: (inputs: Inputs, settings?: Partial<ConversionSettings>, reference?: Reference, extra?: RunExtra) => Result;
@@ -46,6 +56,11 @@ const plain: Record<string, Fn> = {
   matsuda_auc_3pt: matsudaAuc3pt, matsuda_5pt: matsuda5pt, stumvoll_mod: stumvollMod,
   stumvoll_dem: stumvollDem, bigtt_si: bigttSi, avignon_si0: avignonSi0, avignon_si120: avignonSi120,
   hiri, ifc, liri, lipo, atiri, revised_quicki: revisedQuicki, mcauley, tyg, tg_hdl: tgHdl, vai, lap, adipo_ir: adipoIr,
+  homa_beta: homaBeta, cir30, stumvoll_first_phase: stumvollFirstPhase, insulinogenic_dg30: insulinogenicDg30,
+  insulinogenic_g30: insulinogenicG30, di_madsen_table: diMadsenTable, di_xinsg30_matsuda: diXinsg30Matsuda,
+  bigtt_air: bigttAir, di_bigtt: diBigtt,
+  glucagon_fasting: glucagonFasting, glucagon_auc: glucagonAuc, glucagon_ratio_120_0: glucagonRatio1200,
+  glucagon_suppression_pct_60: glucagonSuppressionPct60, glucagon_insulin_ratio: glucagonInsulinRatio,
 };
 type RFn = (i: Inputs, r?: Reference, s?: Partial<ConversionSettings>) => Result;
 const withRef: Record<string, RFn> = {
@@ -59,6 +74,9 @@ const ORDER = [
   'stumvoll_mod', 'stumvoll_dem', 'bigtt_si', 'avignon_si0', 'avignon_si120', 'belfiore_isi_gly',
   'revised_quicki', 'mcauley', 'tyg', 'tg_hdl', 'vai', 'lap', 'adipo_ir', 'belfiore_isi_ffa',
   'bennett', 'hiri', 'avignon_sim', 'ifc', 'liri', 'lipo', 'atiri', 'homa2',
+  'homa_beta', 'cir30', 'stumvoll_first_phase', 'insulinogenic_dg30', 'insulinogenic_g30', 'di_madsen_table',
+  'di_xinsg30_matsuda', 'bigtt_air', 'di_bigtt',
+  'glucagon_fasting', 'glucagon_auc', 'glucagon_ratio_120_0', 'glucagon_suppression_pct_60', 'glucagon_insulin_ratio',
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,6 +97,8 @@ function build(id: string): MethodEntry {
   };
   const base = {
     id, name: sp.name as string, category: sp.category as string, direction: sp.direction as Direction,
+    ...(sp.direction_text ? { direction_text: sp.direction_text as string } : {}),
+    ...(sp.isletcalc ? { isletcalc: { column: sp.isletcalc.column ?? null, relation: sp.isletcalc.relation as LegacyRelation, difference: sp.isletcalc.difference as string | undefined } } : {}),
     verification: sp.verification as MethodEntry['verification'], legacy,
     source_verification: sp.source_verification as SourceVerification,
     source_verification_detail: sp.source_verification_detail as string,

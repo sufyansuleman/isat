@@ -1,11 +1,13 @@
-export type Quantity = 'glucose' | 'insulin' | 'ffa' | 'tg' | 'hdl';
-export type Unit = 'mmol/L' | 'mg/dL' | 'pmol/L' | 'uU/mL' | 'mU/L' | 'umol/L';
+export type Quantity = 'glucose' | 'insulin' | 'glucagon' | 'ffa' | 'tg' | 'hdl';
+export type Unit = 'mmol/L' | 'mg/dL' | 'pmol/L' | 'uU/mL' | 'mU/L' | 'umol/L' | 'pg/mL';
 
 export interface ConversionSettings {
   glucose_mg_per_dL_per_mmol: number;
   insulin_pmol_per_uU: number;
   tg_mg_per_dL_per_mmol: number;
   hdl_mg_per_dL_per_mmol: number;
+  /** pg/mL per pmol/L (glucagon, molecular weight about 3485). */
+  glucagon_pg_per_mL_per_pmol: number;
 }
 
 export const DEFAULT_SETTINGS: ConversionSettings = {
@@ -13,6 +15,7 @@ export const DEFAULT_SETTINGS: ConversionSettings = {
   insulin_pmol_per_uU: 6.0,
   tg_mg_per_dL_per_mmol: 88.57,
   hdl_mg_per_dL_per_mmol: 38.67,
+  glucagon_pg_per_mL_per_pmol: 3.485,
 };
 
 export function resolveSettings(s?: Partial<ConversionSettings>): ConversionSettings {
@@ -23,6 +26,7 @@ export function resolveSettings(s?: Partial<ConversionSettings>): ConversionSett
 export const CANONICAL: Record<Quantity, Unit> = {
   glucose: 'mmol/L',
   insulin: 'pmol/L',
+  glucagon: 'pmol/L',
   ffa: 'mmol/L',
   tg: 'mmol/L',
   hdl: 'mmol/L',
@@ -31,6 +35,7 @@ export const CANONICAL: Record<Quantity, Unit> = {
 const SUPPORTED: Record<Quantity, Unit[]> = {
   glucose: ['mmol/L', 'mg/dL'],
   insulin: ['pmol/L', 'uU/mL', 'mU/L'],
+  glucagon: ['pmol/L', 'pg/mL'],
   ffa: ['mmol/L', 'umol/L'],
   tg: ['mmol/L', 'mg/dL'],
   hdl: ['mmol/L', 'mg/dL'],
@@ -41,6 +46,7 @@ function factor(q: Quantity, u: Unit, s: ConversionSettings): number {
   if (!SUPPORTED[q].includes(u)) throw new Error(`Unit ${u} is not supported for ${q}`);
   if (q === 'glucose') return u === 'mg/dL' ? s.glucose_mg_per_dL_per_mmol : 1;
   if (q === 'insulin') return u === 'pmol/L' ? 1 : 1 / s.insulin_pmol_per_uU;
+  if (q === 'glucagon') return u === 'pg/mL' ? s.glucagon_pg_per_mL_per_pmol : 1;
   if (q === 'ffa') return u === 'umol/L' ? 1000 : 1;
   if (q === 'tg') return u === 'mg/dL' ? s.tg_mg_per_dL_per_mmol : 1;
   return u === 'mg/dL' ? s.hdl_mg_per_dL_per_mmol : 1;

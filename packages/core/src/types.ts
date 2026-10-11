@@ -6,6 +6,7 @@ export type Series = Partial<Record<number, number | undefined>>;
 export interface Inputs {
   glucose?: Series; // mmol/L
   insulin?: Series; // pmol/L
+  glucagon?: Series; // pmol/L
   ffa?: Series; // mmol/L (fasting = time 0)
   tg?: number; // mmol/L
   hdl?: number; // mmol/L
@@ -34,7 +35,7 @@ export interface Reference {
 }
 
 export type Status = 'ok' | 'unavailable' | 'error';
-export type Direction = 'higher_more_sensitive' | 'higher_more_resistant' | 'unknown';
+export type Direction = 'higher_more_sensitive' | 'higher_more_resistant' | 'unknown' | 'descriptive';
 
 export interface Result {
   id: string;

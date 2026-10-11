@@ -3,7 +3,7 @@ import type { UnitChoice } from './parse';
 
 export const unitLabel = (u: string) => u.replace('uU/mL', 'µU/mL').replace('umol/L', 'µmol/L');
 
-export type CheckQuantity = 'glucose' | 'insulin' | 'tg' | 'hdl' | 'ffa';
+export type CheckQuantity = 'glucose' | 'insulin' | 'glucagon' | 'tg' | 'hdl' | 'ffa';
 
 export interface UnitCheckItem {
   quantity: CheckQuantity;
@@ -17,7 +17,7 @@ export interface UnitCheckItem {
 
 export const MIN_VALUES = 5;
 
-const QUANTITY_LABEL: Record<CheckQuantity, string> = { glucose: 'Fasting glucose', insulin: 'Fasting insulin', tg: 'TG', hdl: 'HDL', ffa: 'FFA' };
+const QUANTITY_LABEL: Record<CheckQuantity, string> = { glucose: 'Fasting glucose', insulin: 'Fasting insulin', glucagon: 'Fasting glucagon', tg: 'TG', hdl: 'HDL', ffa: 'FFA' };
 
 export function median(xs: number[]): number {
   const s = [...xs].sort((a, b) => a - b);
@@ -25,24 +25,24 @@ export function median(xs: number[]): number {
   return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
 }
 
-type SeriesKey = 'glucose' | 'insulin' | 'ffa';
+type SeriesKey = 'glucose' | 'insulin' | 'glucagon' | 'ffa';
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** Gathers the numbers the plausibility check needs, row by row (no rows are kept). */
 export class UnitCheckCollector {
-  private readonly s: Record<SeriesKey, Map<number, number[]>> = { glucose: new Map(), insulin: new Map(), ffa: new Map() };
+  private readonly s: Record<SeriesKey, Map<number, number[]>> = { glucose: new Map(), insulin: new Map(), glucagon: new Map(), ffa: new Map() };
   private readonly tg: number[] = [];
   private readonly hdl: number[] = [];
 
   /** Row in the units used in the file. */
   add(r: Inputs): void {
-    for (const key of ['glucose', 'insulin', 'ffa'] as const) {
+    for (const key of ['glucose', 'insulin', 'glucagon', 'ffa'] as const) {
       const x = r[key] as Series | undefined;
       if (!x) continue;
       for (const [k, v] of Object.entries(x)) {
         if (!isNum(v)) continue;
         const t = Number(k);
-        if (key === 'insulin' && t !== 0) continue; // only fasting insulin is checked
+        if ((key === 'insulin' || key === 'glucagon') && t !== 0) continue; // only fasting insulin and glucagon are checked
         const m = this.s[key];
         const a = m.get(t);
         if (a) a.push(v); else m.set(t, [v]);
@@ -80,6 +80,8 @@ export class UnitCheckCollector {
       const s = m > 40 ? 'pmol/L' : m < 25 ? 'uU/mL' : null;
       return s === 'uU/mL' && sel === 'mU/L' ? sel : s; // mU/L is the same unit as uU/mL
     });
+
+    add('glucagon', 'Glucagon0', this.s.glucagon.get(0) ?? [], units.glucagon ?? 'pmol/L', (m) => (m > 30 ? 'pg/mL' : m < 25 ? 'pmol/L' : null));
 
     add('tg', 'TG', this.tg, units.tg, (m) => (m < 8 ? 'mmol/L' : m > 15 ? 'mg/dL' : null));
     add('hdl', 'HDL_c', this.hdl, units.hdl, (m) => (m < 4 ? 'mmol/L' : m > 10 ? 'mg/dL' : null));

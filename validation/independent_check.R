@@ -6,7 +6,7 @@
 
 suppressPackageStartupMessages(library(jsonlite))
 
-x <- read.csv("validation/fixtures/inputs.csv", stringsAsFactors = FALSE)
+x <- read.csv("validation/fixtures/inputs_islet.csv", stringsAsFactors = FALSE)
 isat <- fromJSON("validation/fixtures/isat_results.json", simplifyVector = FALSE)
 
 # Conversion constants (ISAT defaults; InsuSensCalc-compatible)
@@ -75,6 +75,27 @@ calc <- function(r) {
               0.408 * log10(r$HDL_c * HDL_MG) + 0.435 * log10(BMI)
   out$lipo  <- r$rate_glycerol * uu(I0)
   out$atiri <- r$rate_palmitate * uu(I0)
+  # Insulin secretion (beta cell): Madsen 2024 Supplementary Table 1 and the original papers
+  GL0 <- r$Glucagon0; GL30 <- r$Glucagon30; GL60 <- r$Glucagon60; GL120 <- r$Glucagon120
+  out$homa_beta <- if (G0 > 3.5) 20 * uu(I0) / (G0 - 3.5) else NA          # Matthews 1985
+  out$cir30 <- if (mg(G30) > 70) 100 * uu(I30) / (mg(G30) * (mg(G30) - 70)) else NA  # Sluiter 1976
+  out$stumvoll_first_phase <- 1283 + 1.829 * I30 - 138.7 * G30 + 3.772 * I0  # Stumvoll 2000
+  out$insulinogenic_dg30 <- if (G30 != G0) (uu(I30) - uu(I0)) / (mg(G30) - mg(G0)) else NA
+  out$insulinogenic_g30 <- (uu(I30) - uu(I0)) / G30
+  xins <- (uu(I30) - uu(I0)) / G30
+  out$di_madsen_table <- xins * 1000 /
+    (sqrt(mg(G0) * uu(I0)) * (mean(mg(c(G0, G30, G120))) * mean(uu(c(I0, I30, I120)))))
+  out$di_xinsg30_matsuda <- xins * out$matsuda_3pt
+  air <- exp(8.20 + 0.00178 * I0 + 0.00168 * I30 - 0.000383 * I120 - 0.314 * G0 -
+             0.109 * G30 + 0.0781 * G120 + 0.180 * male + 0.032 * BMI)      # Hansen 2007
+  out$bigtt_air <- air
+  out$di_bigtt <- air * out$bigtt_si
+  # Glucagon (alpha cell)
+  out$glucagon_fasting <- GL0
+  out$glucagon_auc <- 0.5 * ((GL30 + GL0) * 30 + (GL120 + GL30) * 90)
+  out$glucagon_ratio_120_0 <- GL120 / GL0
+  out$glucagon_suppression_pct_60 <- if (ok(GL60)) (1 - GL60 / GL0) * 100 else NA  # Chen 2021
+  out$glucagon_insulin_ratio <- GL0 / I0
   out
 }
 
@@ -136,7 +157,13 @@ checks <- c(
   "glucose NaN -> homa_ir not ok" = dep("glucose_nan", "homa_ir") != "ok",
   "no sex -> vai unavailable" = dep("no_sex", "vai") == "unavailable",
   "no sex -> bigtt unavailable" = dep("no_sex", "bigtt_si") == "unavailable",
-  "no weight -> gutt unavailable" = dep("no_weight", "gutt") == "unavailable"
+  "no weight -> gutt unavailable" = dep("no_weight", "gutt") == "unavailable",
+  "G0 = 3.5 -> homa_beta unavailable" = dep("g0_at_3_5", "homa_beta") == "unavailable",
+  "G30 = 70 mg/dL -> cir30 unavailable" = dep("g30_at_70mg", "cir30") == "unavailable",
+  "G30 = G0 -> insulinogenic_dg30 unavailable" = dep("g30_equals_g0", "insulinogenic_dg30") == "unavailable",
+  "no 60-min glucagon -> suppression unavailable" = dep("no_glucagon_60", "glucagon_suppression_pct_60") == "unavailable",
+  "no 60-min glucagon -> glucagon_auc ok" = dep("no_glucagon_60", "glucagon_auc") == "ok",
+  "glucagon 0 -> glucagon_fasting error" = dep("glucagon_zero", "glucagon_fasting") == "error"
 )
 
 cat(sprintf("Independent R vs ISAT: %d checks agree (rel 1e-9 or matching unavailability)\n", n_ok))

@@ -15,6 +15,6 @@ describe('orientation note', () => {
     expect(res).toContain('HOMA-IR');
     expect(sen).toContain('QUICKI');
     const incl = registry.filter((m) => m.deferredReason === undefined);
-    for (const m of incl) expect((m.direction === 'higher_more_resistant' ? res : sen)).toContain(m.name);
+    for (const m of incl.filter((x) => x.direction !== 'descriptive')) expect((m.direction === 'higher_more_resistant' ? res : sen)).toContain(m.name);
   });
 });

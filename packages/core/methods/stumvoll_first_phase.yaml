@@ -1,0 +1,34 @@
+id: stumvoll_first_phase
+name: "Stumvoll first-phase insulin release"
+category: secretion
+direction: descriptive
+direction_text: "higher = more first-phase insulin secretion"
+formula_latex: "1283 + 1.829 I_{30} - 138.7 G_{30} + 3.772 I_0"
+inputs: ["glucose_30 (mmol/L)","insulin_0,30 (pmol/L)"]
+reference:
+  citation: "Stumvoll M, Mitrakou A, Pimenta W, Jenssen T, Yki-Jarvinen H, Van Haeften T, Renn W, Gerich J. Use of the oral glucose tolerance test to assess insulin release and insulin sensitivity. Diabetes Care. 2000;23(3):295-301."
+  doi: 10.2337/diacare.23.3.295
+  pmid: 10868854
+secondary_references:
+  - citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+    doi: 10.1038/s42255-024-01140-6
+    pmid: 39420167
+verification:
+  status: confirmed
+  detail: "Same coefficients as Madsen 2024 Supplementary Table 1 (Stumvoll)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Stumvoll
+  relation: equal
+source_verification: directly_verified
+source_verification_detail: "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Stumvoll 2000."
+derived_in:
+  population: "Adults without diabetes"
+  n: "104"
+notes:
+  - "Insulin in pmol/L and glucose in mmol/L, as in the original equation."
+limitations:
+  - "Estimate of first-phase release (insulin pmol/L) fitted to the IVGTT first phase; can be negative in some people."
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

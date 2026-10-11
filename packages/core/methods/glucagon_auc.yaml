@@ -1,0 +1,30 @@
+id: glucagon_auc
+name: "Glucagon AUC (0-120 min)"
+category: glucagon
+direction: descriptive
+direction_text: "higher = more glucagon over the test"
+formula_latex: "0.5\\,((GL_{30} + GL_0) \\times 30 + (GL_{120} + GL_{30}) \\times 90)"
+inputs: ["glucagon_0,30,120 (pmol/L)"]
+reference:
+  citation: "IsletCalc: islet-hormone release indices (R package, Suleman S). https://github.com/sufyansuleman/IsletCalc"
+  doi: 10.5281/zenodo.21420133
+verification:
+  status: legacy_match
+  detail: "Trapezoid over 0, 30 and 120 min; matches IsletCalc (Glucagon_auc)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Glucagon_auc
+  relation: equal
+source_verification: not_applicable
+source_verification_detail: "Trapezoidal area over the 0, 30 and 120 min samples (unit pmol/L x min); no published formula to verify."
+derived_in:
+  population: "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)"
+  n: "275"
+  setting: "San Antonio, Texas, USA"
+notes:
+  - "Unit pmol/L x min."
+limitations:
+  - "Three time points only; a coarse approximation of the full curve."
+  - "Glucagon assays differ in specificity."

@@ -1,0 +1,29 @@
+id: glucagon_fasting
+name: "Fasting glucagon"
+category: glucagon
+direction: descriptive
+direction_text: "higher = more fasting glucagon"
+formula_latex: "Glucagon_0"
+inputs: ["glucagon_0 (pmol/L)"]
+reference:
+  citation: "IsletCalc: islet-hormone release indices (R package, Suleman S). https://github.com/sufyansuleman/IsletCalc"
+  doi: 10.5281/zenodo.21420133
+verification:
+  status: legacy_match
+  detail: "Reported as measured; matches IsletCalc (Fasting_glucagon)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Fasting_glucagon
+  relation: equal
+source_verification: not_applicable
+source_verification_detail: "Measured value reported as is; no formula to verify."
+derived_in:
+  population: "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)"
+  n: "275"
+  setting: "San Antonio, Texas, USA"
+notes:
+  - "Glucagon is read in pmol/L; pg/mL input is converted with 3.485 pg/mL per pmol/L (molecular weight about 3485)."
+limitations:
+  - "Glucagon assays differ in specificity; values are not directly comparable between assays."

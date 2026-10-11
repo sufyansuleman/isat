@@ -1,0 +1,31 @@
+id: glucagon_suppression_pct_60
+name: "Glucagon suppression at 60 min (%)"
+category: glucagon
+direction: descriptive
+direction_text: "higher = more glucagon suppression"
+formula_latex: "(1 - GL_{60} / GL_0) \\times 100"
+inputs: ["glucagon_0,60 (pmol/L)"]
+reference:
+  citation: "Chen X, Maldonado E, DeFronzo RA, Tripathy D. Impaired Suppression of Glucagon in Obese Subjects Parallels Decline in Insulin Sensitivity and Beta-Cell Function. J Clin Endocrinol Metab. 2021;106(5):1398-1409."
+  doi: 10.1210/clinem/dgab019
+  pmid: 33524152
+verification:
+  status: confirmed
+  detail: "Definition read in the full text of Chen 2021."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: null
+  relation: none
+source_verification: directly_verified
+source_verification_detail: "Definition read in the full text of Chen 2021: [1 - glucagon at 60 min / fasting glucagon] x 100%."
+derived_in:
+  population: "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)"
+  n: "275"
+  setting: "San Antonio, Texas, USA"
+notes:
+  - "Needs a 60-min glucagon sample. Not computed by IsletCalc."
+limitations:
+  - "Negative when glucagon at 60 min is above fasting."
+  - "Glucagon assays differ in specificity."

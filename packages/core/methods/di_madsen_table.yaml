@@ -1,0 +1,32 @@
+id: di_madsen_table
+name: "Disposition index (Madsen 2024 table form)"
+category: secretion
+direction: descriptive
+direction_text: "higher = better beta-cell function relative to insulin sensitivity"
+formula_latex: "\\mathrm{xinsG30} \\times 1000 / (\\sqrt{G_0 I_0} \\times \\bar G \\bar I)"
+inputs: ["glucose_0,30,120 (mg/dL)","insulin_0,30,120 (uU/mL)"]
+reference:
+  citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+  doi: 10.1038/s42255-024-01140-6
+  pmid: 39420167
+verification:
+  status: confirmed
+  detail: "Reproduces the expression printed in Supplementary Table 1 exactly; the square root covers only G0 x I0 and the OGTT means sit outside it, so this is not the Matsuda ISI."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Di
+  relation: equal
+  difference: "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+source_verification: directly_verified
+source_verification_detail: "Formula as printed in Madsen 2024 Supplementary Table 1. The main text describes this index as a disposition index for the modified insulinogenic index and Matsuda; see di_xinsg30_matsuda for the conventional product."
+derived_in:
+  population: "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)"
+  n: "25,000"
+  setting: "Denmark and Finland"
+notes:
+  - "Reported as printed so that it reproduces IsletCalc (column Di). Means over 0, 30 and 120 min; glucose in mg/dL and insulin in uU/mL."
+limitations:
+  - "The printed form differs from insulinogenic index x Matsuda ISI; compare with di_xinsg30_matsuda."
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

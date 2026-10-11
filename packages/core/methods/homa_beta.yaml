@@ -1,0 +1,36 @@
+id: homa_beta
+name: "HOMA-beta"
+category: secretion
+direction: descriptive
+direction_text: "higher = more basal insulin secretion"
+formula_latex: "20 \\times I_{0,\\mu U/mL} / (G_0 - 3.5)"
+inputs: ["glucose_0 (mmol/L)","insulin_0 (uU/mL)"]
+reference:
+  citation: "Matthews DR, Hosker JP, Rudenski AS, Naylor BA, Treacher DF, Turner RC. Homeostasis model assessment: insulin resistance and beta-cell function from fasting plasma glucose and insulin concentrations in man. Diabetologia. 1985;28(7):412-419."
+  doi: 10.1007/bf00280883
+  pmid: 3899825
+secondary_references:
+  - citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+    doi: 10.1038/s42255-024-01140-6
+    pmid: 39420167
+verification:
+  status: confirmed
+  detail: "Same expression as Madsen 2024 Supplementary Table 1 (HOMA-beta)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Homa_beta
+  relation: equal
+  difference: "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+source_verification: directly_verified
+source_verification_detail: "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Matthews 1985."
+derived_in:
+  population: "12 adults without diabetes (aged 23-67) and 11 with type 2 diabetes; numbers differed between comparisons"
+  n: "23"
+notes:
+  - "Insulin is converted from pmol/L to uU/mL with the insulin factor in the settings (default 6.0 pmol/L per uU/mL)."
+limitations:
+  - "Not defined (unavailable) when fasting glucose is 3.5 mmol/L or lower."
+  - "Fasting-only index of basal secretion; it does not capture the glucose-stimulated response."
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

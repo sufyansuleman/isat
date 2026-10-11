@@ -1,0 +1,35 @@
+id: di_xinsg30_matsuda
+name: "Disposition index (insulinogenic x Matsuda)"
+category: secretion
+direction: descriptive
+direction_text: "higher = better beta-cell function relative to insulin sensitivity"
+formula_latex: "\\mathrm{xinsG30} \\times \\mathrm{ISI}_{Matsuda,3pt}"
+inputs: ["glucose_0,30,120 (mmol/L)","insulin_0,30,120 (pmol/L)"]
+reference:
+  citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+  doi: 10.1038/s42255-024-01140-6
+  pmid: 39420167
+secondary_references:
+  - citation: "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470."
+    doi: 10.2337/diacare.22.9.1462
+    pmid: 10480510
+verification:
+  status: confirmed
+  detail: "Madsen 2024 text: disposition index for modified insulinogenic index and Matsuda. Supplementary Table 1 prints a different form (di_madsen_table)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: null
+  relation: none
+source_verification: directly_verified
+source_verification_detail: "Madsen 2024 main text describes a disposition index for the modified insulinogenic index and Matsuda; the product form used here (xinsG30 x Matsuda ISI, 3-point) is the conventional disposition index. Supplementary Table 1 prints a different expression, reported as di_madsen_table."
+derived_in:
+  population: "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)"
+  n: "25,000"
+  setting: "Denmark and Finland"
+notes:
+  - "Uses the ISAT 3-point Matsuda ISI (mean of the 0, 30 and 120 min values). Not computed by IsletCalc."
+limitations:
+  - "Not the form printed in Madsen 2024 Supplementary Table 1 (see di_madsen_table)."
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

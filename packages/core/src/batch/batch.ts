@@ -230,6 +230,7 @@ export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
     conversion_factors: {
       glucose_mg_per_dL_per_mmol: s.glucose_mg_per_dL_per_mmol, insulin_pmol_per_uU: s.insulin_pmol_per_uU,
       tg_mg_per_dL_per_mmol: s.tg_mg_per_dL_per_mmol, hdl_mg_per_dL_per_mmol: s.hdl_mg_per_dL_per_mmol,
+      ...(i.units['glucagon'] !== undefined ? { glucagon_pg_per_mL_per_pmol: s.glucagon_pg_per_mL_per_pmol } : {}),
     },
     avignon_weight: { value: i.avignon.w, source: i.avignon.source },
     orientation: i.orientation,

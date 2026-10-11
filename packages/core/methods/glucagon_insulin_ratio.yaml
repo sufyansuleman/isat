@@ -1,0 +1,30 @@
+id: glucagon_insulin_ratio
+name: "Glucagon / insulin ratio (fasting)"
+category: glucagon
+direction: descriptive
+direction_text: "higher = more glucagon relative to insulin"
+formula_latex: "GL_0 / I_0"
+inputs: ["glucagon_0 (pmol/L)","insulin_0 (pmol/L)"]
+reference:
+  citation: "Chen X, Maldonado E, DeFronzo RA, Tripathy D. Impaired Suppression of Glucagon in Obese Subjects Parallels Decline in Insulin Sensitivity and Beta-Cell Function. J Clin Endocrinol Metab. 2021;106(5):1398-1409."
+  doi: 10.1210/clinem/dgab019
+  pmid: 33524152
+verification:
+  status: confirmed
+  detail: "Ratio defined in Chen 2021; units are not stated in the text. Matches IsletCalc (Glucagon_insulin_ratio)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Glucagon_insulin_ratio
+  relation: equal
+source_verification: directly_verified
+source_verification_detail: "The fasting glucagon / insulin ratio is defined in Chen 2021; the full text does not state the units."
+derived_in:
+  population: "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)"
+  n: "275"
+  setting: "San Antonio, Texas, USA"
+notes:
+  - "Molar ratio (both in pmol/L). Values reported by Chen 2021 (about 9) were on a conventional-unit scale (pg/mL over uU/mL), so they are not comparable with this ratio."
+limitations:
+  - "Glucagon and insulin assays differ between laboratories."

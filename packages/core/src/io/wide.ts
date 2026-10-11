@@ -10,7 +10,7 @@ const isEmpty = (v: unknown) =>
   v === undefined || v === null || (typeof v === 'string' && ['', 'na', 'nan', 'null'].includes(v.trim().toLowerCase()));
 
 /**
- * Wide-format row -> Inputs. Columns: G<t>, I<t> (t in minutes), FFA (fasting) or FFA<t>, TG, HDL_c/HDL,
+ * Wide-format row -> Inputs. Columns: G<t>, I<t>, Glucagon<t> (t in minutes), FFA (fasting) or FFA<t>, TG, HDL_c/HDL,
  * weight, bmi, waist, age, sex (1 = male, 2 = female). Empty cells are missing (never 0). Values are
  * assumed to be in canonical units. Pure: no file access.
  */
@@ -34,7 +34,7 @@ export function parseWideRow(row: Record<string, string | number | null | undefi
       continue;
     }
     const num = typeof raw === 'number' ? raw : Number(String(raw).trim());
-    const series = /^(g|i|ffa)(\d*)$/.exec(lk);
+    const series = /^(glucagon|g|i|ffa)(\d*)$/.exec(lk);
     const scalar = { tg: 'tg', hdl: 'hdl', hdl_c: 'hdl', weight: 'weight', bmi: 'bmi', waist: 'waist', age: 'age', fat_mass: 'fat_mass', rate_glycerol: 'rate_glycerol', rate_palmitate: 'rate_palmitate' }[lk] as
       | 'tg' | 'hdl' | 'weight' | 'bmi' | 'waist' | 'age' | 'fat_mass' | 'rate_glycerol' | 'rate_palmitate' | undefined;
     if (!series && !scalar) continue; // ignore unknown columns
@@ -44,7 +44,7 @@ export function parseWideRow(row: Record<string, string | number | null | undefi
     }
     if (scalar) inputs[scalar] = num;
     else {
-      const name = series![1] === 'g' ? 'glucose' : series![1] === 'i' ? 'insulin' : 'ffa';
+      const name = series![1] === 'g' ? 'glucose' : series![1] === 'i' ? 'insulin' : series![1] === 'glucagon' ? 'glucagon' : 'ffa';
       const t = series![2] === '' ? 0 : Number(series![2]);
       (inputs[name] ??= {})[t] = num;
     }

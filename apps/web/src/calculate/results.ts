@@ -135,6 +135,7 @@ export const badgeText = (sv: string) => BADGE[sv] ?? sv;
 const DIRECTION: Record<string, string> = {
   higher_more_sensitive: 'higher = more insulin-sensitive',
   higher_more_resistant: 'higher = more insulin-resistant',
+  descriptive: 'direction depends on the index',
   unknown: 'direction not specified',
 };
 
@@ -197,7 +198,7 @@ export function cardHtml(r: Result, snap: Snapshot): string {
   extra.push(referenceHtml(r, snap.state, snap.built.settings));
   return `<article class="card" data-id="${esc(r.id)}" data-status="ok">${head}
 <p class="value"><span class="num" data-full="${v}">${fmt4(v)}</span>${r.unit ? ` <span class="unit">${esc(r.unit)}</span>` : ''}</p>
-<p class="dir">${DIRECTION[r.direction] ?? ''}</p>
+<p class="dir">${(m?.direction_text ?? DIRECTION[r.direction]) ?? ''}</p>
 ${cardFormulaHtml(spec, snap.state.sex)}
 <p><span class="badge" data-sv="${esc(sv)}">${esc(badgeText(sv))}</span></p>
 ${extra.join('')}
@@ -289,10 +290,12 @@ export function csvText(oriented: Result[], snap: Snapshot): string {
 // ---------- summary table (one row per result, grouped by category, full card on demand) ----------
 const SUMMARY_GROUPS: Array<[string, string]> = [
   ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'], ['tracer_dxa', 'Tracer & DXA'],
+  ['secretion', 'Insulin secretion (beta cell)'], ['glucagon', 'Glucagon (alpha cell)'],
 ];
 const SHORT_DIRECTION: Record<string, string> = {
   higher_more_sensitive: 'higher = more sensitive',
   higher_more_resistant: 'higher = more resistant',
+  descriptive: '',
   unknown: 'not specified',
 };
 
@@ -313,7 +316,7 @@ export function summaryHtml(oriented: Result[], snap: Snapshot, open: ReadonlySe
       const val = r.status === 'ok'
         ? `<span class="num">${fmt4(r.value as number)}</span>${r.unit ? ` <span class="unit">${esc(r.unit)}</span>` : ''}`
         : '<span class="err-msg">error</span>';
-      const dir = r.status === 'ok' ? (SHORT_DIRECTION[r.direction] ?? '') : '';
+      const dir = r.status === 'ok' ? (registry.find((x) => x.id === baseId(r.id))?.direction_text ?? SHORT_DIRECTION[r.direction] ?? '') : '';
       return `<tr class="srow" data-row="${id}"><th scope="row">${name}</th><td>${val}</td><td>${dir}</td>
 <td><button type="button" class="linklike" data-toggle="${id}" aria-expanded="${isOpen}">Details</button></td></tr>
 <tr class="sdetail" data-detail="${id}"${isOpen ? '' : ' hidden'}><td colspan="4">${cardHtml(r, snap)}</td></tr>`;

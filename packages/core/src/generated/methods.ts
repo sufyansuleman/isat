@@ -334,6 +334,58 @@ export const methodSpecs = {
     "source_verification": "unresolved",
     "source_verification_detail": "Evidence collected: Anderson RL, Hamman RF, Savage PJ, et al. Am J Epidemiol 1995;142(7):724-732, doi:10.1093/aje/142.7.724, PMID 7572943. The original unit convention and log base were not inspected. Later sources differ: InsuSensCalc and Suleman 2024 (JCEM 109:2754, Table 2) use 1/(ln I uU/mL * ln G mg/dL); secondary literature reports a mmol/L convention. Logs are not unit-invariant, so the conventions give different values."
   },
+  "bigtt_air": {
+    "id": "bigtt_air",
+    "name": "BIGTT-AIR",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = greater acute insulin response",
+    "formula_latex": "\\exp(8.20 + 0.00178 I_0 + 0.00168 I_{30} - 0.000383 I_{120} - 0.314 G_0 - 0.109 G_{30} + 0.0781 G_{120} + 0.180\\,male + 0.032 BMI)",
+    "inputs": [
+      "glucose_0,30,120 (mmol/L)",
+      "insulin_0,30,120 (pmol/L)",
+      "bmi",
+      "sex"
+    ],
+    "reference": {
+      "citation": "Hansen T, Drivsholm T, Urhammer SA, Palacios RT, Vølund A, Borch-Johnsen K, Pedersen O. The BIGTT test: a novel test for simultaneous measurement of pancreatic beta-cell function, insulin sensitivity, and glucose tolerance. Diabetes Care. 2007;30(2):257-262.",
+      "doi": "10.2337/dc06-1240",
+      "pmid": 17259491
+    },
+    "secondary_references": [
+      {
+        "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+        "doi": "10.1038/s42255-024-01140-6",
+        "pmid": 39420167
+      }
+    ],
+    "verification": {
+      "status": "confirmed",
+      "detail": "Same coefficients as Madsen 2024 Supplementary Table 1 (BIGTT-AIR). male = 1 for male, 0 otherwise, as for bigtt_si."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Bigtt_air",
+      "relation": "equal"
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Hansen 2007.",
+    "derived_in": {
+      "population": "Adults with normal glucose tolerance (fasting below 7.0 and 2-h glucose below 7.8 mmol/L); 28 more for external validation",
+      "n": "258",
+      "setting": "Denmark"
+    },
+    "notes": [
+      "Insulin in pmol/L and glucose in mmol/L, as in the original equation."
+    ],
+    "limitations": [
+      "Derived in people with normal glucose tolerance; use in other groups is an extrapolation.",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
+  },
   "bigtt_si": {
     "id": "bigtt_si",
     "name": "BIGTT-SI",
@@ -380,6 +432,201 @@ export const methodSpecs = {
     },
     "source_verification": "unresolved",
     "source_verification_detail": "Evidence collected: Cederholm J, Wibell L. Diabetes Res Clin Pract 1990;10(2):167-175, doi:10.1016/0168-8227(90)90040-Z, PMID 2261853. The abstract confirms SI = (M/mean blood glucose)/log(mean serum insulin). The 1.15·180·0.19·BW constants and 0/30/60/120 four-sample means are known only from Gutt 2000's description; log base inferred as log10 from Gutt's derived ISI0,120; full paper not inspected."
+  },
+  "cir30": {
+    "id": "cir30",
+    "name": "Corrected insulin response at 30 min (CIR)",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = more insulin secretion",
+    "formula_latex": "100 \\times I_{30,\\mu U/mL} / (G_{30,mg/dL} (G_{30,mg/dL} - 70))",
+    "inputs": [
+      "glucose_30 (mg/dL)",
+      "insulin_30 (uU/mL)"
+    ],
+    "reference": {
+      "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+      "doi": "10.1038/s42255-024-01140-6",
+      "pmid": 39420167
+    },
+    "secondary_references": [
+      {
+        "citation": "Sluiter WJ, Erkelens DW, Terpstra P, Reitsma WD, Doorenbos H. Glucose tolerance and insulin release, a mathematical approach. I. Assay of the beta-cell response after oral glucose loading. Diabetes. 1976;25(4):241-244.",
+        "doi": "10.2337/diab.25.4.241",
+        "pmid": 773721
+      }
+    ],
+    "verification": {
+      "status": "confirmed",
+      "detail": "Madsen 2024 prints an unbalanced bracket; the standard Sluiter form with 30-min values is used (the same reading as IsletCalc)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Cir",
+      "relation": "equal",
+      "difference": "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Sluiter 1976 (part I).",
+    "derived_in": {
+      "population": "Not stated in the abstract (Sluiter 1976)",
+      "n": "not stated"
+    },
+    "notes": [
+      "The 30-min value replaces the 60-min value of the original corrected insulin response, as in Madsen 2024."
+    ],
+    "limitations": [
+      "Not defined (unavailable) when 30-min glucose is 70 mg/dL (3.9 mmol/L) or lower.",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
+  },
+  "di_bigtt": {
+    "id": "di_bigtt",
+    "name": "Disposition index (BIGTT-AIR x BIGTT-SI)",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = better beta-cell function relative to insulin sensitivity",
+    "formula_latex": "AIR_{BIGTT} \\times SI_{BIGTT}",
+    "inputs": [
+      "glucose_0,30,120 (mmol/L)",
+      "insulin_0,30,120 (pmol/L)",
+      "bmi",
+      "sex"
+    ],
+    "reference": {
+      "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+      "doi": "10.1038/s42255-024-01140-6",
+      "pmid": 39420167
+    },
+    "secondary_references": [
+      {
+        "citation": "Hansen T, Drivsholm T, Urhammer SA, Palacios RT, Vølund A, Borch-Johnsen K, Pedersen O. The BIGTT test: a novel test for simultaneous measurement of pancreatic beta-cell function, insulin sensitivity, and glucose tolerance. Diabetes Care. 2007;30(2):257-262.",
+        "doi": "10.2337/dc06-1240",
+        "pmid": 17259491
+      }
+    ],
+    "verification": {
+      "status": "confirmed",
+      "detail": "Madsen 2024 name: DIBIG."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Dibig",
+      "relation": "equal"
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1.",
+    "derived_in": {
+      "population": "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)",
+      "n": "25,561",
+      "setting": "Denmark and Finland"
+    },
+    "notes": [
+      "Madsen 2024 name: DIBIG. Product of the ISAT BIGTT-AIR and BIGTT-SI values."
+    ],
+    "limitations": [
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
+  },
+  "di_madsen_table": {
+    "id": "di_madsen_table",
+    "name": "Disposition index (Madsen 2024 table form)",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = better beta-cell function relative to insulin sensitivity",
+    "formula_latex": "\\mathrm{xinsG30} \\times 1000 / (\\sqrt{G_0 I_0} \\times \\bar G \\bar I)",
+    "inputs": [
+      "glucose_0,30,120 (mg/dL)",
+      "insulin_0,30,120 (uU/mL)"
+    ],
+    "reference": {
+      "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+      "doi": "10.1038/s42255-024-01140-6",
+      "pmid": 39420167
+    },
+    "verification": {
+      "status": "confirmed",
+      "detail": "Reproduces the expression printed in Supplementary Table 1 exactly; the square root covers only G0 x I0 and the OGTT means sit outside it, so this is not the Matsuda ISI."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Di",
+      "relation": "equal",
+      "difference": "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1. The main text describes this index as a disposition index for the modified insulinogenic index and Matsuda; see di_xinsg30_matsuda for the conventional product.",
+    "derived_in": {
+      "population": "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)",
+      "n": "25,000",
+      "setting": "Denmark and Finland"
+    },
+    "notes": [
+      "Reported as printed so that it reproduces IsletCalc (column Di). Means over 0, 30 and 120 min; glucose in mg/dL and insulin in uU/mL."
+    ],
+    "limitations": [
+      "The printed form differs from insulinogenic index x Matsuda ISI; compare with di_xinsg30_matsuda.",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
+  },
+  "di_xinsg30_matsuda": {
+    "id": "di_xinsg30_matsuda",
+    "name": "Disposition index (insulinogenic x Matsuda)",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = better beta-cell function relative to insulin sensitivity",
+    "formula_latex": "\\mathrm{xinsG30} \\times \\mathrm{ISI}_{Matsuda,3pt}",
+    "inputs": [
+      "glucose_0,30,120 (mmol/L)",
+      "insulin_0,30,120 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+      "doi": "10.1038/s42255-024-01140-6",
+      "pmid": 39420167
+    },
+    "secondary_references": [
+      {
+        "citation": "Matsuda M, DeFronzo RA. Insulin sensitivity indices obtained from oral glucose tolerance testing: comparison with the euglycemic insulin clamp. Diabetes Care. 1999;22(9):1462-1470.",
+        "doi": "10.2337/diacare.22.9.1462",
+        "pmid": 10480510
+      }
+    ],
+    "verification": {
+      "status": "confirmed",
+      "detail": "Madsen 2024 text: disposition index for modified insulinogenic index and Matsuda. Supplementary Table 1 prints a different form (di_madsen_table)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": null,
+      "relation": "none"
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Madsen 2024 main text describes a disposition index for the modified insulinogenic index and Matsuda; the product form used here (xinsG30 x Matsuda ISI, 3-point) is the conventional disposition index. Supplementary Table 1 prints a different expression, reported as di_madsen_table.",
+    "derived_in": {
+      "population": "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)",
+      "n": "25,000",
+      "setting": "Denmark and Finland"
+    },
+    "notes": [
+      "Uses the ISAT 3-point Matsuda ISI (mean of the 0, 30 and 120 min values). Not computed by IsletCalc."
+    ],
+    "limitations": [
+      "Not the form printed in Madsen 2024 Supplementary Table 1 (see di_madsen_table).",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
   },
   "firi": {
     "id": "firi",
@@ -429,6 +676,212 @@ export const methodSpecs = {
       "population": "Adults without diabetes (13 in the minimal-model comparison) and 30 with newly diagnosed type 2 diabetes",
       "n": "13 + 30"
     }
+  },
+  "glucagon_auc": {
+    "id": "glucagon_auc",
+    "name": "Glucagon AUC (0-120 min)",
+    "category": "glucagon",
+    "direction": "descriptive",
+    "direction_text": "higher = more glucagon over the test",
+    "formula_latex": "0.5\\,((GL_{30} + GL_0) \\times 30 + (GL_{120} + GL_{30}) \\times 90)",
+    "inputs": [
+      "glucagon_0,30,120 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "IsletCalc: islet-hormone release indices (R package, Suleman S). https://github.com/sufyansuleman/IsletCalc",
+      "doi": "10.5281/zenodo.21420133"
+    },
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Trapezoid over 0, 30 and 120 min; matches IsletCalc (Glucagon_auc)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Glucagon_auc",
+      "relation": "equal"
+    },
+    "source_verification": "not_applicable",
+    "source_verification_detail": "Trapezoidal area over the 0, 30 and 120 min samples (unit pmol/L x min); no published formula to verify.",
+    "derived_in": {
+      "population": "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)",
+      "n": "275",
+      "setting": "San Antonio, Texas, USA"
+    },
+    "notes": [
+      "Unit pmol/L x min."
+    ],
+    "limitations": [
+      "Three time points only; a coarse approximation of the full curve.",
+      "Glucagon assays differ in specificity."
+    ]
+  },
+  "glucagon_fasting": {
+    "id": "glucagon_fasting",
+    "name": "Fasting glucagon",
+    "category": "glucagon",
+    "direction": "descriptive",
+    "direction_text": "higher = more fasting glucagon",
+    "formula_latex": "Glucagon_0",
+    "inputs": [
+      "glucagon_0 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "IsletCalc: islet-hormone release indices (R package, Suleman S). https://github.com/sufyansuleman/IsletCalc",
+      "doi": "10.5281/zenodo.21420133"
+    },
+    "verification": {
+      "status": "legacy_match",
+      "detail": "Reported as measured; matches IsletCalc (Fasting_glucagon)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Fasting_glucagon",
+      "relation": "equal"
+    },
+    "source_verification": "not_applicable",
+    "source_verification_detail": "Measured value reported as is; no formula to verify.",
+    "derived_in": {
+      "population": "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)",
+      "n": "275",
+      "setting": "San Antonio, Texas, USA"
+    },
+    "notes": [
+      "Glucagon is read in pmol/L; pg/mL input is converted with 3.485 pg/mL per pmol/L (molecular weight about 3485)."
+    ],
+    "limitations": [
+      "Glucagon assays differ in specificity; values are not directly comparable between assays."
+    ]
+  },
+  "glucagon_insulin_ratio": {
+    "id": "glucagon_insulin_ratio",
+    "name": "Glucagon / insulin ratio (fasting)",
+    "category": "glucagon",
+    "direction": "descriptive",
+    "direction_text": "higher = more glucagon relative to insulin",
+    "formula_latex": "GL_0 / I_0",
+    "inputs": [
+      "glucagon_0 (pmol/L)",
+      "insulin_0 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "Chen X, Maldonado E, DeFronzo RA, Tripathy D. Impaired Suppression of Glucagon in Obese Subjects Parallels Decline in Insulin Sensitivity and Beta-Cell Function. J Clin Endocrinol Metab. 2021;106(5):1398-1409.",
+      "doi": "10.1210/clinem/dgab019",
+      "pmid": 33524152
+    },
+    "verification": {
+      "status": "confirmed",
+      "detail": "Ratio defined in Chen 2021; units are not stated in the text. Matches IsletCalc (Glucagon_insulin_ratio)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Glucagon_insulin_ratio",
+      "relation": "equal"
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "The fasting glucagon / insulin ratio is defined in Chen 2021; the full text does not state the units.",
+    "derived_in": {
+      "population": "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)",
+      "n": "275",
+      "setting": "San Antonio, Texas, USA"
+    },
+    "notes": [
+      "Molar ratio (both in pmol/L). Values reported by Chen 2021 (about 9) were on a conventional-unit scale (pg/mL over uU/mL), so they are not comparable with this ratio."
+    ],
+    "limitations": [
+      "Glucagon and insulin assays differ between laboratories."
+    ]
+  },
+  "glucagon_ratio_120_0": {
+    "id": "glucagon_ratio_120_0",
+    "name": "Glucagon 120-min / fasting ratio (IsletCalc definition)",
+    "category": "glucagon",
+    "direction": "descriptive",
+    "direction_text": "higher = less glucagon suppression after glucose",
+    "formula_latex": "GL_{120} / GL_0",
+    "inputs": [
+      "glucagon_0,120 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "IsletCalc: islet-hormone release indices (R package, Suleman S). https://github.com/sufyansuleman/IsletCalc",
+      "doi": "10.5281/zenodo.21420133"
+    },
+    "verification": {
+      "status": "legacy_match",
+      "detail": "IsletCalc definition (Glucagon_suppression_ratio)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Glucagon_suppression_ratio",
+      "relation": "equal"
+    },
+    "source_verification": "not_applicable",
+    "source_verification_detail": "IsletCalc own definition (Glucagon_suppression_ratio = Glucagon120 / Glucagon0); not a published index. For the published suppression measure see glucagon_suppression_pct_60.",
+    "derived_in": {
+      "population": "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)",
+      "n": "275",
+      "setting": "San Antonio, Texas, USA"
+    },
+    "notes": [
+      "Labelled by IsletCalc as a suppression ratio, but a higher value means LESS suppression."
+    ],
+    "limitations": [
+      "Not a published index; defined by IsletCalc.",
+      "Glucagon assays differ in specificity."
+    ]
+  },
+  "glucagon_suppression_pct_60": {
+    "id": "glucagon_suppression_pct_60",
+    "name": "Glucagon suppression at 60 min (%)",
+    "category": "glucagon",
+    "direction": "descriptive",
+    "direction_text": "higher = more glucagon suppression",
+    "formula_latex": "(1 - GL_{60} / GL_0) \\times 100",
+    "inputs": [
+      "glucagon_0,60 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "Chen X, Maldonado E, DeFronzo RA, Tripathy D. Impaired Suppression of Glucagon in Obese Subjects Parallels Decline in Insulin Sensitivity and Beta-Cell Function. J Clin Endocrinol Metab. 2021;106(5):1398-1409.",
+      "doi": "10.1210/clinem/dgab019",
+      "pmid": 33524152
+    },
+    "verification": {
+      "status": "confirmed",
+      "detail": "Definition read in the full text of Chen 2021."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": null,
+      "relation": "none"
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Definition read in the full text of Chen 2021: [1 - glucagon at 60 min / fasting glucagon] x 100%.",
+    "derived_in": {
+      "population": "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)",
+      "n": "275",
+      "setting": "San Antonio, Texas, USA"
+    },
+    "notes": [
+      "Needs a 60-min glucagon sample. Not computed by IsletCalc."
+    ],
+    "limitations": [
+      "Negative when glucagon at 60 min is above fasting.",
+      "Glucagon assays differ in specificity."
+    ]
   },
   "gutt": {
     "id": "gutt",
@@ -525,6 +978,57 @@ export const methodSpecs = {
     },
     "source_verification": "not_applicable",
     "source_verification_detail": "Closed-source model; not implemented."
+  },
+  "homa_beta": {
+    "id": "homa_beta",
+    "name": "HOMA-beta",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = more basal insulin secretion",
+    "formula_latex": "20 \\times I_{0,\\mu U/mL} / (G_0 - 3.5)",
+    "inputs": [
+      "glucose_0 (mmol/L)",
+      "insulin_0 (uU/mL)"
+    ],
+    "reference": {
+      "citation": "Matthews DR, Hosker JP, Rudenski AS, Naylor BA, Treacher DF, Turner RC. Homeostasis model assessment: insulin resistance and beta-cell function from fasting plasma glucose and insulin concentrations in man. Diabetologia. 1985;28(7):412-419.",
+      "doi": "10.1007/bf00280883",
+      "pmid": 3899825
+    },
+    "secondary_references": [
+      {
+        "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+        "doi": "10.1038/s42255-024-01140-6",
+        "pmid": 39420167
+      }
+    ],
+    "verification": {
+      "status": "confirmed",
+      "detail": "Same expression as Madsen 2024 Supplementary Table 1 (HOMA-beta)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Homa_beta",
+      "relation": "equal",
+      "difference": "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Matthews 1985.",
+    "derived_in": {
+      "population": "12 adults without diabetes (aged 23-67) and 11 with type 2 diabetes; numbers differed between comparisons",
+      "n": "23"
+    },
+    "notes": [
+      "Insulin is converted from pmol/L to uU/mL with the insulin factor in the settings (default 6.0 pmol/L per uU/mL)."
+    ],
+    "limitations": [
+      "Not defined (unavailable) when fasting glucose is 3.5 mmol/L or lower.",
+      "Fasting-only index of basal secretion; it does not capture the glucose-stimulated response.",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
   },
   "homa_ir": {
     "id": "homa_ir",
@@ -670,6 +1174,94 @@ export const methodSpecs = {
       "n": "not stated",
       "setting": "Arizona, USA"
     }
+  },
+  "insulinogenic_dg30": {
+    "id": "insulinogenic_dg30",
+    "name": "Insulinogenic index (delta glucose, 30 min)",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = more insulin secretion",
+    "formula_latex": "(I_{30} - I_0)_{\\mu U/mL} / (G_{30} - G_0)_{mg/dL}",
+    "inputs": [
+      "glucose_0,30 (mg/dL)",
+      "insulin_0,30 (uU/mL)"
+    ],
+    "reference": {
+      "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+      "doi": "10.1038/s42255-024-01140-6",
+      "pmid": 39420167
+    },
+    "verification": {
+      "status": "confirmed",
+      "detail": "Madsen 2024 name: xinsdG30."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Xinsdg30",
+      "relation": "equal",
+      "difference": "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1.",
+    "derived_in": {
+      "population": "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)",
+      "n": "25,588",
+      "setting": "Denmark and Finland"
+    },
+    "notes": [
+      "Madsen 2024 name: xinsdG30. Insulin converted to uU/mL and glucose to mg/dL with the settings factors."
+    ],
+    "limitations": [
+      "Not defined (unavailable) when 30-min glucose equals fasting glucose.",
+      "Unstable when the glucose rise is small.",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
+  },
+  "insulinogenic_g30": {
+    "id": "insulinogenic_g30",
+    "name": "Insulinogenic index (30-min glucose)",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = more insulin secretion",
+    "formula_latex": "(I_{30} - I_0)_{\\mu U/mL} / G_{30,mmol/L}",
+    "inputs": [
+      "glucose_30 (mmol/L)",
+      "insulin_0,30 (uU/mL)"
+    ],
+    "reference": {
+      "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+      "doi": "10.1038/s42255-024-01140-6",
+      "pmid": 39420167
+    },
+    "verification": {
+      "status": "confirmed",
+      "detail": "Madsen 2024 name: xinsG30."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Xinsg30",
+      "relation": "equal",
+      "difference": "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1.",
+    "derived_in": {
+      "population": "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)",
+      "n": "25,769",
+      "setting": "Denmark and Finland"
+    },
+    "notes": [
+      "Madsen 2024 name: xinsG30. Insulin converted to uU/mL with the settings factor; glucose stays in mmol/L."
+    ],
+    "limitations": [
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
   },
   "isi_120": {
     "id": "isi_120",
@@ -1152,6 +1744,55 @@ export const methodSpecs = {
       "population": "Adults without diabetes: 65 normal and 39 impaired glucose tolerance",
       "n": "104"
     }
+  },
+  "stumvoll_first_phase": {
+    "id": "stumvoll_first_phase",
+    "name": "Stumvoll first-phase insulin release",
+    "category": "secretion",
+    "direction": "descriptive",
+    "direction_text": "higher = more first-phase insulin secretion",
+    "formula_latex": "1283 + 1.829 I_{30} - 138.7 G_{30} + 3.772 I_0",
+    "inputs": [
+      "glucose_30 (mmol/L)",
+      "insulin_0,30 (pmol/L)"
+    ],
+    "reference": {
+      "citation": "Stumvoll M, Mitrakou A, Pimenta W, Jenssen T, Yki-Jarvinen H, Van Haeften T, Renn W, Gerich J. Use of the oral glucose tolerance test to assess insulin release and insulin sensitivity. Diabetes Care. 2000;23(3):295-301.",
+      "doi": "10.2337/diacare.23.3.295",
+      "pmid": 10868854
+    },
+    "secondary_references": [
+      {
+        "citation": "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024.",
+        "doi": "10.1038/s42255-024-01140-6",
+        "pmid": 39420167
+      }
+    ],
+    "verification": {
+      "status": "confirmed",
+      "detail": "Same coefficients as Madsen 2024 Supplementary Table 1 (Stumvoll)."
+    },
+    "legacy": {
+      "insusenscalc_column": null,
+      "relation": "none"
+    },
+    "isletcalc": {
+      "column": "Stumvoll",
+      "relation": "equal"
+    },
+    "source_verification": "directly_verified",
+    "source_verification_detail": "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Stumvoll 2000.",
+    "derived_in": {
+      "population": "Adults without diabetes",
+      "n": "104"
+    },
+    "notes": [
+      "Insulin in pmol/L and glucose in mmol/L, as in the original equation."
+    ],
+    "limitations": [
+      "Estimate of first-phase release (insulin pmol/L) fitted to the IVGTT first phase; can be negative in some people.",
+      "Insulin assays differ between laboratories; values are not directly comparable between studies."
+    ]
   },
   "stumvoll_mod": {
     "id": "stumvoll_mod",

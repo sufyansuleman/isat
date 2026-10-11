@@ -1,0 +1,30 @@
+id: glucagon_ratio_120_0
+name: "Glucagon 120-min / fasting ratio (IsletCalc definition)"
+category: glucagon
+direction: descriptive
+direction_text: "higher = less glucagon suppression after glucose"
+formula_latex: "GL_{120} / GL_0"
+inputs: ["glucagon_0,120 (pmol/L)"]
+reference:
+  citation: "IsletCalc: islet-hormone release indices (R package, Suleman S). https://github.com/sufyansuleman/IsletCalc"
+  doi: 10.5281/zenodo.21420133
+verification:
+  status: legacy_match
+  detail: "IsletCalc definition (Glucagon_suppression_ratio)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Glucagon_suppression_ratio
+  relation: equal
+source_verification: not_applicable
+source_verification_detail: "IsletCalc own definition (Glucagon_suppression_ratio = Glucagon120 / Glucagon0); not a published index. For the published suppression measure see glucagon_suppression_pct_60."
+derived_in:
+  population: "Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp)"
+  n: "275"
+  setting: "San Antonio, Texas, USA"
+notes:
+  - "Labelled by IsletCalc as a suppression ratio, but a higher value means LESS suppression."
+limitations:
+  - "Not a published index; defined by IsletCalc."
+  - "Glucagon assays differ in specificity."

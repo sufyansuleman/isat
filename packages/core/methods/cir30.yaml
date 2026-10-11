@@ -1,0 +1,35 @@
+id: cir30
+name: "Corrected insulin response at 30 min (CIR)"
+category: secretion
+direction: descriptive
+direction_text: "higher = more insulin secretion"
+formula_latex: "100 \\times I_{30,\\mu U/mL} / (G_{30,mg/dL} (G_{30,mg/dL} - 70))"
+inputs: ["glucose_30 (mg/dL)","insulin_30 (uU/mL)"]
+reference:
+  citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+  doi: 10.1038/s42255-024-01140-6
+  pmid: 39420167
+secondary_references:
+  - citation: "Sluiter WJ, Erkelens DW, Terpstra P, Reitsma WD, Doorenbos H. Glucose tolerance and insulin release, a mathematical approach. I. Assay of the beta-cell response after oral glucose loading. Diabetes. 1976;25(4):241-244."
+    doi: 10.2337/diab.25.4.241
+    pmid: 773721
+verification:
+  status: confirmed
+  detail: "Madsen 2024 prints an unbalanced bracket; the standard Sluiter form with 30-min values is used (the same reading as IsletCalc)."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Cir
+  relation: equal
+  difference: "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+source_verification: directly_verified
+source_verification_detail: "Formula as printed in Madsen 2024 Supplementary Table 1. Original: Sluiter 1976 (part I)."
+derived_in:
+  population: "Not stated in the abstract (Sluiter 1976)"
+  n: "not stated"
+notes:
+  - "The 30-min value replaces the 60-min value of the original corrected insulin response, as in Madsen 2024."
+limitations:
+  - "Not defined (unavailable) when 30-min glucose is 70 mg/dL (3.9 mmol/L) or lower."
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

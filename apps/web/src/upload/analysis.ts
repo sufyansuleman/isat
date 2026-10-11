@@ -43,6 +43,7 @@ export function transformedLabel(name: string, t: TransformSetting): string {
 /** Category order used by the summary and the heatmap. */
 export const CATEGORIES: Array<[string, string]> = [
   ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'], ['tracer_dxa', 'Tracer & DXA'],
+  ['secretion', 'Insulin secretion (beta cell)'], ['glucagon', 'Glucagon (alpha cell)'],
 ];
 
 /** INCLUDED positions ordered by category, then by name. */

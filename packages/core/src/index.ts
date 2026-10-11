@@ -11,6 +11,8 @@ export { parseWideRow, parseCsv, type WideRow } from './io/wide';
 export * from './indices/fasting';
 export * from './indices/ogtt';
 export * from './indices/lipid';
+export * from './indices/secretion';
+export * from './indices/glucagon';
 export { orient, type OrientMode } from './orient';
 export * from './transform';
 export * from './batch';

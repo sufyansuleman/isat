@@ -7,6 +7,7 @@ type Spec = Record<string, any>;
 
 const CATEGORIES: Array<[string, string]> = [
   ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'], ['tracer_dxa', 'Tracer & DXA'],
+  ['secretion', 'Insulin secretion (beta cell)'], ['glucagon', 'Glucagon (alpha cell)'],
 ];
 
 function flatSpecs(): Record<string, Spec> {

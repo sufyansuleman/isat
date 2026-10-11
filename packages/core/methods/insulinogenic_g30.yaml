@@ -1,0 +1,31 @@
+id: insulinogenic_g30
+name: "Insulinogenic index (30-min glucose)"
+category: secretion
+direction: descriptive
+direction_text: "higher = more insulin secretion"
+formula_latex: "(I_{30} - I_0)_{\\mu U/mL} / G_{30,mmol/L}"
+inputs: ["glucose_30 (mmol/L)","insulin_0,30 (uU/mL)"]
+reference:
+  citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+  doi: 10.1038/s42255-024-01140-6
+  pmid: 39420167
+verification:
+  status: confirmed
+  detail: "Madsen 2024 name: xinsG30."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Xinsg30
+  relation: equal
+  difference: "IsletCalc converts insulin with x 0.1667; ISAT divides by 6.0 (relative difference about 2e-4 in the insulin conversion)."
+source_verification: directly_verified
+source_verification_detail: "Formula as printed in Madsen 2024 Supplementary Table 1."
+derived_in:
+  population: "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)"
+  n: "25,769"
+  setting: "Denmark and Finland"
+notes:
+  - "Madsen 2024 name: xinsG30. Insulin converted to uU/mL with the settings factor; glucose stays in mmol/L."
+limitations:
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

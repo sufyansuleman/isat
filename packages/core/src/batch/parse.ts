@@ -4,9 +4,9 @@ import { parseWideRow } from '../io/wide';
 
 /** Units chosen for the columns of a file. */
 export interface UnitChoice {
-  glucose: 'mmol/L' | 'mg/dL'; insulin: 'pmol/L' | 'uU/mL'; tg: 'mmol/L' | 'mg/dL'; hdl: 'mmol/L' | 'mg/dL'; ffa: 'mmol/L' | 'umol/L';
+  glucose: 'mmol/L' | 'mg/dL'; insulin: 'pmol/L' | 'uU/mL'; tg: 'mmol/L' | 'mg/dL'; hdl: 'mmol/L' | 'mg/dL'; ffa: 'mmol/L' | 'umol/L'; glucagon?: 'pmol/L' | 'pg/mL';
 }
-export const DEFAULT_UNIT_CHOICE: UnitChoice = { glucose: 'mmol/L', insulin: 'pmol/L', tg: 'mmol/L', hdl: 'mmol/L', ffa: 'mmol/L' };
+export const DEFAULT_UNIT_CHOICE: UnitChoice = { glucose: 'mmol/L', insulin: 'pmol/L', tg: 'mmol/L', hdl: 'mmol/L', ffa: 'mmol/L', glucagon: 'pmol/L' };
 
 export type DelimiterName = 'comma' | 'semicolon' | 'tab';
 export const DELIMS: Record<DelimiterName, string> = { comma: ',', semicolon: ';', tab: '\t' };
@@ -77,9 +77,9 @@ export interface ColumnInfo {
 }
 
 
-function seriesInfo(name: string, q: 'g' | 'i' | 'ffa', t: number): ColumnInfo {
-  const label = q === 'g' ? 'glucose' : q === 'i' ? 'insulin' : 'FFA';
-  const canonical = q === 'ffa' ? (t === 0 ? 'FFA' : `FFA${t}`) : `${q.toUpperCase()}${t}`;
+function seriesInfo(name: string, q: 'g' | 'i' | 'ffa' | 'glucagon', t: number): ColumnInfo {
+  const label = q === 'g' ? 'glucose' : q === 'i' ? 'insulin' : q === 'glucagon' ? 'glucagon' : 'FFA';
+  const canonical = q === 'ffa' ? (t === 0 ? 'FFA' : `FFA${t}`) : q === 'glucagon' ? `Glucagon${t}` : `${q.toUpperCase()}${t}`;
   return { name, kind: 'variable', canonical, variable: t === 0 ? `fasting ${label}` : `${label} at ${t} min` };
 }
 
@@ -91,13 +91,16 @@ export function classifyColumn(name: string): ColumnInfo {
   if (f) return seriesInfo(name, f[1] === 'glucose' ? 'g' : 'i', 0);
   const a = /^(glucose|insulin)_(\d+)$/.exec(lk);
   if (a) return seriesInfo(name, a[1] === 'glucose' ? 'g' : 'i', Number(a[2]));
+  if (lk === 'fasting_glucagon') return seriesInfo(name, 'glucagon', 0);
+  const gl = /^glucagon_?(\d*)$/.exec(lk);
+  if (gl) return seriesInfo(name, 'glucagon', gl[1] === '' ? 0 : Number(gl[1]));
   const m = /^(g|i|ffa)(\d*)$/.exec(lk);
   if (m) return seriesInfo(name, m[1] as 'g' | 'i' | 'ffa', m[2] === '' ? 0 : Number(m[2]));
   return { name, kind: 'ignored' };
 }
 
 /** Accepted alias spellings, for documentation and tests. */
-export const ALIASES = ['fasting_glucose', 'fasting_insulin', 'glucose_<min>', 'insulin_<min>'] as const;
+export const ALIASES = ['fasting_glucose', 'fasting_insulin', 'glucose_<min>', 'insulin_<min>', 'fasting_glucagon', 'glucagon_<min>'] as const;
 
 /** File-level errors: two columns that give the same variable. */
 export function columnConflicts(columns: ColumnInfo[]): string[] {
@@ -191,7 +194,7 @@ export function loadTable(text: string): Loaded {
 
 /** File-unit Inputs -> canonical units via core toUnit (the only conversion path). */
 export function toCanonical(i: Inputs, u: UnitChoice, s: Partial<ConversionSettings>): Inputs {
-  const series = (x: Series | undefined, q: 'glucose' | 'insulin' | 'ffa', from: string): Series | undefined => {
+  const series = (x: Series | undefined, q: 'glucose' | 'insulin' | 'glucagon' | 'ffa', from: string): Series | undefined => {
     if (!x) return undefined;
     const out: Series = {};
     for (const [t, v] of Object.entries(x)) if (typeof v === 'number') out[Number(t)] = toUnit(v, q, from as Unit, CANONICAL[q], s);
@@ -201,6 +204,7 @@ export function toCanonical(i: Inputs, u: UnitChoice, s: Partial<ConversionSetti
   if (i.glucose) out.glucose = series(i.glucose, 'glucose', u.glucose);
   if (i.insulin) out.insulin = series(i.insulin, 'insulin', u.insulin);
   if (i.ffa) out.ffa = series(i.ffa, 'ffa', u.ffa);
+  if (i.glucagon) out.glucagon = series(i.glucagon, 'glucagon', u.glucagon ?? 'pmol/L');
   if (i.tg !== undefined) out.tg = toUnit(i.tg, 'tg', u.tg, CANONICAL.tg, s);
   if (i.hdl !== undefined) out.hdl = toUnit(i.hdl, 'hdl', u.hdl, CANONICAL.hdl, s);
   return out;

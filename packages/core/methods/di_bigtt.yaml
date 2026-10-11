@@ -1,0 +1,34 @@
+id: di_bigtt
+name: "Disposition index (BIGTT-AIR x BIGTT-SI)"
+category: secretion
+direction: descriptive
+direction_text: "higher = better beta-cell function relative to insulin sensitivity"
+formula_latex: "AIR_{BIGTT} \\times SI_{BIGTT}"
+inputs: ["glucose_0,30,120 (mmol/L)","insulin_0,30,120 (pmol/L)","bmi","sex"]
+reference:
+  citation: "Madsen AL, Hartmann B, Holst JJ, et al. Genetic architecture of oral glucose-stimulated insulin release provides biological insights into type 2 diabetes aetiology. Nat Metab. 2024."
+  doi: 10.1038/s42255-024-01140-6
+  pmid: 39420167
+secondary_references:
+  - citation: "Hansen T, Drivsholm T, Urhammer SA, Palacios RT, Vølund A, Borch-Johnsen K, Pedersen O. The BIGTT test: a novel test for simultaneous measurement of pancreatic beta-cell function, insulin sensitivity, and glucose tolerance. Diabetes Care. 2007;30(2):257-262."
+    doi: 10.2337/dc06-1240
+    pmid: 17259491
+verification:
+  status: confirmed
+  detail: "Madsen 2024 name: DIBIG."
+legacy:
+  insusenscalc_column: null
+  relation: none
+isletcalc:
+  column: Dibig
+  relation: equal
+source_verification: directly_verified
+source_verification_detail: "Formula as printed in Madsen 2024 Supplementary Table 1."
+derived_in:
+  population: "Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release)"
+  n: "25,561"
+  setting: "Denmark and Finland"
+notes:
+  - "Madsen 2024 name: DIBIG. Product of the ISAT BIGTT-AIR and BIGTT-SI values."
+limitations:
+  - "Insulin assays differ between laboratories; values are not directly comparable between studies."

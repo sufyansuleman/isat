@@ -63,3 +63,27 @@ The same information is shown with every result and on the [Methods page](https:
 | LIRI | Adults without diabetes, mean age 43, mean BMI 26 | 368 | Kuopio, Finland | Vangipurapu 2011 |
 | Lipo-IR | Adults without diabetes with biopsy-proven fatty liver disease (NAFLD) | 40 | Turin, Italy | Rosso 2019 |
 | ATIRI | Obese adults without diabetes (mean BMI 40) | 47 | St. Louis, Missouri, USA | Fabbrini 2012 |
+
+## Insulin secretion (beta cell)
+
+| Index | Population | N | Place | Original paper |
+|---|---|---|---|---|
+| HOMA-beta | 12 adults without diabetes (aged 23-67) and 11 with type 2 diabetes; numbers differed between comparisons | 23 |  | Matthews 1985 |
+| Corrected insulin response at 30 min (CIR) | Not stated in the abstract (Sluiter 1976) | not stated |  | Madsen 2024 |
+| Stumvoll first-phase insulin release | Adults without diabetes | 104 |  | Stumvoll 2000 |
+| Insulinogenic index (delta glucose, 30 min) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,588 | Denmark and Finland | Madsen 2024 |
+| Insulinogenic index (30-min glucose) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,769 | Denmark and Finland | Madsen 2024 |
+| Disposition index (Madsen 2024 table form) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,000 | Denmark and Finland | Madsen 2024 |
+| Disposition index (insulinogenic x Matsuda) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,000 | Denmark and Finland | Madsen 2024 |
+| BIGTT-AIR | Adults with normal glucose tolerance (fasting below 7.0 and 2-h glucose below 7.8 mmol/L); 28 more for external validation | 258 | Denmark | Hansen 2007 |
+| Disposition index (BIGTT-AIR x BIGTT-SI) | Adults without diabetes of European ancestry from nine Danish and Finnish cohorts (formula applied in a genome-wide study of OGTT insulin release) | 25,561 | Denmark and Finland | Madsen 2024 |
+
+## Glucagon (alpha cell)
+
+| Index | Population | N | Place | Original paper |
+|---|---|---|---|---|
+| Fasting glucagon | Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp) | 275 | San Antonio, Texas, USA | IsletCalc: |
+| Glucagon AUC (0-120 min) | Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp) | 275 | San Antonio, Texas, USA | IsletCalc: |
+| Glucagon 120-min / fasting ratio (IsletCalc definition) | Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp) | 275 | San Antonio, Texas, USA | IsletCalc: |
+| Glucagon suppression at 60 min (%) | Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp) | 275 | San Antonio, Texas, USA | Chen 2021 |
+| Glucagon / insulin ratio (fasting) | Obese Hispanic American adults with normal glucose tolerance, prediabetes or type 2 diabetes (90 with clamp) | 275 | San Antonio, Texas, USA | Chen 2021 |

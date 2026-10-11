@@ -11,7 +11,7 @@ export interface Conv {
   hdlmg: (mmol: number) => number;
 }
 
-export type Outcome = number | { value: number; details?: Record<string, unknown> };
+export type Outcome = number | { value: number; details?: Record<string, unknown> } | { unavailable: string };
 export type Formula = (v: Record<string, number>, c: Conv, sex?: Sex) => Outcome;
 
 const LABEL: Record<string, string> = {
@@ -19,11 +19,11 @@ const LABEL: Record<string, string> = {
   tg: 'triglycerides', hdl: 'HDL cholesterol', sex: 'sex (male/female)',
   fat_mass: 'fat mass (DXA)', rate_glycerol: 'glycerol rate of appearance', rate_palmitate: 'palmitate rate of appearance',
 };
-const SERIES: Record<string, 'glucose' | 'insulin' | 'ffa'> = { G: 'glucose', I: 'insulin', FFA: 'ffa' };
-const SNAME: Record<string, string> = { glucose: 'glucose', insulin: 'insulin', ffa: 'FFA' };
+const SERIES: Record<string, 'glucose' | 'insulin' | 'glucagon' | 'ffa'> = { G: 'glucose', I: 'insulin', GL: 'glucagon', FFA: 'ffa' };
+const SNAME: Record<string, string> = { glucose: 'glucose', insulin: 'insulin', glucagon: 'glucagon', ffa: 'FFA' };
 
 function label(key: string): string {
-  const m = /^(G|I|FFA)(\d+)$/.exec(key);
+  const m = /^(GL|G|I|FFA)(\d+)$/.exec(key);
   if (!m) return LABEL[key] ?? key;
   const t = Number(m[2]);
   return `${t === 0 ? 'fasting' : `${t}-min`} ${SNAME[SERIES[m[1]!]!]}`;
@@ -53,7 +53,7 @@ export function run(
       else sex = inputs.sex;
       continue;
     }
-    const m = /^(G|I|FFA)(\d+)$/.exec(k);
+    const m = /^(GL|G|I|FFA)(\d+)$/.exec(k);
     const v = m ? inputs[SERIES[m[1]!]!]?.[Number(m[2])] : (inputs as Record<string, unknown>)[k];
     if (v === undefined) missing.push(`requires ${label(k)}`);
     else if (typeof v !== 'number' || bad(v))
@@ -69,6 +69,7 @@ export function run(
     hdlmg: (x) => toUnit(x, 'hdl', 'mmol/L', 'mg/dL', s),
   };
   const out = fn(vals, c, sex);
+  if (typeof out === 'object' && 'unavailable' in out) return unavailable(id, dir, s, out.unavailable);
   const value = typeof out === 'number' ? out : out.value;
   if (!Number.isFinite(value))
     return error(id, dir, s, 'Result is not finite for these inputs (division by zero or log of a non-positive value).');

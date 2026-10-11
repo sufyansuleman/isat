@@ -8,7 +8,7 @@ type Spec = Record<string, any>;
 
 export const CATEGORIES: Array<[string, string]> = [
   ['all', 'All'], ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'],
-  ['tracer_dxa', 'Tracer & DXA'],
+  ['tracer_dxa', 'Tracer & DXA'], ['secretion', 'Insulin secretion (beta cell)'], ['glucagon', 'Glucagon (alpha cell)'],
 ];
 
 /** Category used for filtering; excluded methods are always "deferred" whatever their YAML category. */
@@ -19,6 +19,7 @@ export function categoryOf(m: MethodEntry): string {
 export const DIRECTION_PHRASE: Record<string, string> = {
   higher_more_sensitive: 'higher = more insulin-sensitive',
   higher_more_resistant: 'higher = more insulin-resistant',
+  descriptive: 'direction depends on the index',
   unknown: 'direction not specified',
 };
 
@@ -133,14 +134,14 @@ export function entryHtml(m: MethodEntry): string {
 ${referencesHtml(spec)}<p class="legacy">${legacyText(spec)}</p>`
     : `${formulasHtml(spec)}
 ${inputs.length ? `<div class="extra"><strong>Required inputs:</strong><ul>${inputs.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
-<p class="dir">${DIRECTION_PHRASE[m.direction] ?? ''}</p>
+<p class="dir">${(m.direction_text ?? DIRECTION_PHRASE[m.direction]) ?? ''}</p>
 ${derivedHtml(spec)}
 ${referencesHtml(spec)}
 <div class="extra"><strong>Verification:</strong> ${esc(m.source_verification_detail)}</div>
 ${list('Limitations', spec.limitations)}${list('Notes', (Array.isArray(spec.notes) ? spec.notes : []).filter((n: string) => !JUDGEMENT.test(n)))}
 <p class="legacy">${legacyText(spec)}</p>`;
   return `<details class="method" id="m-${esc(m.id)}" data-id="${esc(m.id)}" data-cat="${categoryOf(m)}" data-search="${esc(searchText(m, spec))}">
-<summary><span class="mname">${esc(m.name)}</span> <span class="mdir">${excluded ? 'not included' : DIRECTION_PHRASE[m.direction] ?? ''}</span> <span class="badge" data-sv="${esc(m.source_verification)}">${esc(badgeText(m.source_verification))}</span>${excluded ? '' : derivedShort(spec)}</summary>
+<summary><span class="mname">${esc(m.name)}</span> <span class="mdir">${excluded ? 'not included' : (m.direction_text ?? DIRECTION_PHRASE[m.direction]) ?? ''}</span> <span class="badge" data-sv="${esc(m.source_verification)}">${esc(badgeText(m.source_verification))}</span>${excluded ? '' : derivedShort(spec)}</summary>
 ${body}
 </details>`;
 }
