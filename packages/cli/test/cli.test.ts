@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
-  INCLUDED, composeCsv, loadTable, parseDelimited, runBatch, settingsFile, toCanonical, checkUnits,
+  INCLUDED, columnName, composeCsv, loadTable, warningText, parseDelimited, runBatch, settingsFile, toCanonical, checkUnits,
   type AvignonUse, type UnitChoice,
 } from '@isat/core';
 import { isBrokenPipe, run, settingsPathFor, shortRef } from '../src/cli';
@@ -12,6 +12,7 @@ import { ISAT_VERSION } from '../src/version';
 const root = resolve(__dirname, '../../..');
 const fixtures = readFileSync(resolve(root, 'validation/fixtures/inputs.csv'), 'utf8');
 const template = readFileSync(resolve(root, 'apps/web/public/isat-template.csv'), 'utf8');
+const islet = readFileSync(resolve(root, 'validation/fixtures/inputs_islet.csv'), 'utf8');
 
 let dir: string;
 beforeAll(() => { dir = mkdtempSync(join(tmpdir(), 'isat-cli-')); });
@@ -29,11 +30,14 @@ interface WebOpts { units?: UnitChoice; orientation?: 'published' | 'sensitivity
 
 /** The web export path, step for step (load -> toCanonical -> runBatch -> composeCsv -> settingsFile). */
 function webRun(text: string, o: WebOpts = {}) {
-  const units = o.units ?? DEFAULTS;
   const factors = o.factors ?? { insulin: '6', glucose: '18' };
   const settings = { glucose_mg_per_dL_per_mmol: Number(factors.glucose), insulin_pmol_per_uU: Number(factors.insulin) };
   const l = loadTable(text);
+  const units: UnitChoice = { ...DEFAULTS, glucagon: 'pmol/L', ...(o.units ?? {}) };
   const rows = l.inputs.map((i) => toCanonical(i, units, settings));
+  // As the web upload does (unitsForRun): the glucagon unit is recorded only when the file has glucagon columns.
+  const runUnits: UnitChoice = { ...units };
+  if (!l.columns.some((c) => c.kind === 'variable' && c.canonical?.startsWith('Glucagon'))) delete runUnits.glucagon;
   const chunks = [];
   let av: AvignonUse | undefined;
   for (const m of runBatch({ type: 'run', rows, ids: l.ids, problems: l.rowProblems, settings, avignon: o.avignon ?? 'default' })) {
@@ -45,8 +49,8 @@ function webRun(text: string, o: WebOpts = {}) {
   const csv = composeCsv(chunks, orientation, status).join('');
   const doc = settingsFile({
     version: ISAT_VERSION, timestamp: 'T', fileName: 'in.csv', delimiter: l.delimiter,
-    units: { ...units, insulin_factor_pmol_per_uU: factors.insulin, glucose_factor_mg_per_dL_per_mmol: factors.glucose },
-    settings, avignon: av!, orientation, includeStatus: status, unitCheck: checkUnits(l.inputs, units),
+    units: { ...runUnits, insulin_factor_pmol_per_uU: factors.insulin, glucose_factor_mg_per_dL_per_mmol: factors.glucose },
+    settings, avignon: av!, orientation, includeStatus: status, unitCheck: checkUnits(l.inputs, runUnits),
     rows: { total: l.total, withProblems: l.rowsWithProblems, calculated: l.total },
   });
   return { csv, doc };
@@ -110,6 +114,127 @@ describe('golden: CLI output is byte-identical to the web export path', () => {
     const semi = template.split(/\r?\n/).map((l) => l.replace(/,/g, ';')).join('\n');
     expect((await calc('g6', semi)).csv).toBe(webRun(template).csv);
     expect((await calc('g7', semi, '--delimiter', 'semicolon')).csv).toBe(webRun(template).csv);
+  });
+});
+
+/** Multiplies every cell of columns whose header matches re (the pg/mL version of a pmol/L file). */
+function scaleColumns(text: string, re: RegExp, k: number): string {
+  const t = parseDelimited(text, ',');
+  const h = t[0]!;
+  const body = t.slice(1);
+  for (const row of body) h.forEach((n, c) => { if (re.test(n) && row[c]) row[c] = String(Number(row[c]) * k); });
+  return [h, ...body].map((r) => r.join(',')).join('\r\n') + '\r\n';
+}
+const GLUCAGON_COLS = /^(glucagon_\d+|fasting_glucagon|Glucagon\d+)$/i;
+
+describe('golden: secretion and glucagon indices (web export path)', () => {
+  for (const [label, text] of [['template', template], ['islet fixture', islet]] as const) {
+    it(`${label}: default units, csv and settings`, async () => {
+      const g = await calc('h1', text);
+      const ref = webRun(text);
+      expect(g.csv).toBe(ref.csv);
+      expect(g.settings['units']).toEqual(ref.doc['units']);
+      expect(g.settings['conversion_factors']).toEqual(ref.doc['conversion_factors']);
+      expect((g.settings['units'] as Record<string, string>)['glucagon']).toBe('pmol/L');
+      expect((g.settings['conversion_factors'] as Record<string, number>)['glucagon_pg_per_mL_per_pmol']).toBe(3.485);
+    });
+    it(`${label}: glucagon in pg/mL (values x3.485) gives the same numbers as pmol/L`, async () => {
+      const pg = scaleColumns(text, GLUCAGON_COLS, 3.485);
+      const g = await calc('h2', pg, '--glucagon-unit', 'pg/mL');
+      const ref = webRun(pg, { units: { ...DEFAULTS, glucagon: 'pg/mL' } });
+      expect(g.csv).toBe(ref.csv);
+      expect((g.settings['units'] as Record<string, string>)['glucagon']).toBe('pg/mL');
+      expect(g.settings['units']).toEqual(ref.doc['units']);
+      // reading the pg/mL file as pmol/L gives different glucagon columns
+      expect((await calc('h2b', pg)).csv).not.toBe(g.csv);
+    });
+    it(`${label}: pg/mL together with mg/dL and uU/mL`, async () => {
+      let t = scaleColumns(text, GLUCAGON_COLS, 3.485);
+      t = scaleColumns(t, /^(fasting_glucose|glucose_\d+|G\d+)$/, 18);
+      t = scaleColumns(t, /^(fasting_insulin|insulin_\d+|I\d+)$/, 1 / 6);
+      const g = await calc('h3', t, '--glucose-unit', 'mg/dL', '--insulin-unit', 'uU/mL', '--glucagon-unit', 'pg/mL');
+      const ref = webRun(t, { units: { glucose: 'mg/dL', insulin: 'uU/mL', tg: 'mmol/L', hdl: 'mmol/L', ffa: 'mmol/L', glucagon: 'pg/mL' } });
+      expect(g.csv).toBe(ref.csv);
+      expect(g.settings['units']).toEqual(ref.doc['units']);
+    });
+    it(`${label}: --orientation inv never negates secretion or glucagon indices`, async () => {
+      const g = await calc('h4', text, '--orientation', 'inv');
+      expect(g.csv).toBe(webRun(text, { orientation: 'sensitivity' }).csv);
+      const header = g.csv.split('\r\n')[0]!.split(',');
+      const pub = (await calc('h4p', text)).csv.split('\r\n')[0]!.split(',');
+      const descriptive = INCLUDED.filter((m) => m.category === 'secretion' || m.category === 'glucagon');
+      expect(descriptive.length).toBe(14);
+      for (const m of descriptive) {
+        const col = columnName(m.id, 'published');
+        expect(pub).toContain(col);
+        expect(header).toContain(col);
+        expect(header).not.toContain(`${col}_inv`);
+        expect(columnName(m.id, 'sensitivity')).toBe(col);
+      }
+      expect(header.filter((c) => c.endsWith('_inv')).length).toBeGreaterThan(0);
+    });
+  }
+
+  it('a file without glucagon columns records no glucagon unit or factor, even with --glucagon-unit pg/mL', async () => {
+    const g = await calc('h5', fixtures, '--glucagon-unit', 'pg/mL');
+    const ref = webRun(fixtures);
+    expect(g.csv).toBe(ref.csv);
+    expect(g.settings['units']).toEqual(ref.doc['units']);
+    expect(g.settings['units']).not.toHaveProperty('glucagon');
+    expect(g.settings['conversion_factors']).not.toHaveProperty('glucagon_pg_per_mL_per_pmol');
+  });
+
+  it('--glucagon-unit is validated; help mentions it and the glucagon columns', async () => {
+    const bad = await cli('calculate', 'x.csv', '-o', 'y.csv', '--glucagon-unit', 'ng/mL');
+    expect(bad.code).toBe(1);
+    expect(bad.err).toMatch(/--glucagon-unit: "ng\/mL" is not valid/);
+    for (const c of ['calculate', 'check']) {
+      const h = (await cli(c, '--help')).out;
+      expect(h).toContain('--glucagon-unit pmol/L|pg/mL');
+      expect(h).toContain('Glucagon0');
+      expect(h).toContain('glucagon_<min>');
+      expect(h).toContain('fasting_glucagon');
+    }
+    expect((await cli('version')).out).toContain('3.485 pg/mL per pmol/L');
+  });
+});
+
+describe('check: glucagon units', () => {
+  it('warns about pg/mL values read as pmol/L, with the web text, and not with the right unit', async () => {
+    const pg = scaleColumns(template, GLUCAGON_COLS, 3.485);
+    const f = join(dir, 'pg.csv'); writeFileSync(f, pg);
+    const l = loadTable(pg);
+    const web = checkUnits(l.inputs, { ...DEFAULTS, glucagon: 'pmol/L' }).filter((i) => i.suggested !== null).map(warningText);
+    expect(web.join('\n')).toMatch(/glucagon/i);
+    const bad = await cli('check', f);
+    for (const w of web) expect(bad.out).toContain(w);
+    const ok = await cli('check', f, '--glucagon-unit', 'pg/mL');
+    expect(ok.out).toContain('Unit check: no warnings');
+    const f2 = join(dir, 'pmol.csv'); writeFileSync(f2, template);
+    const rev = await cli('check', f2, '--glucagon-unit', 'pg/mL');
+    expect(rev.out).toMatch(/glucagon.*looks like pmol\/L, but pg\/mL is selected/i);
+  });
+});
+
+describe('methods: categories and direction text', () => {
+  it('lists secretion and glucagon categories; descriptive indices show direction_text', async () => {
+    const cats = new Set(INCLUDED.map((m) => m.category));
+    expect(cats.has('secretion')).toBe(true);
+    expect(cats.has('glucagon')).toBe(true);
+    const table = (await cli('methods')).out.trim().split('\n');
+    const head = table[0]!;
+    expect(head).toMatch(/^id\s+name\s+category\s+direction\s+verification\s+reference$/);
+    const dirStart = head.indexOf('direction');
+    const verStart = head.indexOf('verification');
+    for (const m of INCLUDED) {
+      const line = table.find((l) => l.startsWith(m.id + ' '))!;
+      expect(line).toBeDefined();
+      expect(line.slice(dirStart, verStart).trim()).toBe(m.direction_text ?? m.direction);
+    }
+    const j = JSON.parse((await cli('methods', '--json')).out) as Array<{ id: string; category: string; direction: string; direction_text?: string }>;
+    const s = j.filter((r) => r.category === 'secretion' || r.category === 'glucagon');
+    expect(s.length).toBe(14);
+    for (const r of s) expect(r.direction_text).toBe(INCLUDED.find((m) => m.id === r.id)!.direction_text);
   });
 });
 

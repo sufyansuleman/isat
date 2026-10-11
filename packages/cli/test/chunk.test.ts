@@ -2,12 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { INCLUDED, SEP, composeCsv, type ChunkPayload, loadTable, runBatch, toCanonical, transform, type TransformKind } from '@isat/core';
+import { INCLUDED, SEP, parseDelimited, composeCsv, type ChunkPayload, loadTable, runBatch, toCanonical, transform, type TransformKind } from '@isat/core';
 import { chunkRange, run, settingsPathFor } from '../src/cli';
 
 const root = resolve(__dirname, '../../..');
 const fixtures = readFileSync(resolve(root, 'validation/fixtures/inputs.csv'), 'utf8');
 const template = readFileSync(resolve(root, 'apps/web/public/isat-template.csv'), 'utf8');
+const islet = readFileSync(resolve(root, 'validation/fixtures/inputs_islet.csv'), 'utf8');
 
 let dir: string;
 beforeAll(() => { dir = mkdtempSync(join(tmpdir(), 'isat-chunk-')); });
@@ -116,7 +117,7 @@ describe('chunk boundaries', () => {
 
 describe('chunked + merge equals unchunked, byte for byte', () => {
   const big = generate(5000);
-  for (const [label, text] of [['generated 5,000 rows', big], ['validation fixtures', fixtures], ['template', template]] as const) {
+  for (const [label, text] of [['generated 5,000 rows', big], ['validation fixtures', fixtures], ['islet fixtures', islet], ['template', template]] as const) {
     for (const n of [1, 3, 7]) {
       it(`${label}, n=${n}`, async () => {
         const args = ['--status-columns', '--orientation', 'inv'];
@@ -146,6 +147,22 @@ describe('chunked + merge equals unchunked, byte for byte', () => {
   });
 });
 
+describe('glucagon pg/mL: chunk 3 + merge equals unchunked', () => {
+  it('template with glucagon in pg/mL', async () => {
+    const t = parseDelimited(template, ',');
+    for (const row of t.slice(1)) t[0]!.forEach((n, c) => { if (/^glucagon_\d+$/.test(n) && row[c]) row[c] = String(Number(row[c]) * 3.485); });
+    const text = t.map((r) => r.join(',')).join('\r\n') + '\r\n';
+    const args = ['--glucagon-unit', 'pg/mL'];
+    const whole = await calcFile('gw', text, ...args);
+    const { files } = await chunkedMerge('gm', text, 3, args);
+    const merged = join(dir, 'gmerged.csv');
+    expect((await cli('merge', ...files, '-o', merged, '--force', '--quiet')).code).toBe(0);
+    expect(rd(merged)).toBe(rd(whole.out));
+    const st = JSON.parse(rd(settingsPathFor(merged))) as { units: Record<string, string> };
+    expect(st.units['glucagon']).toBe('pg/mL');
+  });
+});
+
 describe('merge refuses inconsistent chunks (exit 2)', () => {
   it('missing chunk, duplicate chunk', async () => {
     const { files } = await chunkedMerge('r1', template, 3);
@@ -170,6 +187,10 @@ describe('merge refuses inconsistent chunks (exit 2)', () => {
     const inp = await cli('merge', a.files[0]!, c.files[1]!, '-o', out, '--force');
     expect(inp.code).toBe(2);
     expect(inp.err).toMatch(/input file fingerprint/);
+    const g = await chunkedMerge('r7', template, 2, ['--glucagon-unit', 'pg/mL']);
+    const gu = await cli('merge', a.files[0]!, g.files[1]!, '-o', out, '--force');
+    expect(gu.code).toBe(2);
+    expect(gu.err).toMatch(/differs from .* in units/);
     const d = await chunkedMerge('r5', template, 2, ['--avignon-weight', '0.2']);
     const w = await cli('merge', a.files[0]!, d.files[1]!, '-o', out, '--force');
     expect(w.code).toBe(2);

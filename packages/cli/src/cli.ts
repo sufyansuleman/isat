@@ -62,15 +62,20 @@ const UNIT_HELP = `Unit options (default: the units of the web app's template):
   --tg-unit mmol/L|mg/dL             default mmol/L
   --hdl-unit mmol/L|mg/dL            default mmol/L
   --ffa-unit mmol/L|umol/L           default mmol/L
+  --glucagon-unit pmol/L|pg/mL       default pmol/L (only used when the file has glucagon columns)
   --insulin-factor 6.0|6.945         pmol/L per µU/mL, default 6.0
   --glucose-factor 18|18.016         mg/dL per mmol/L, default 18
-  --delimiter auto|comma|semicolon|tab   default auto`;
+  --delimiter auto|comma|semicolon|tab   default auto
+
+Glucagon is optional: columns Glucagon0, Glucagon30, Glucagon60, Glucagon90, Glucagon120 (or glucagon_<min>,
+fasting_glucagon) switch on the glucagon indices; pg/mL is converted with 3.485 pg/mL per pmol/L.`;
 
 const HELP: Record<string, string> = {
   calculate: `Usage: isat calculate <file> -o <out.csv> [options]
 
 Streams the input file and the output file (constant memory; no row limit).
 Also writes <out>.settings.json (e.g. results.csv -> results.settings.json) (units, factors, Avignon weight, counts).
+Secretion and glucagon indices are never negated by --orientation inv (only resistance indices are).
 
 ${UNIT_HELP}
 
@@ -92,6 +97,7 @@ Examples:
   isat calculate cohort.csv -o results.csv
   isat calculate cohort.csv -o results.csv --glucose-unit mg/dL --insulin-unit uU/mL --status-columns
   isat calculate cohort.csv -o results.csv --avignon-weight sample --orientation inv
+  isat calculate cohort.csv -o results.csv --glucagon-unit pg/mL
 
 SLURM job array (20 chunks, then merge):
   #SBATCH --array=1-20
@@ -102,7 +108,7 @@ SLURM job array (20 chunks, then merge):
 
 Joins the outputs of "isat calculate --chunk i/n" (i = 1..n) into one results file, byte for byte what an
 unchunked run gives. Each chunk's settings file (res_3.csv -> res_3.settings.json) is read and checked:
-same ISAT version, units, factors, orientation, Avignon weight, status-columns setting, input file
+same ISAT version, units (including the glucagon unit), factors, orientation, Avignon weight, status-columns setting, input file
 (size, rows, header) and n; exactly chunks 1..n once each; same CSV header; row counts as recorded.
 The order of the arguments does not matter. Any inconsistency stops the merge (exit code 2).
 Writes <out>.settings.json (chunk information removed, row counts summed, merged_from listed).
@@ -160,7 +166,9 @@ Example:
   methods: `Usage: isat methods [--json]
 
 Lists the included methods (id, name, category, direction, verification level, primary reference).
---json prints the same as JSON.
+Categories: sensitivity and resistance indices, insulin secretion, glucagon. For descriptive indices
+(secretion, glucagon) the direction column gives the index's own direction text. --json prints the same as JSON
+(plus direction_text where there is one).
 `,
   version: `Usage: isat version
 
@@ -169,7 +177,7 @@ Shows the ISAT version and the default conversion factors.
 };
 
 // ---------- options ----------
-const UNIT_VALUES = ['glucose-unit', 'insulin-unit', 'tg-unit', 'hdl-unit', 'ffa-unit', 'insulin-factor', 'glucose-factor', 'delimiter'];
+const UNIT_VALUES = ['glucose-unit', 'insulin-unit', 'glucagon-unit', 'tg-unit', 'hdl-unit', 'ffa-unit', 'insulin-factor', 'glucose-factor', 'delimiter'];
 
 const oneOf = <T extends string>(opt: string, v: string, table: Record<string, T>): T => {
   const hit = table[v.trim().toLowerCase()];
@@ -188,6 +196,7 @@ function commonOptions(v: Record<string, string>): Common {
       : DEFAULT_UNIT_CHOICE.insulin,
     tg: v['tg-unit'] ? oneOf('tg-unit', v['tg-unit'], mass) : DEFAULT_UNIT_CHOICE.tg,
     hdl: v['hdl-unit'] ? oneOf('hdl-unit', v['hdl-unit'], mass) : DEFAULT_UNIT_CHOICE.hdl,
+    glucagon: v['glucagon-unit'] ? oneOf<'pmol/L' | 'pg/mL'>('glucagon-unit', v['glucagon-unit'], { 'pmol/l': 'pmol/L', 'pg/ml': 'pg/mL' }) : 'pmol/L',
     ffa: v['ffa-unit']
       ? oneOf('ffa-unit', v['ffa-unit'], { 'mmol/l': 'mmol/L', 'umol/l': 'umol/L', 'µmol/l': 'umol/L', 'μmol/l': 'umol/L' })
       : DEFAULT_UNIT_CHOICE.ffa,
@@ -261,6 +270,7 @@ function cmdVersion(io: Io): number {
   io.out(`  insulin: ${d.insulin_pmol_per_uU} pmol/L per uU/mL\n`);
   io.out(`  TG: ${d.tg_mg_per_dL_per_mmol} mg/dL per mmol/L\n`);
   io.out(`  HDL: ${d.hdl_mg_per_dL_per_mmol} mg/dL per mmol/L\n`);
+  io.out(`  glucagon: ${d.glucagon_pg_per_mL_per_pmol} pg/mL per pmol/L\n`);
   return 0;
 }
 
@@ -290,10 +300,10 @@ function cmdMethods(rest: string[], io: Io): number {
   const p = parseArgs(rest, { value: [], bool: ['json', 'help'], short: { h: 'help' } });
   if (p.positional.length) throw new UsageError('methods takes no arguments');
   const rows = INCLUDED.map((m) => ({
-    id: m.id, name: m.name, category: m.category, direction: m.direction,
+    id: m.id, name: m.name, category: m.category, direction: m.direction_text ?? m.direction,
     verification: m.source_verification, reference: shortRef(primaryCitation(m.id)),
   }));
-  if (p.flags.has('json')) { io.out(JSON.stringify(rows, null, 2) + '\n'); return 0; }
+  if (p.flags.has('json')) { io.out(JSON.stringify(rows.map((r, k) => (INCLUDED[k]!.direction_text ? { ...r, direction: INCLUDED[k]!.direction, direction_text: INCLUDED[k]!.direction_text } : r)), null, 2) + '\n'); return 0; }
   const head = ['id', 'name', 'category', 'direction', 'verification', 'reference'] as const;
   const w = head.map((h) => Math.max(h.length, ...rows.map((r) => r[h].length)));
   const line = (cells: string[]) => cells.map((c, i) => c.padEnd(w[i]!)).join('  ').trimEnd() + '\n';
@@ -450,11 +460,14 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
     throw e;
   }
 
-  const unitCheck = uc.finish(c.units);
+  // The glucagon unit is only recorded when the file has glucagon columns (as the web does).
+  const unitsRecorded: UnitChoice = { ...c.units };
+  if (!rs.columns.some((x) => x.kind === 'variable' && x.canonical?.startsWith('Glucagon'))) delete unitsRecorded.glucagon;
+  const unitCheck = uc.finish(unitsRecorded);
   const doc = {
     ...settingsFile({
       version: ISAT_VERSION, timestamp: new Date().toISOString(), fileName: basename(input), delimiter: rs.delimiter ?? 'comma',
-      units: { ...c.units, insulin_factor_pmol_per_uU: c.factors.insulin, glucose_factor_mg_per_dL_per_mmol: c.factors.glucose },
+      units: { ...unitsRecorded, insulin_factor_pmol_per_uU: c.factors.insulin, glucose_factor_mg_per_dL_per_mmol: c.factors.glucose },
       settings: c.settings, avignon: av, orientation, includeStatus, unitCheck,
       rows: chunk
         ? { total: results.written, withProblems: results.withProblems, calculated: results.written }
