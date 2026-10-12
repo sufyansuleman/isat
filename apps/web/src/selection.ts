@@ -43,6 +43,7 @@ function html(prefix: string): string {
 <div class="chips" role="group" aria-label="Index groups">${chips} <button type="button" data-sel-all>All</button> <button type="button" data-sel-none>None</button></div>
 <details class="sel-details"><summary>Choose individual indices</summary><div class="sel-lists">${lists}</div></details>
 <p class="hint" data-sel-count role="status"></p>
+<p class="methods-pointer">Not sure which indices to use? Read each one on the <a href="#/methods">Methods page</a> first: its formula, original reference, the population it was derived in, what a higher value means, and its limitations.</p>
 </fieldset>`;
 }
 

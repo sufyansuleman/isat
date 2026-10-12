@@ -179,6 +179,9 @@ table.stats { min-width: 40rem; }
 .smalls .plot { flex: none; }
 figure.plot figcaption { margin-top: 4px; }
 
+/* Pointer to the Methods page (header and index selection) */
+.methods-pointer { border-left: 3px solid var(--accent); padding: 4px 10px; margin: 8px 0; background: var(--surface); font-size: 0.95rem; }
+
 /* Methods page: overview of derivation populations */
 .populations { border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; margin: 12px 0 20px; background: var(--surface); }
 .populations summary { cursor: pointer; font-weight: 600; font-size: 1.05rem; padding: 10px 0; color: var(--accent); }

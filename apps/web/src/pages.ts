@@ -18,7 +18,8 @@ export function landing(): string {
 <p class="subtitle">Insulin Sensitivity Analysis Tool</p>
 <p class="lede">Calculate and explore insulin sensitivity, insulin secretion and glucagon indices from metabolic data, for a whole research file or one person, entirely in your browser.</p>
 <p class="notice">${PRIVACY_STATEMENT}</p>
-<p class="notice">${SURROGATE_NOTE}</p>`;
+<p class="notice">${SURROGATE_NOTE}</p>
+<p class="methods-pointer">Before using an index in your research, read its details on the <a href="#/methods">Methods page</a>: formula, original reference, derivation population, verification and limitations.</p>`;
 }
 
 export function pageFor(route: Route): string {
