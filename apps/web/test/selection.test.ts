@@ -229,3 +229,20 @@ describe('Upload tab', () => {
     expect(cells()).toBe(full);
   });
 });
+
+describe('selection is shared between the two tabs', () => {
+  it('a change in one control updates the other at once and calls its onChange', () => {
+    const a = document.createElement('div'), b = document.createElement('div');
+    document.body.append(a, b);
+    const store = { v: null as string | null, load() { return this.v; }, save(s: string) { this.v = s; } };
+    const seen: number[] = [];
+    mountSelection(a, 'ta', () => {}, { storage: store } as never);
+    const cb = mountSelection(b, 'tb', (ids) => seen.push(ids.size), { storage: store } as never);
+    (a.querySelector('[data-sel-none]') as HTMLButtonElement).click();
+    expect(cb.get().size).toBe(0);
+    expect(seen.at(-1)).toBe(0);
+    (a.querySelector('[data-sel-all]') as HTMLButtonElement).click();
+    expect(cb.get().size).toBeGreaterThan(0);
+    a.remove(); b.remove();
+  });
+});

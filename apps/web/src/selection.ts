@@ -52,6 +52,9 @@ export interface SelectionControl {
   set(ids: Iterable<string>): void;
 }
 
+/** Controls currently on the page (one per tab), so a change in one tab updates the other at once. */
+const live = new Set<{ host: HTMLElement; sync: (ids: Set<string>) => void }>();
+
 /**
  * Fills `host` with the control. `initial` (default: the saved selection) is the starting state; onChange runs after every
  * user change with the new set; the choice is saved to `storage` (localStorage unless given).
@@ -74,7 +77,17 @@ export function mountSelection(
       ? 'No indices selected: nothing is shown or exported.'
       : `${ids.size} of ${INCLUDED.length} indices selected. Every index is still calculated; this only chooses what is shown and exported.`;
   };
-  const apply = (next: Set<string>): void => { ids = next; paint(); saveSelection(ids, storage); onChange(new Set(ids)); };
+  const apply = (next: Set<string>): void => {
+    ids = next; paint(); saveSelection(ids, storage); onChange(new Set(ids));
+    for (const other of [...live]) {
+      if (!other.host.isConnected) { live.delete(other); continue; }
+      if (other !== self) other.sync(new Set(ids));
+    }
+  };
+  // Another tab changed the selection: show it here too and let this tab update its results.
+  const self = { host, sync: (next: Set<string>) => { ids = next; paint(); onChange(new Set(ids)); } };
+  for (const other of [...live]) if (other.host === host || !other.host.isConnected) live.delete(other);
+  live.add(self);
   host.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button');
     if (!b || !host.contains(b)) return;
