@@ -3,7 +3,7 @@ import { methodCounts } from './counts';
 import aboutHtml from './about.html?raw';
 
 export const PRIVACY_STATEMENT =
-  'Your data are processed locally in your browser and are never uploaded. Visits are counted anonymously, without cookies.';
+  'Your data are processed locally in your browser and are never uploaded.';
 export const SURROGATE_NOTE =
   'These are surrogate indices calculated from routine measurements, not direct measurements of insulin sensitivity or secretion, and are not a diagnosis.';
 
