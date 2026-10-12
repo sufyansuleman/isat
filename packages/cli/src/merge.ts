@@ -23,6 +23,7 @@ const MUST_MATCH: Array<[string, (d: Doc) => unknown]> = [
   ['orientation', (d) => d['orientation']],
   ['Avignon weight', (d) => d['avignon_weight']],
   ['status-columns setting', (d) => d['include_status_columns']],
+  ['index selection (--include / --methods)', (d) => d['selection']],
   ['delimiter', (d) => d['delimiter']],
   ['input file fingerprint (size, rows, header)', (d) => d['input_fingerprint']],
   ['number of chunks (n)', (d) => (d['chunk'] as ChunkInfo | undefined)?.of],

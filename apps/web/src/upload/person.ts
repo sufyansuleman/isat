@@ -35,7 +35,7 @@ export function stateFromInputs(i: Inputs, units: UnitChoice, settings: Partial<
 /** Full single-person view (cards, plots, AUC, footer) built with the manual-mode renderers. Returns a disposer. */
 export function renderPerson(
   host: HTMLElement, inputs: Inputs, units: UnitChoice, settings: Partial<ConversionSettings>,
-  factors: { insulin: string; glucose: string }, av: AvignonUse, mode: OrientMode,
+  factors: { insulin: string; glucose: string }, av: AvignonUse, mode: OrientMode, selected?: ReadonlySet<string>,
 ): () => void {
   const st = stateFromInputs(inputs, units, settings, factors);
   const snap: Snapshot = {
@@ -44,7 +44,7 @@ export function renderPerson(
   };
   host.innerHTML = `<h3>OGTT plots</h3><div class="plots" data-part="plots"></div><h3>Summary</h3><div data-part="cards"></div><div data-part="auc"></div><div data-part="foot"></div>`;
   const part = (n: string) => host.querySelector<HTMLElement>(`[data-part="${n}"]`)!;
-  part('cards').innerHTML = summaryHtml(orient(snap.results, mode), snap);
+  part('cards').innerHTML = summaryHtml(orient(selected ? snap.results.filter((r) => selected.has(r.id)) : snap.results, mode), snap);
   wireSummary(part('cards'));
   hydrateFormulas(part('cards'));
   part('auc').innerHTML = aucHtml(inputs, st, settings);

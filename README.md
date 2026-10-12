@@ -51,6 +51,7 @@ Latest development build, rebuilt with every change (not a citable version): `ht
 ```bash
 ./isat check cohort.csv                                   # columns, units, problems
 ./isat calculate cohort.csv -o results.csv                # all indices
+./isat calculate cohort.csv -o results.csv --include fasting,secretion   # only these index groups (--methods homa_ir,... picks single indices)
 ./isat calculate cohort.csv -o results.csv --glucagon-unit pg/mL   # glucagon columns in pg/mL (default pmol/L)
 ./isat calculate cohort.csv -o res_${SLURM_ARRAY_TASK_ID}.csv --chunk ${SLURM_ARRAY_TASK_ID}/20   # in a SLURM array (--array=1-20)
 ./isat merge res_*.csv -o results.csv                     # join the chunks

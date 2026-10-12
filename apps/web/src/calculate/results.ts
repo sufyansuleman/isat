@@ -46,8 +46,8 @@ export function orientationNoteHtml(): string {
 }
 
 // ---------- availability panel ----------
-export function availabilityHtml(results: Result[]): string {
-  const included = registry.filter((m) => m.deferredReason === undefined);
+export function availabilityHtml(results: Result[], selected?: ReadonlySet<string>): string {
+  const included = registry.filter((m) => m.deferredReason === undefined && (!selected || selected.has(m.id)));
   const byId = new Map(results.map((r) => [r.id, r]));
   const ok = included.filter((m) => byId.get(m.id)?.status === 'ok');
   const notOk = included.filter((m) => byId.get(m.id)?.status !== 'ok').map((m) => {
@@ -63,8 +63,8 @@ ${notOk.length ? `<p><strong>Not calculated:</strong></p><ul class="av-list">${n
 }
 
 /** One line under the results pointing to the reasons for indices that were not calculated. */
-export function notCalculatedHtml(results: Result[]): string {
-  const included = new Set(registry.filter((m) => m.deferredReason === undefined).map((m) => m.id));
+export function notCalculatedHtml(results: Result[], selected?: ReadonlySet<string>): string {
+  const included = new Set(registry.filter((m) => m.deferredReason === undefined && (!selected || selected.has(m.id))).map((m) => m.id));
   const n = results.filter((r) => included.has(r.id) && r.status !== 'ok').length;
   return n ? `<p class="hint">${n} ${n === 1 ? 'index' : 'indices'} not calculated with these values. <button type="button" class="linklike" id="show-why">See why</button></p>` : '';
 }
@@ -240,7 +240,7 @@ export function resultsFooterHtml(snap: Snapshot): string {
   const bmi = snap.built.bmiFromHeight !== undefined ? `<p>BMI from height and weight: ${fmt4(snap.built.bmiFromHeight)} kg/m² (used because BMI was not entered).</p>` : '';
   const when = snap.calculatedAt.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
   return `<div class="results-foot">
-<p>Surrogate indices; not direct measurements of insulin sensitivity and not a diagnosis.</p>
+<p>Surrogate indices; not direct measurements of insulin sensitivity or secretion, and not a diagnosis.</p>
 ${bmi}
 <p>Conversion factors used: glucose ${f(s.glucose_mg_per_dL_per_mmol)} mg/dL per mmol/L; insulin ${f(s.insulin_pmol_per_uU)} pmol/L per µU/mL; TG 88.57 mg/dL per mmol/L; HDL 38.67 mg/dL per mmol/L${snap.built.inputs.glucagon ? '; glucagon 3.485 pg/mL per pmol/L' : ''}.</p>
 <p>ISAT version ${esc(snap.version)}; calculated ${when}.</p></div>`;

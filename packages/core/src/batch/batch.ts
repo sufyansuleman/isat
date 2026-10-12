@@ -5,6 +5,7 @@ import { registry, type MethodEntry } from '../registry';
 import type { TransformKind } from '../transform';
 import { CHUNK_ROWS } from './limits';
 import { insertAfter, transformBlock, transformedRowFields } from './transformcsv';
+import { describeSelection, isFullSelection, selectedMethods } from './selection';
 
 /** Methods that get an output column (deferred/excluded methods never calculate). */
 export const INCLUDED: MethodEntry[] = registry.filter((m) => m.deferredReason === undefined);
@@ -165,43 +166,50 @@ export function columnName(id: string, orientation: 'published' | 'sensitivity')
 export interface TransformedColumns { suffix: string; cols: ArrayLike<number>[] }
 
 /** Positions of the index columns in the results CSV (after participant_id and input_problems). */
-const tfPositions = (): number[] => INCLUDED.map((_, k) => k + 2);
+const tfPositions = (n: number): number[] => Array.from({ length: n }, (_, k) => k + 2);
+
+/** Positions in INCLUDED of the given methods (the layout of ChunkPayload.vals and TransformedColumns.cols). */
+const includedPos = (methods: MethodEntry[]): number[] => {
+  const at = new Map(INCLUDED.map((m, k) => [m.id, k]));
+  return methods.map((m) => at.get(m.id)!);
+};
 
 /** CSV header line (with line ending). */
-export function csvHead(orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns): string {
-  const names = INCLUDED.map((m) => columnName(m.id, orientation));
+export function csvHead(orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns, methods: MethodEntry[] = INCLUDED): string {
+  const names = methods.map((m) => columnName(m.id, orientation));
   const fields = ['participant_id', 'input_problems', ...names, ...(includeStatus ? names.map((n) => `${n}_status`) : [])];
-  return (tf ? insertAfter(fields, tfPositions(), names.map((n) => n + tf.suffix)) : fields).join(',') + '\r\n';
+  return (tf ? insertAfter(fields, tfPositions(names.length), names.map((n) => n + tf.suffix)) : fields).join(',') + '\r\n';
 }
 
 /** CSV data lines (each with line ending) for one chunk; offset = rows before this chunk (for transformed columns). */
 export function csvChunkText(
-  ch: ChunkPayload, orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns, offset = 0,
+  ch: ChunkPayload, orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns, offset = 0, methods: MethodEntry[] = INCLUDED,
 ): string {
   const ids = ch.ids.split(SEP);
   const probs = ch.problems.split(SEP);
-  const cols = ch.vals.map((v, c) => {
-    const cells = v.split(SEP);
-    return orientation === 'sensitivity' && NEGATED.has(INCLUDED[c]!.id) ? cells.map(negate) : cells;
+  const at = includedPos(methods);
+  const cols = at.map((k) => {
+    const cells = ch.vals[k]!.split(SEP);
+    return orientation === 'sensitivity' && NEGATED.has(INCLUDED[k]!.id) ? cells.map(negate) : cells;
   });
-  const stat = includeStatus ? ch.status.map((s) => s.split(SEP)) : [];
-  const pos = tfPositions();
+  const stat = includeStatus ? at.map((k) => ch.status[k]!.split(SEP)) : [];
+  const pos = tfPositions(at.length);
   const lines: string[] = [];
   for (let r = 0; r < ids.length; r++) {
     const fields = [ids[r]!, probs[r]!, ...cols.map((c) => c[r]!), ...stat.map((c) => c[r]!)];
-    lines.push((tf ? transformedRowFields(fields, pos, tf.cols.map((c) => c[offset + r]!)) : fields).join(','));
+    lines.push((tf ? transformedRowFields(fields, pos, at.map((k) => tf.cols[k]![offset + r]!)) : fields).join(','));
   }
   return lines.join('\r\n') + '\r\n';
 }
 
 /** CSV text parts (join to get the file). Empty = not calculated; never 0. */
 export function composeCsv(
-  chunks: ChunkPayload[], orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns,
+  chunks: ChunkPayload[], orientation: 'published' | 'sensitivity', includeStatus: boolean, tf?: TransformedColumns, methods: MethodEntry[] = INCLUDED,
 ): string[] {
-  const parts: string[] = [csvHead(orientation, includeStatus, tf)];
+  const parts: string[] = [csvHead(orientation, includeStatus, tf, methods)];
   let offset = 0;
   for (const ch of chunks) {
-    parts.push(csvChunkText(ch, orientation, includeStatus, tf, offset));
+    parts.push(csvChunkText(ch, orientation, includeStatus, tf, offset, methods));
     offset += ch.ids.split(SEP).length;
   }
   return parts;
@@ -216,10 +224,14 @@ export interface SettingsFileInput {
   unitCheck?: Array<{ quantity: string; column: string; median: number; n: number; selected: string; suggested: string | null }>;
   /** Transform applied to the oriented values (Distributions, Correlations and the optional CSV columns). */
   transform?: { kind: TransformKind; withinSex: boolean; addedColumns: boolean; suffix: string };
+  /** Resolved ids of the indices shown and exported (resolveSelection). Omitted or all indices = nothing recorded. */
+  selection?: string[];
 }
 
 export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
   const s = resolveSettings(i.settings);
+  const partial = i.selection !== undefined && !isFullSelection(i.selection);
+  const shown = partial ? selectedMethods(i.selection!) : INCLUDED;
   return {
     isat_version: i.version,
     timestamp: i.timestamp,
@@ -236,9 +248,10 @@ export function settingsFile(i: SettingsFileInput): Record<string, unknown> {
     orientation: i.orientation,
     belfiore_reference_set: 'belfiore_1998',
     include_status_columns: i.includeStatus,
+    ...(partial ? { selection: { ...describeSelection(i.selection!), methods: shown.map((m) => m.id) } } : {}),
     transform: transformBlock(i.transform),
     row_counts: { total: i.rows.total, with_problems: i.rows.withProblems, rows_with_input_problems: i.rows.withProblems, calculated: i.rows.calculated },
-    methods: INCLUDED.map((m) => ({
+    methods: shown.map((m) => ({
       id: m.id, name: m.name, csv_column: columnName(m.id, i.orientation),
       source_verification: m.source_verification,
     })),

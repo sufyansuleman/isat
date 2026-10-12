@@ -2,6 +2,7 @@
 // Runtime-agnostic (no file or DOM access). Output is built from the same helpers as composeCsv, so it is identical.
 import type { ConversionSettings } from '../units';
 import type { Inputs } from '../types';
+import type { MethodEntry } from '../registry';
 import {
   DELIMS, classifyColumn, columnConflicts, dataColumns, detectDelimiter, parseBody, processRow, toCanonical,
   type ColumnInfo, type DataCol, type DelimiterName, type UnitChoice,
@@ -121,6 +122,8 @@ export interface ResultsStreamOptions {
   av: AvignonUse;
   orientation: 'published' | 'sensitivity';
   includeStatus: boolean;
+  /** Methods written (default: all included); calculation itself is always complete. */
+  methods?: MethodEntry[];
 }
 
 /** Calculates parsed rows and returns CSV text identical to composeCsv for the same rows. Holds only counters. */
@@ -131,7 +134,7 @@ export class ResultsStream {
   constructor(private readonly o: ResultsStreamOptions) {}
 
   /** Header line (with line ending). */
-  header(): string { return csvHead(this.o.orientation, this.o.includeStatus); }
+  header(): string { return csvHead(this.o.orientation, this.o.includeStatus, undefined, this.o.methods); }
 
   /** CSV lines for these rows ('' when there are none). */
   rows(rows: StreamRow[]): string {
@@ -142,6 +145,6 @@ export class ResultsStream {
     mergeCounts(this.counts, counts);
     this.written += rows.length;
     for (const r of rows) if (r.msgs.length) this.withProblems++;
-    return csvChunkText(payload, orientation, includeStatus);
+    return csvChunkText(payload, orientation, includeStatus, undefined, 0, this.o.methods);
   }
 }

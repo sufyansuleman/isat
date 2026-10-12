@@ -6,7 +6,7 @@ import { DEFAULT_UNITS, type UnitChoice } from '../calculate/state';
 import { unitsSectionHtml } from '../calculate/units';
 import { ISAT_VERSION } from '../version';
 import {
-  composeCsv, emptyCounts, INCLUDED, mergeCounts, settingsFile,
+  composeCsv, emptyCounts, INCLUDED, mergeCounts, selectedMethods, settingsFile,
   type AvignonChoice, type AvignonUse, type ChunkPayload, type Counts, type RunRequest, type WorkerMessage,
 } from '@isat/core';
 import { checkFileSize, checkRowCount, hasAllowedExtension } from '@isat/core';
@@ -17,6 +17,7 @@ import { checkUnits, warningText, type UnitCheckItem } from '@isat/core';
 import { orientationNoteHtml, unitLabel } from '../calculate/results';
 import { renderPerson } from './person';
 import { exampleDetailsHtml, exampleFile } from './example';
+import { mountSelection, type SelectionControl } from '../selection';
 
 type TabId = 'summary' | 'dist' | 'cor' | 'people';
 const TABS: Array<[TabId, string]> = [['summary', 'Summary'], ['dist', 'Distributions'], ['cor', 'Correlations'], ['people', 'Participants']];
@@ -80,6 +81,9 @@ export function mountUpload(root: HTMLElement): () => void {
   let analysis: Analysis | undefined;
   let distUi: DistUi = { sel: undefined, all: true };
   let corUi: CorUi = newCorUi();
+  // Indices shown and exported (all by default, remembered in the browser); every index is still calculated.
+  let selected: Set<string> | undefined;
+  let selCtl: SelectionControl | undefined;
 
   const stopWorker = () => { worker?.terminate(); worker = undefined; };
 
@@ -141,6 +145,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
 <h3>Preview (first ${l.preview.length} rows)</h3>
 <div class="table-wrap"><table class="ogtt"><thead><tr>${cols}</tr></thead><tbody>${prev}</tbody></table></div>
 </section>
+<div id="up-sel"></div>
 <p class="actions"><button type="button" class="primary" id="up-calc"${blocked ? " disabled" : ""}>Calculate</button></p>
 <div id="up-progress-box" hidden>
 <p><progress id="up-progress" max="100" value="0" aria-label="Progress"></progress> <span id="up-progress-text" aria-live="polite"></span>
@@ -155,6 +160,8 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     root.querySelectorAll<HTMLElement>('[data-glucagon-unit]').forEach((e) => { e.hidden = !hasGlucagon; });
     $<HTMLSelectElement>('#u-x-insulin').value = factors.insulin;
     $<HTMLSelectElement>('#u-x-glucose').value = factors.glucose;
+    selCtl = mountSelection($('#up-sel'), 'up', onSelection, selected ? { initial: selected } : {});
+    selected = selCtl.get();
     renderUnitCheck();
   }
 
@@ -227,7 +234,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
   const hasSexColumn = () => loaded!.columns.some((c) => c.kind === 'variable' && c.variable === 'sex');
 
   function getAnalysis(): Analysis {
-    if (!analysis || analysis.mode !== orientMode) analysis = new Analysis(run!.chunks, orientMode, sexes());
+    if (!analysis || analysis.mode !== orientMode) { analysis = new Analysis(run!.chunks, orientMode, sexes()); analysis.setSelection(selected); }
     return analysis;
   }
 
@@ -242,7 +249,7 @@ ${probs ? `<ul>${probs}</ul>${l.rowsWithProblems > 20 ? `<p class="hint">Showing
     const kindLabel = { none: 'None', log: 'Natural log', z: 'z-score', rint: 'Rank-based inverse normal (RINT, Blom)' };
     res.hidden = false;
     res.innerHTML = `<h2 id="up-h-res">Results</h2>
-<p>${n.toLocaleString('en-GB')} participants calculated. ${esc(avText)} Belfiore indices use the belfiore_1998 reference set. Surrogate indices; not direct measurements of insulin sensitivity and not a diagnosis.</p>
+<p>${n.toLocaleString('en-GB')} participants calculated. ${esc(avText)} Belfiore indices use the belfiore_1998 reference set. Surrogate indices; not direct measurements of insulin sensitivity or secretion, and not a diagnosis.</p>
 <fieldset class="orient"><legend>Orientation (applies to the analysis tabs, the download and the participant view)</legend>
 <label><input type="radio" name="up-orient" value="published"${orientMode === 'published' ? ' checked' : ''}> Published direction</label>
 <label><input type="radio" name="up-orient" value="sensitivity"${orientMode === 'sensitivity' ? ' checked' : ''}> InsuSensCalc convention (resistance indices negated, _inv)</label>
@@ -266,7 +273,23 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
 <div id="up-person" tabindex="-1"></div>`;
     renderList();
     updateTfUi();
+    syncSelectionUi();
     showTab(tab);
+  }
+
+  /** The selection changed: update what is shown and exported, without recalculating. */
+  function onSelection(ids: Set<string>): void {
+    selected = ids;
+    if (!run) return;
+    getAnalysis().setSelection(selected);
+    syncSelectionUi();
+    if (openIndex !== undefined) openPerson(openIndex);
+    updateTfUi(); showTab(tab);
+  }
+
+  function syncSelectionUi(): void {
+    const none = !selected || selected.size === 0;
+    for (const id of ['#up-csv', '#up-json']) { const b = root.querySelector<HTMLButtonElement>(id); if (b) b.disabled = none; }
   }
 
   function updateTfUi(): void {
@@ -282,7 +305,7 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
     let excl = '';
     if (tf.kind === 'log') {
       const an = getAnalysis();
-      const items = INCLUDED.map((m, c) => [m, an.nonPositive(c)] as const).filter(([m, k]) => k > 0 && run!.counts[m.id]!.ok > 0);
+      const items = INCLUDED.map((m, c) => [m, an.nonPositive(c)] as const).filter(([m, k]) => an.shows(INCLUDED.indexOf(m)) && k > 0 && run!.counts[m.id]!.ok > 0);
       if (items.length) {
         excl = `<details class="why"><summary>Values ≤ 0 in ${items.length} index${items.length === 1 ? '' : 'es'}</summary><ul class="av-list">${items.map(([m, k]) => `<li>${esc(m.name)}: ${k.toLocaleString('en-GB')} values ≤ 0 set to missing for log</li>`).join('')}</ul></details>`;
       }
@@ -298,6 +321,7 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
     });
     root.querySelectorAll<HTMLElement>('.tabpanel').forEach((p) => { p.hidden = p.id !== `up-tab-${id}`; });
     const host = $(`#up-tab-${id}`);
+    if (id !== 'people' && selected && selected.size === 0) { host.innerHTML = '<p>No indices selected. Choose at least one group under "Indices to include".</p>'; return; }
     if (id === 'summary') host.innerHTML = summaryHtml(getAnalysis(), run!.counts, loaded!.total);
     else if (id === 'dist') mountDistributions(host, getAnalysis(), run!.counts, effTf, distUi);
     else if (id === 'cor') mountCorrelations(host, getAnalysis(), effTf, corUi);
@@ -318,7 +342,7 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
     disposePerson?.();
     const host = $('#up-person');
     host.innerHTML = `<h3>Participant ${esc(loaded!.ids[k]!)} (row ${k + 1})</h3><div id="up-person-body"></div>`;
-    disposePerson = renderPerson($('#up-person-body'), r.canonical[k]!, r.units, r.settings, r.factors, r.av, orientMode);
+    disposePerson = renderPerson($('#up-person-body'), r.canonical[k]!, r.units, r.settings, r.factors, r.av, orientMode, selected);
     host.focus();
   }
 
@@ -358,13 +382,13 @@ ${TABS.map(([id]) => `<div role="tabpanel" id="up-tab-${id}" aria-labelledby="up
     else if (b.id === 'up-csv' && run) {
       const t = effTf();
       const extra = t.kind !== 'none' && addTransformed ? { suffix: transformSuffix(t), cols: getAnalysis().transformedColumns(t) } : undefined;
-      saveBlob(new Blob(composeCsv(run.chunks, orientMode, includeStatus, extra), { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
+      saveBlob(new Blob(composeCsv(run.chunks, orientMode, includeStatus, extra, selectedMethods([...selected!])), { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
     } else if (b.id === 'up-json' && run) {
       const doc = settingsFile({
         version: ISAT_VERSION, timestamp: run.finishedAt, fileName: run.fileName, delimiter: run.delimiter,
         units: { ...run.units, insulin_factor_pmol_per_uU: run.factors.insulin, glucose_factor_mg_per_dL_per_mmol: run.factors.glucose },
         settings: run.settings, avignon: run.av, orientation: orientMode, includeStatus,
-        unitCheck: run.unitCheck,
+        unitCheck: run.unitCheck, selection: [...selected!],
         rows: { total: loaded!.total, withProblems: run.withProblems, calculated: loaded!.total },
         transform: { kind: effTf().kind, withinSex: effTf().bySex, addedColumns: tf.kind !== 'none' && addTransformed, suffix: transformSuffix(effTf()) },
       });

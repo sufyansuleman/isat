@@ -13,10 +13,10 @@ const DASH = '-';
 const stat = (v: number | null) => (v === null ? DASH : fmt4(v));
 
 /** INCLUDED positions grouped by category (registry order inside each group). */
-function grouped(): Array<[string, number[]]> {
+function grouped(an: Analysis): Array<[string, number[]]> {
   const known = new Set(CATEGORIES.map(([k]) => k));
-  const out = CATEGORIES.map(([k, label]) => [label, INCLUDED.flatMap((m, c) => (m.category === k ? [c] : []))] as [string, number[]]);
-  const other = INCLUDED.flatMap((m, c) => (known.has(m.category) ? [] : [c]));
+  const out = CATEGORIES.map(([k, label]) => [label, INCLUDED.flatMap((m, c) => (m.category === k && an.shows(c) ? [c] : []))] as [string, number[]]);
+  const other = INCLUDED.flatMap((m, c) => (known.has(m.category) || !an.shows(c) ? [] : [c]));
   if (other.length) out.push(['Other', other]);
   return out.filter(([, cs]) => cs.length);
 }
@@ -43,7 +43,7 @@ function sexCells(an: Analysis, c: number, ok: boolean): string {
 export function summaryHtml(an: Analysis, counts: Counts, n: number): string {
   const sx = an.hasSex;
   const cols = sx ? 8 : 6;
-  const rows = grouped().map(([label, cs]) => {
+  const rows = grouped(an).map(([label, cs]) => {
     const body = cs.map((c) => {
       const m = INCLUDED[c]!, ct = counts[m.id]!;
       const missing = ct.unavailable + ct.error;
@@ -94,7 +94,7 @@ function kindHint(kind: 'density' | 'hist', split: boolean): string {
 
 export function mountDistributions(host: HTMLElement, an: Analysis, counts: Counts, getTf: () => TransformSetting, ui: DistUi): void {
   const tf = getTf();
-  const calc = grouped().map(([label, cs]) => [label, cs.filter((c) => counts[INCLUDED[c]!.id]!.ok > 0)] as [string, number[]]).filter(([, cs]) => cs.length);
+  const calc = grouped(an).map(([label, cs]) => [label, cs.filter((c) => counts[INCLUDED[c]!.id]!.ok > 0)] as [string, number[]]).filter(([, cs]) => cs.length);
   const all = calc.flatMap(([, cs]) => cs);
   const div = document.createElement('div');
   host.replaceChildren(div);

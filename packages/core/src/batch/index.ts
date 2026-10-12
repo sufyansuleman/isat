@@ -4,3 +4,4 @@ export * from './batch';
 export * from './unitcheck';
 export * from './stream';
 export * from './transformcsv';
+export * from './selection';

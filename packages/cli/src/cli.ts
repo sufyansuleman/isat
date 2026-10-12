@@ -5,7 +5,7 @@ import { basename, resolve } from 'node:path';
 import process from 'node:process';
 import {
   AVIGNON_1999_WEIGHT, AvignonAccumulator, RowSplitter, countRecords, DEFAULT_SETTINGS, DEFAULT_UNIT_CHOICE, INCLUDED, ResultsStream, RowStream, UnitCheckCollector,
-  methodSpecs, settingsFile, toCanonical, warningText,
+  GROUP_IDS, SelectionError, describeSelection, isFullSelection, methodSpecs, resolveSelection, selectedMethods, settingsFile, toCanonical, warningText,
   type AvignonUse, type ConversionSettings, type DelimiterName, type StreamRow, type UnitChoice,
 } from '@isat/core';
 import { UsageError, parseArgs } from './args';
@@ -36,7 +36,7 @@ const USAGE = `ISAT command-line tool
 Usage: isat <command> [options]
 
 Commands:
-  calculate <file> -o <out.csv>   Calculate all included indices for a CSV/TSV file
+  calculate <file> -o <out.csv>   Calculate the included indices for a CSV/TSV file (all, or --include / --methods)
   merge <chunks...> -o <out.csv>  Join the outputs of calculate --chunk into one results file
   transform <results.csv> -o <out.csv> --method log|z|rint
                                   Add log / z-score / RINT columns to a results file
@@ -49,6 +49,7 @@ Run "isat <command> --help" for details.
 Examples:
   isat check cohort.csv --glucose-unit mg/dL
   isat calculate cohort.csv -o results.csv
+  isat calculate cohort.csv -o results.csv --include fasting,secretion
 
 On a SLURM cluster (split the rows into 20 chunks, then join them):
   #SBATCH --array=1-20
@@ -76,6 +77,8 @@ const HELP: Record<string, string> = {
 Streams the input file and the output file (constant memory; no row limit).
 Also writes <out>.settings.json (e.g. results.csv -> results.settings.json) (units, factors, Avignon weight, counts).
 Secretion and glucagon indices are never negated by --orientation inv (only resistance indices are).
+--include / --methods only choose which indices are written (every index is still calculated, so
+those that depend on others stay correct); the choice is recorded in the settings file.
 
 ${UNIT_HELP}
 
@@ -85,6 +88,10 @@ Other options:
   --avignon-weight published|sample|<number>
                                      published = 0.137 (Avignon 1999, default); sample = derived from
                                      this file (reads it twice); or a number
+  --include <groups>                 only these index groups: comma list of fasting, ogtt, lipid, tracer_dxa,
+                                     secretion, glucagon, or all (default all)
+  --methods <ids>                    only these indices (comma list of method ids, see "isat methods");
+                                     with --include, the union of both
   --status-columns                   add a <index>_status column per index
   --chunk <i>/<n>                    process only block i of n (1-based) of the data rows, for job arrays;
                                      join the outputs with "isat merge". With --chunk, --avignon-weight
@@ -98,6 +105,8 @@ Examples:
   isat calculate cohort.csv -o results.csv --glucose-unit mg/dL --insulin-unit uU/mL --status-columns
   isat calculate cohort.csv -o results.csv --avignon-weight sample --orientation inv
   isat calculate cohort.csv -o results.csv --glucagon-unit pg/mL
+  isat calculate cohort.csv -o results.csv --include fasting,secretion
+  isat calculate cohort.csv -o results.csv --include glucagon --methods homa_ir,matsuda_3pt
 
 SLURM job array (20 chunks, then merge):
   #SBATCH --array=1-20
@@ -108,7 +117,7 @@ SLURM job array (20 chunks, then merge):
 
 Joins the outputs of "isat calculate --chunk i/n" (i = 1..n) into one results file, byte for byte what an
 unchunked run gives. Each chunk's settings file (res_3.csv -> res_3.settings.json) is read and checked:
-same ISAT version, units (including the glucagon unit), factors, orientation, Avignon weight, status-columns setting, input file
+same ISAT version, units (including the glucagon unit), factors, orientation, Avignon weight, status-columns setting, index selection, input file
 (size, rows, header) and n; exactly chunks 1..n once each; same CSV header; row counts as recorded.
 The order of the arguments does not matter. Any inconsistency stops the merge (exit code 2).
 Writes <out>.settings.json (chunk information removed, row counts summed, merged_from listed).
@@ -166,7 +175,7 @@ Example:
   methods: `Usage: isat methods [--json]
 
 Lists the included methods (id, name, category, direction, verification level, primary reference).
-Categories: sensitivity and resistance indices, insulin secretion, glucagon. For descriptive indices
+Categories (the group names for calculate --include): fasting, ogtt, lipid, tracer_dxa, secretion, glucagon. For descriptive indices
 (secretion, glucagon) the direction column gives the index's own direction text. --json prints the same as JSON
 (plus direction_text where there is one).
 `,
@@ -178,6 +187,18 @@ Shows the ISAT version and the default conversion factors.
 
 // ---------- options ----------
 const UNIT_VALUES = ['glucose-unit', 'insulin-unit', 'glucagon-unit', 'tg-unit', 'hdl-unit', 'ffa-unit', 'insulin-factor', 'glucose-factor', 'delimiter'];
+
+/** --include / --methods -> resolved method ids (all when neither is given). */
+function selectionOptions(v: Record<string, string>): string[] {
+  const list = (x: string | undefined) => (x === undefined ? undefined : x.split(',').map((t) => t.trim()).filter((t) => t !== ''));
+  const groups = list(v['include']), ids = list(v['methods']);
+  if (v['include'] !== undefined && !groups!.length) throw new UsageError('--include: no group given (use ' + GROUP_IDS.join(', ') + ' or all)');
+  if (v['methods'] !== undefined && !ids!.length) throw new UsageError('--methods: no index given (see "isat methods")');
+  try { return resolveSelection({ groups, ids }); } catch (e) {
+    if (e instanceof SelectionError) throw new UsageError(`${v['include'] !== undefined && v['methods'] === undefined ? '--include' : v['methods'] !== undefined && v['include'] === undefined ? '--methods' : '--include/--methods'}: ${e.message}`);
+    throw e;
+  }
+}
 
 const oneOf = <T extends string>(opt: string, v: string, table: Record<string, T>): T => {
   const hit = table[v.trim().toLowerCase()];
@@ -313,10 +334,11 @@ function cmdMethods(rest: string[], io: Io): number {
 }
 
 function cmdCheck(rest: string[], io: Io): number {
-  const p = parseArgs(rest, { value: UNIT_VALUES, bool: ['help'], short: { h: 'help' } });
+  const p = parseArgs(rest, { value: [...UNIT_VALUES, 'include', 'methods'], bool: ['help'], short: { h: 'help' } });
   if (p.positional.length !== 1) throw new UsageError('check needs exactly one file');
   const file = p.positional[0]!;
   const c = commonOptions(p.values);
+  const chosen = selectionOptions(p.values);
   checkInput(file);
 
   const rs = new RowStream({ delimiter: c.delimiter });
@@ -353,6 +375,12 @@ function cmdCheck(rest: string[], io: Io): number {
   if (warns.length) for (const w of warns) io.out(`${warningText(w)}\n`);
   else io.out('Unit check: no warnings\n');
 
+  if (p.values['include'] !== undefined || p.values['methods'] !== undefined) {
+    const d = describeSelection(chosen);
+    io.out(`Indices that calculate would write: ${chosen.length} of ${INCLUDED.length}${isFullSelection(chosen) ? ' (all)' : ` (groups: ${d.groups.join(', ') || 'none'}; other indices: ${d.ids.join(', ') || 'none'})`}
+`);
+  }
+
   const av = acc.result();
   io.out(av.source === 'sample'
     ? `Avignon SiM weight derived from this cohort: ${av.w} (${acc.pairs} rows with Si0 and Si120; published weight ${AVIGNON_1999_WEIGHT})\n`
@@ -365,7 +393,7 @@ function cmdCheck(rest: string[], io: Io): number {
 
 function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
   const p = parseArgs(rest, {
-    value: [...UNIT_VALUES, 'output', 'orientation', 'avignon-weight', 'chunk'],
+    value: [...UNIT_VALUES, 'output', 'orientation', 'avignon-weight', 'chunk', 'include', 'methods'],
     bool: ['status-columns', 'quiet', 'force', 'help'], short: { o: 'output', h: 'help' },
   });
   if (p.positional.length !== 1) throw new UsageError('calculate needs exactly one input file');
@@ -373,6 +401,7 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
   const output = p.values['output'];
   if (!output) throw new UsageError('calculate needs -o <out.csv>');
   const c = commonOptions(p.values);
+  const chosen = selectionOptions(p.values);
   const orientation = p.values['orientation'] === undefined ? 'published' : oneOf('orientation', p.values['orientation'], { published: 'published', inv: 'sensitivity' } as const);
   const includeStatus = p.flags.has('status-columns');
   const quiet = p.flags.has('quiet');
@@ -426,7 +455,7 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
   let fd: number | undefined;
   const rs = new RowStream({ delimiter: c.delimiter });
   const uc = new UnitCheckCollector();
-  const results = new ResultsStream({ units: c.units, settings: c.settings, av, orientation, includeStatus });
+  const results = new ResultsStream({ units: c.units, settings: c.settings, av, orientation, includeStatus, methods: selectedMethods(chosen) });
   let pending = '', next = PROGRESS_ROWS;
   const flush = (force = false) => {
     if (fd === undefined || pending === '' || (!force && pending.length < WRITE_BYTES)) return;
@@ -468,7 +497,7 @@ function cmdCalculate(rest: string[], io: Io, commandLine: string): number {
     ...settingsFile({
       version: ISAT_VERSION, timestamp: new Date().toISOString(), fileName: basename(input), delimiter: rs.delimiter ?? 'comma',
       units: { ...unitsRecorded, insulin_factor_pmol_per_uU: c.factors.insulin, glucose_factor_mg_per_dL_per_mmol: c.factors.glucose },
-      settings: c.settings, avignon: av, orientation, includeStatus, unitCheck,
+      settings: c.settings, avignon: av, orientation, includeStatus, unitCheck, selection: chosen,
       rows: chunk
         ? { total: results.written, withProblems: results.withProblems, calculated: results.written }
         : { total: rs.rows, withProblems: results.withProblems, calculated: rs.rows },

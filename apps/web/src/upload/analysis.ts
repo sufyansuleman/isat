@@ -4,7 +4,7 @@ import {
   describe, kde, pearsonMatrix, spearmanMatrix, transform,
   type Described, type Kde, type SpearmanMatrix, type TransformKind, type TransformResult,
 } from '@isat/core';
-import { INCLUDED, NEGATED, SEP, columnName, type ChunkPayload } from '@isat/core';
+import { INCLUDED, NEGATED, SELECTION_GROUPS, SEP, columnName, type ChunkPayload } from '@isat/core';
 
 /** One density curve (or one sex group) of an index under a transform. */
 export interface GroupDensity { key: 'male' | 'female' | 'all'; n: number; median: number; kde: Kde }
@@ -41,10 +41,7 @@ export function transformedLabel(name: string, t: TransformSetting): string {
 }
 
 /** Category order used by the summary and the heatmap. */
-export const CATEGORIES: Array<[string, string]> = [
-  ['fasting', 'Fasting'], ['ogtt', 'OGTT'], ['lipid', 'Lipid & body measures'], ['tracer_dxa', 'Tracer & DXA'],
-  ['secretion', 'Insulin secretion (beta cell)'], ['glucagon', 'Glucagon (alpha cell)'],
-];
+export const CATEGORIES: Array<[string, string]> = SELECTION_GROUPS;
 
 /** INCLUDED positions ordered by category, then by name. */
 export const HEATMAP_ORDER: number[] = (() => {
@@ -61,6 +58,8 @@ export interface Matrix extends SpearmanMatrix {
   labels: string[];
 }
 
+const NO_VALUES = new Float64Array(0);
+
 export class Analysis {
   readonly total: number;
   private rawCols = new Map<number, Float64Array>();
@@ -69,6 +68,9 @@ export class Analysis {
   private matrices = new Map<string, Matrix>();
   private splits = new Map<string, SexSplit>();
   private dens = new Map<string, GroupDensity>();
+  /** INCLUDED positions shown and exported (all by default); the calculated values are never affected. */
+  private shown: Set<number> | undefined;
+  private selKey = '';
 
   constructor(
     private chunks: ChunkPayload[],
@@ -78,6 +80,16 @@ export class Analysis {
   ) {
     this.total = sexes.length;
   }
+
+  /** Restrict what is shown to these method ids (undefined = all). Cached columns are kept; matrices are keyed by selection. */
+  setSelection(ids: ReadonlySet<string> | undefined): void {
+    if (!ids || INCLUDED.every((m) => ids.has(m.id))) { this.shown = undefined; this.selKey = ''; return; }
+    this.shown = new Set(INCLUDED.flatMap((m, c) => (ids.has(m.id) ? [c] : [])));
+    this.selKey = [...this.shown].join('.');
+  }
+
+  /** True when index `c` (position in INCLUDED) is part of the selection. */
+  shows(c: number): boolean { return this.shown === undefined || this.shown.has(c); }
 
   /** Oriented values of index `c` (position in INCLUDED); NaN = missing. */
   raw(c: number): Float64Array {
@@ -168,9 +180,12 @@ export class Analysis {
    * Pearson depends on the transformed values, so every transform has its own matrix.
    */
   private matrixKey(t: TransformSetting, method: CorMethod): string {
-    if (method === 'pearson') return t.kind === 'none' ? 'p:raw' : `p:${t.kind}:${t.bySex ? 'sex' : 'all'}`;
-    if (t.kind === 'none' || (!t.bySex && t.kind !== 'log')) return 'raw';
-    return t.bySex ? `${t.kind}:sex` : 'log';
+    const k = (() => {
+      if (method === 'pearson') return t.kind === 'none' ? 'p:raw' : `p:${t.kind}:${t.bySex ? 'sex' : 'all'}`;
+      if (t.kind === 'none' || (!t.bySex && t.kind !== 'log')) return 'raw';
+      return t.bySex ? `${t.kind}:sex` : 'log';
+    })();
+    return this.selKey ? `${k}|${this.selKey}` : k;
   }
 
   hasMatrix(t: TransformSetting, method: CorMethod = 'spearman'): boolean { return this.matrices.has(this.matrixKey(t, method)); }
@@ -180,8 +195,8 @@ export class Analysis {
     const key = this.matrixKey(t, method);
     let m = this.matrices.get(key);
     if (m) return m;
-    const use: TransformSetting = key === 'raw' || key === 'p:raw' ? NO_TRANSFORM : t;
-    const cols = HEATMAP_ORDER.filter((c) => {
+    const use: TransformSetting = key.split('|')[0] === 'raw' || key.split('|')[0] === 'p:raw' ? NO_TRANSFORM : t;
+    const cols = HEATMAP_ORDER.filter((c) => this.shows(c)).filter((c) => {
       const v = this.transformed(c, use).values;
       let n = 0;
       for (let i = 0; i < v.length && n < 3; i++) if (!Number.isNaN(v[i]!)) n++;
@@ -196,7 +211,7 @@ export class Analysis {
 
   /** Transformed values of every index, for the results CSV (INCLUDED order). */
   transformedColumns(t: TransformSetting): Float64Array[] {
-    return INCLUDED.map((_, c) => this.transformed(c, t).values);
+    return INCLUDED.map((_, c) => (this.shows(c) ? this.transformed(c, t).values : NO_VALUES));
   }
 }
 

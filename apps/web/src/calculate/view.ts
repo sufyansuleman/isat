@@ -11,6 +11,7 @@ import { hydrateFormulas } from './mathml';
 import { unitsSectionHtml } from './units';
 import { drawChart, downloadPng, saveBlob, seriesPoints, type Chart } from './plots';
 import { fieldHint, seriesHint } from './hints';
+import { mountSelection } from '../selection';
 
 const opt = (v: string, cur: string, label = unitLabel(v)) => `<option value="${v}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
 
@@ -50,6 +51,7 @@ ${field('bmi', 'BMI (kg/m²)')}${field('waist', 'Waist (cm)')}
 </details>
 </section>
 
+<div id="m-sel"></div>
 <p class="actions sticky-actions"><button type="button" class="primary" id="calc">Calculate</button>
 <button type="button" id="example">Load example</button> <button type="button" id="clear">Clear</button></p>
 <p id="calc-msg" class="err" role="alert"></p>
@@ -80,6 +82,10 @@ export function mountCalculate(root: HTMLElement): () => void {
   let snap: Snapshot | undefined;
   let charts: Chart[] = [];
   let orientMode: OrientMode = 'published';
+  let selected: Set<string> = new Set();
+  let availResults: Result[] = [];
+  /** Results restricted to the selected indices (calculation itself is always complete). */
+  const shownOf = (rs: Result[]): Result[] => rs.filter((r) => selected.has(r.id));
   const openCards = new Set<string>();
   let autoTimer: ReturnType<typeof setTimeout> | undefined;
   root.innerHTML = formHtml(st);
@@ -139,9 +145,10 @@ export function mountCalculate(root: HTMLElement): () => void {
     $('#bmi-note').textContent = built.bmiFromHeight !== undefined
       ? `BMI from height and weight: ${Number(built.bmiFromHeight.toPrecision(4))} kg/m² (will be used because BMI is empty)` : '';
     const results = calculateAll(built.inputs, { settings: built.settings });
+    availResults = results;
     // Live update on every keystroke: keep the details block open if the user opened it.
     const wasOpen = root.querySelector<HTMLDetailsElement>('#av-details')?.open ?? false;
-    $('#avail').innerHTML = availabilityHtml(results);
+    $('#avail').innerHTML = availabilityHtml(results, selected);
     if (wasOpen) root.querySelector<HTMLDetailsElement>('#av-details')!.open = true;
     if (snap) { clearTimeout(autoTimer); autoTimer = setTimeout(() => calculate(false), 300); }
   }
@@ -149,11 +156,11 @@ export function mountCalculate(root: HTMLElement): () => void {
   // ----- results -----
   function renderResults(): void {
     if (!snap) return;
-    const oriented = orient(snap.results, orientMode);
+    const oriented = orient(shownOf(snap.results), orientMode);
     $('#results').hidden = false;
-    $('#summary').innerHTML = summaryHtml(oriented, snap, openCards);
+    $('#summary').innerHTML = selected.size ? summaryHtml(oriented, snap, openCards) : '<p>No indices selected. Choose at least one group under "Indices to include".</p>';
     hydrateFormulas($('#summary'));
-    $('#not-calc').innerHTML = notCalculatedHtml(snap.results);
+    $('#not-calc').innerHTML = notCalculatedHtml(snap.results, selected);
     $('#foot').innerHTML = resultsFooterHtml(snap);
     $('#auc').innerHTML = aucHtml(snap.built.inputs, snap.state, snap.built.settings);
   }
@@ -224,9 +231,17 @@ export function mountCalculate(root: HTMLElement): () => void {
     else if (el.id === 'clear') { st = { ...emptyState(st.units), insulinFactor: st.insulinFactor, glucoseFactor: st.glucoseFactor }; clearTimeout(autoTimer); openCards.clear(); snap = undefined; $('#results').hidden = true; $('#calc-msg').textContent = ''; writeFields(); refresh(); }
     else if (el.id === 'example') { st = exampleState(st.units, st); writeFields(); refresh(); }
     else if (el.id === 'csv' && snap) {
-      saveBlob(new Blob([csvText(orient(snap.results, orientMode), snap)], { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
+      saveBlob(new Blob([csvText(orient(shownOf(snap.results), orientMode), snap)], { type: 'text/csv;charset=utf-8' }), 'isat-results.csv');
     }
   });
+
+  selected = mountSelection($('#m-sel'), 'm', (ids) => {
+    selected = ids;
+    const wasOpen = root.querySelector<HTMLDetailsElement>('#av-details')?.open ?? false;
+    $('#avail').innerHTML = availabilityHtml(availResults, selected);
+    if (wasOpen) root.querySelector<HTMLDetailsElement>('#av-details')!.open = true;
+    renderResults();
+  }).get();
 
   wireSummary($('#summary'), openCards);
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
