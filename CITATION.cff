@@ -8,8 +8,8 @@ authors:
     given-names: Sufyan
     orcid: "https://orcid.org/0000-0001-6612-6915"
 doi: "10.5281/zenodo.23190906"
-version: 0.2.0
-date-released: "2026-10-11"
+version: 0.2.1
+date-released: "2026-10-12"
 license: MIT
 repository-code: "https://github.com/sufyansuleman/isat"
 url: "https://sufyansuleman.github.io/isat/"
